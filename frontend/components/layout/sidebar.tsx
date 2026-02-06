@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { signOut } from "next-auth/react";
 import {
   Home,
   Terminal,
@@ -25,48 +26,47 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Separator } from "@/components/ui/separator";
+
+type Role = "OWNER" | "ADMIN" | "MODERATOR" | "VIEWER";
+
+const ROLE_LEVEL: Record<Role, number> = {
+  VIEWER: 1,
+  MODERATOR: 2,
+  ADMIN: 3,
+  OWNER: 4,
+};
 
 interface NavLink {
   href: string;
   label: string;
   icon: React.ComponentType<{ className?: string }>;
-  ownerOnly?: boolean;
+  minRole: Role;
 }
 
 const navLinks: NavLink[] = [
-  { href: "/dashboard", label: "Dashboard", icon: Home },
-  { href: "/console", label: "Console", icon: Terminal },
-  { href: "/mods", label: "Mods", icon: Package },
-  { href: "/settings", label: "Settings", icon: Settings },
-  { href: "/jvm-config", label: "JVM Config", icon: Cpu },
-  { href: "/analytics", label: "Analytics", icon: BarChart },
-  { href: "/connect", label: "Connect", icon: Globe },
-  { href: "/files", label: "Files", icon: Folder },
-  { href: "/backups", label: "Backups", icon: Database },
-  { href: "/users", label: "Users", icon: Users, ownerOnly: true },
+  { href: "/dashboard", label: "Dashboard", icon: Home, minRole: "VIEWER" },
+  { href: "/connect", label: "Connect", icon: Globe, minRole: "VIEWER" },
+  { href: "/console", label: "Console", icon: Terminal, minRole: "MODERATOR" },
+  { href: "/analytics", label: "Analytics", icon: BarChart, minRole: "MODERATOR" },
+  { href: "/mods", label: "Mods", icon: Package, minRole: "ADMIN" },
+  { href: "/settings", label: "Settings", icon: Settings, minRole: "ADMIN" },
+  { href: "/settings/jvm", label: "JVM Config", icon: Cpu, minRole: "OWNER" },
+  { href: "/files", label: "Files", icon: Folder, minRole: "ADMIN" },
+  { href: "/backups", label: "Backups", icon: Database, minRole: "ADMIN" },
+  { href: "/admin/users", label: "Users", icon: Users, minRole: "OWNER" },
 ];
 
 interface SidebarProps {
-  userRole?: "OWNER" | "ADMIN" | "MODERATOR" | "VIEWER";
+  userRole?: Role;
   username?: string;
 }
 
 export function Sidebar({ userRole = "ADMIN", username = "Admin" }: SidebarProps) {
   const pathname = usePathname();
 
-  const handleLogout = async () => {
-    // TODO: Implement logout functionality
-    console.log("Logout clicked");
-  };
-
-  // Filter links based on user role
-  const visibleLinks = navLinks.filter(link => {
-    if (link.ownerOnly && userRole !== "OWNER") {
-      return false;
-    }
-    return true;
-  });
+  const visibleLinks = navLinks.filter(
+    (link) => ROLE_LEVEL[userRole] >= ROLE_LEVEL[link.minRole]
+  );
 
   return (
     <aside className="flex w-64 flex-col border-r border-border bg-card">
@@ -84,7 +84,9 @@ export function Sidebar({ userRole = "ADMIN", username = "Admin" }: SidebarProps
       <nav className="flex-1 space-y-1 overflow-y-auto p-4">
         {visibleLinks.map((link) => {
           const Icon = link.icon;
-          const isActive = pathname === link.href;
+          const isActive =
+            pathname === link.href ||
+            (link.href !== "/dashboard" && pathname.startsWith(link.href + "/"));
 
           return (
             <Link
@@ -131,7 +133,7 @@ export function Sidebar({ userRole = "ADMIN", username = "Admin" }: SidebarProps
             </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem
-              onClick={handleLogout}
+              onClick={() => signOut({ callbackUrl: "/login" })}
               className="cursor-pointer text-destructive focus:text-destructive"
             >
               <LogOut className="mr-2 h-4 w-4" />

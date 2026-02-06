@@ -242,6 +242,12 @@ export default function HomePage() {
                 <p className="text-center text-sm text-white/60">
                   See you in-game, adventurer!
                 </p>
+                <p className="text-center text-sm text-white/50">
+                  Need help?{' '}
+                  <a href="mailto:hyfern-admin@hyfern.us" className="text-primary hover:underline">
+                    hyfern-admin@hyfern.us
+                  </a>
+                </p>
               </CardContent>
             </Card>
           )}
