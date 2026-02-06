@@ -36,6 +36,7 @@ if [ "$GC_TYPE" = "ZGC" ]; then
     JVM_ARGS="$JVM_ARGS -XX:ZCollectionInterval=5"
     JVM_ARGS="$JVM_ARGS -XX:ZFragmentationLimit=10"
 elif [ "$GC_TYPE" = "G1GC" ]; then
+    JVM_ARGS="$JVM_ARGS -XX:+UnlockExperimentalVMOptions"
     JVM_ARGS="$JVM_ARGS -XX:+UseG1GC"
     JVM_ARGS="$JVM_ARGS -XX:MaxGCPauseMillis=${MAX_GC_PAUSE}"
     JVM_ARGS="$JVM_ARGS -XX:G1HeapRegionSize=16M"
@@ -50,16 +51,15 @@ if [ "$PARALLEL_REF_PROC" = "true" ]; then
     JVM_ARGS="$JVM_ARGS -XX:+ParallelRefProcEnabled"
 fi
 
-# AOT cache
-if [ -n "$AOT_CACHE" ]; then
-    JVM_ARGS="$JVM_ARGS -XX:AOTLibrary=${AOT_CACHE}"
+# AOT cache (JDK 25+ uses -XX:AOTCache, not -XX:AOTLibrary)
+if [ -n "$AOT_CACHE" ] && [ -f "/server/${AOT_CACHE}" ]; then
+    JVM_ARGS="$JVM_ARGS -XX:AOTCache=${AOT_CACHE}"
 fi
 
 # Performance flags
 JVM_ARGS="$JVM_ARGS -XX:+AlwaysPreTouch"
 JVM_ARGS="$JVM_ARGS -XX:+DisableExplicitGC"
 JVM_ARGS="$JVM_ARGS -XX:+UseStringDeduplication"
-JVM_ARGS="$JVM_ARGS -XX:+UseFastAccessorMethods"
 
 # Sentry
 if [ "$DISABLE_SENTRY" = "true" ]; then
