@@ -14,7 +14,7 @@ scrape_configs:
       # IMPORTANT: Prometheus does NOT support env var expansion.
       # Replace this with the prometheus user password from your
       # Hytale WebServer plugin config (mods/WebServer/users.json).
-      password: 'CHANGE_THIS_ON_SERVER'
+      password: 'K1P2IRWdY0F2hRURJ6WMmoWgpZIrIJd4/l7DzlAUL9c='
     static_configs:
       - targets: ['host.docker.internal:5523']
         labels:
