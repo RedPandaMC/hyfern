@@ -47,9 +47,13 @@ prisma/migrations/
 # Docker
 docker-compose.override.yml
 
-# Project specific
-.env.example  # Keep this, but .env.example in subdirectories may be needed
+# Project/documentation specific files (local use only)
 HyFern_Implementation_Plan_v3*.pdf
 IMPLEMENTATION_STATUS.md
+IMPLEMENTATION_PLAN.md
+SETTINGS_ARCHITECTURE.md
 SETTINGS_BUILD_SUMMARY.md
 SETTINGS_FILES_LIST.txt
+
+# Claude Code
+.claude/

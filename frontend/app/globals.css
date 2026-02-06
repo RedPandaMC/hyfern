@@ -1,0 +1,129 @@
+@import "tailwindcss";
+
+/* HyFern Dark Theme - Navy & Teal */
+@layer base {
+  :root {
+    /* Background colors */
+    --background: 222 47% 11%;           /* #0C1222 - Deep navy */
+    --foreground: 210 40% 98%;           /* #F8FAFC - Light text */
+
+    /* Card/Surface colors */
+    --card: 222 47% 15%;                 /* Slightly lighter navy */
+    --card-foreground: 210 40% 98%;
+
+    /* Popover colors */
+    --popover: 222 47% 15%;
+    --popover-foreground: 210 40% 98%;
+
+    /* Primary/Accent - Teal */
+    --primary: 172 100% 42%;             /* #00D4AA - Bright teal */
+    --primary-foreground: 222 47% 11%;   /* Dark text on teal */
+
+    /* Secondary colors */
+    --secondary: 217 33% 17%;            /* Darker navy variant */
+    --secondary-foreground: 210 40% 98%;
+
+    /* Muted colors */
+    --muted: 217 33% 17%;
+    --muted-foreground: 215 20% 65%;     /* Muted gray-blue text */
+
+    /* Accent colors */
+    --accent: 217 33% 17%;
+    --accent-foreground: 210 40% 98%;
+
+    /* Destructive/Error colors */
+    --destructive: 0 84% 60%;            /* Red for errors */
+    --destructive-foreground: 210 40% 98%;
+
+    /* Border colors */
+    --border: 217 33% 17%;               /* Subtle borders */
+    --input: 217 33% 17%;                /* Input borders */
+    --ring: 172 100% 42%;                /* Teal focus ring */
+
+    /* Chart colors (for recharts) */
+    --chart-1: 172 100% 42%;             /* Teal */
+    --chart-2: 197 71% 52%;              /* Blue */
+    --chart-3: 142 71% 45%;              /* Green */
+    --chart-4: 48 96% 53%;               /* Yellow */
+    --chart-5: 340 75% 55%;              /* Red-pink */
+
+    /* Border radius */
+    --radius: 0.5rem;
+  }
+}
+
+@theme inline {
+  /* Map CSS variables to Tailwind theme */
+  --color-background: hsl(var(--background));
+  --color-foreground: hsl(var(--foreground));
+  --color-card: hsl(var(--card));
+  --color-card-foreground: hsl(var(--card-foreground));
+  --color-popover: hsl(var(--popover));
+  --color-popover-foreground: hsl(var(--popover-foreground));
+  --color-primary: hsl(var(--primary));
+  --color-primary-foreground: hsl(var(--primary-foreground));
+  --color-secondary: hsl(var(--secondary));
+  --color-secondary-foreground: hsl(var(--secondary-foreground));
+  --color-muted: hsl(var(--muted));
+  --color-muted-foreground: hsl(var(--muted-foreground));
+  --color-accent: hsl(var(--accent));
+  --color-accent-foreground: hsl(var(--accent-foreground));
+  --color-destructive: hsl(var(--destructive));
+  --color-destructive-foreground: hsl(var(--destructive-foreground));
+  --color-border: hsl(var(--border));
+  --color-input: hsl(var(--input));
+  --color-ring: hsl(var(--ring));
+
+  /* Chart colors */
+  --color-chart-1: hsl(var(--chart-1));
+  --color-chart-2: hsl(var(--chart-2));
+  --color-chart-3: hsl(var(--chart-3));
+  --color-chart-4: hsl(var(--chart-4));
+  --color-chart-5: hsl(var(--chart-5));
+
+  /* Font families */
+  --font-sans: ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+  --font-mono: ui-monospace, "Cascadia Code", "Source Code Pro", Menlo, Consolas, "DejaVu Sans Mono", monospace;
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+    font-feature-settings: "rlig" 1, "calt" 1;
+  }
+}
+
+/* Custom scrollbar for dark theme */
+@layer base {
+  ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+
+  ::-webkit-scrollbar-track {
+    @apply bg-secondary;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    @apply bg-muted-foreground/30 rounded;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    @apply bg-muted-foreground/50;
+  }
+}
+
+/* Terminal styles (for xterm.js) */
+@layer base {
+  .xterm {
+    @apply font-mono;
+  }
+
+  .xterm-viewport {
+    @apply bg-background;
+  }
+}
