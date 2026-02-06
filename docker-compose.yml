@@ -54,6 +54,7 @@ services:
       MAIL_FROM_ADDRESS: ${MAIL_FROM_ADDRESS:-noreply@hyfern.us}
     volumes:
       - pelican_data:/app/var
+      - ./pelican-Caddyfile:/etc/caddy/Caddyfile:ro
     networks:
       - internal
     depends_on:
@@ -140,7 +141,7 @@ services:
     networks:
       - internal
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER}"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d postgres"]
       interval: 10s
       timeout: 5s
       retries: 5
