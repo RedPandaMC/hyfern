@@ -186,40 +186,20 @@ export default function HomePage() {
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
-                {/* Server address */}
+                {/* Direct Connect address */}
                 <div className="space-y-2">
-                  <label className="text-sm font-medium text-white/90">Server Address</label>
+                  <label className="text-sm font-medium text-white/90">Direct Connect</label>
                   <div className="flex gap-2">
                     <Input
-                      value={serverInfo?.address || 'Loading...'}
+                      value={serverInfo ? `${serverInfo.address}:${serverInfo.port}` : 'Loading...'}
                       readOnly
-                      className="border-white/20 bg-white/10 text-white"
+                      className="border-white/20 bg-white/10 text-white font-mono"
                     />
                     <Button
                       size="icon"
                       variant="outline"
                       className="border-white/20 bg-white/10 hover:bg-white/20"
-                      onClick={() => copyToClipboard(serverInfo?.address, 'Address')}
-                    >
-                      {copied ? <Check className="h-4 w-4 text-green-500" /> : <Copy className="h-4 w-4 text-white" />}
-                    </Button>
-                  </div>
-                </div>
-
-                {/* Port */}
-                <div className="space-y-2">
-                  <label className="text-sm font-medium text-white/90">Port</label>
-                  <div className="flex gap-2">
-                    <Input
-                      value={serverInfo?.port || '5520'}
-                      readOnly
-                      className="border-white/20 bg-white/10 text-white"
-                    />
-                    <Button
-                      size="icon"
-                      variant="outline"
-                      className="border-white/20 bg-white/10 hover:bg-white/20"
-                      onClick={() => copyToClipboard(serverInfo?.port, 'Port')}
+                      onClick={() => copyToClipboard(`${serverInfo?.address}:${serverInfo?.port}`, 'Address')}
                     >
                       {copied ? <Check className="h-4 w-4 text-green-500" /> : <Copy className="h-4 w-4 text-white" />}
                     </Button>

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getQueryClient } from '@/lib/query';
+import { getPelicanClient } from '@/lib/pelican';
 import { timingSafeEqual } from 'crypto';
 
 function constantTimeCompare(a: string, b: string): boolean {
@@ -24,21 +25,36 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Get server info from Query API
-    const queryClient = getQueryClient();
-    let serverData;
+    // Try to get server address and port from Pelican Panel
+    let address = process.env.NEXT_PUBLIC_SERVER_ADDRESS || 'hyfern.us';
+    let port = 5520;
 
     try {
+      const pelicanClient = getPelicanClient();
+      const serverDetails = await pelicanClient.getServerDetails();
+      const allocation = serverDetails?.attributes?.relationships?.allocations?.data?.[0]?.attributes;
+      if (allocation) {
+        // Use the allocation's alias (domain) if set, otherwise the IP
+        address = allocation.alias || allocation.ip_alias || allocation.ip || address;
+        port = allocation.port || port;
+      }
+    } catch (error) {
+      // Pelican API unavailable — fall back to env vars
+      console.error('Failed to fetch server allocation from Pelican:', error);
+    }
+
+    // Get server status from Query API
+    let serverData;
+    try {
+      const queryClient = getQueryClient();
       serverData = await queryClient.getServerStatus();
     } catch (error) {
-      // If Query API fails, still return basic connection info
       console.error('Failed to fetch server status:', error);
     }
 
-    // Return server connection info
     return NextResponse.json({
-      address: process.env.NEXT_PUBLIC_SERVER_ADDRESS || 'hyfern.us',
-      port: 5520,
+      address,
+      port,
       password: process.env.SERVER_PASSWORD || 'password',
       version: serverData?.version || 'Unknown',
       maxPlayers: serverData?.players?.max || 100,
