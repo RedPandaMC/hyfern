@@ -6,6 +6,8 @@ services:
     ports:
       - "80:80"
       - "443:443"
+    environment:
+      LETSENCRYPT_EMAIL: ${LETSENCRYPT_EMAIL}
     volumes:
       - ./Caddyfile:/etc/caddy/Caddyfile:ro
       - caddy_data:/data
