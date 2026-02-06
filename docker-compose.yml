@@ -80,30 +80,6 @@ services:
     depends_on:
       - pelican-panel
 
-  hytale-server:
-    build:
-      context: ./egg
-      dockerfile: Dockerfile
-    container_name: hyfern-hytale-server
-    restart: unless-stopped
-    ports:
-      - "5520:5520/udp"
-    environment:
-      SERVER_MEMORY: ${SERVER_MEMORY:-4G}
-      GC_TYPE: ${GC_TYPE:-G1GC}
-      MAX_GC_PAUSE: ${MAX_GC_PAUSE:-200}
-      PARALLEL_REF_PROC: ${PARALLEL_REF_PROC:-true}
-      AOT_CACHE: ${AOT_CACHE:-HytaleServer.aot}
-      BACKUP_ENABLED: ${BACKUP_ENABLED:-false}
-      BACKUP_FREQUENCY: ${BACKUP_FREQUENCY:-60}
-      CUSTOM_JVM_FLAGS: ${CUSTOM_JVM_FLAGS:-}
-      DISABLE_SENTRY: ${DISABLE_SENTRY:-false}
-    volumes:
-      - ./server-data:/server
-    networks:
-      - internal
-      - public
-
   hyfern-frontend:
     build:
       context: ./frontend
@@ -122,7 +98,7 @@ services:
       PELICAN_API_URL: http://pelican-panel:8080
       PELICAN_API_KEY: ${PELICAN_API_KEY}
       PELICAN_SERVER_UUID: ${PELICAN_SERVER_UUID:-default}
-      HYTALE_WEBSERVER_URL: http://hytale-server:5523
+      HYTALE_WEBSERVER_URL: ${HYTALE_WEBSERVER_URL:-http://host.docker.internal:5523}
       HYTALE_WEBSERVER_USERNAME: hyfern
       HYTALE_WEBSERVER_PASSWORD: ${HYTALE_WEBSERVER_PASSWORD}
       CURSEFORGE_API_KEY: ${CURSEFORGE_API_KEY}
@@ -197,8 +173,6 @@ services:
       - prometheus_data:/prometheus
     networks:
       - internal
-    depends_on:
-      - hytale-server
     healthcheck:
       test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:9090/-/healthy"]
       interval: 30s
