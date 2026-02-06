@@ -16,7 +16,7 @@ import {
 
 interface InstalledMod {
   id: string;
-  curseforgeId: number;
+  curseforgeId: number | null;
   name: string;
   slug: string;
   version: string;
@@ -115,19 +115,21 @@ export function InstalledMods({ mods, onUninstall }: InstalledModsProps) {
 
               {/* Actions */}
               <div className="flex items-center gap-2 ml-4">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() =>
-                    window.open(
-                      `https://www.curseforge.com/hytale/mods/${mod.slug}`,
-                      '_blank'
-                    )
-                  }
-                  className="border-gray-700 hover:bg-gray-800"
-                >
-                  <ExternalLink className="w-4 h-4" />
-                </Button>
+                {mod.curseforgeId != null && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() =>
+                      window.open(
+                        `https://www.curseforge.com/hytale/mods/${mod.slug}`,
+                        '_blank'
+                      )
+                    }
+                    className="border-gray-700 hover:bg-gray-800"
+                  >
+                    <ExternalLink className="w-4 h-4" />
+                  </Button>
+                )}
 
                 {mod.isCore ? (
                   <Button

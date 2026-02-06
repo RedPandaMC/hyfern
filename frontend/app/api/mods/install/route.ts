@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
 import { hasPermission } from '@/lib/permissions';
-import { getCurseForgeClient } from '@/lib/curseforge';
+import { getCurseForgeClient, isCurseForgeConfigured } from '@/lib/curseforge';
 import { prisma } from '@/lib/prisma';
 import crypto from 'crypto';
 
@@ -32,6 +32,10 @@ export async function POST(request: NextRequest) {
     // Parse request body
     const body = await request.json();
     const { modId, fileId } = body;
+
+    if (!isCurseForgeConfigured()) {
+      return NextResponse.json({ error: 'CurseForge API is not configured' }, { status: 501 });
+    }
 
     if (!modId || !fileId) {
       return NextResponse.json(

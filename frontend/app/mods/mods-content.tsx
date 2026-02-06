@@ -1,8 +1,8 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { toast } from 'sonner';
-import { RefreshCcw, Package, Download } from 'lucide-react';
+import { RefreshCcw, Package, Download, Upload, FileUp } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -21,7 +21,7 @@ import type { CurseForgeMod } from '@/types/curseforge';
 
 interface InstalledMod {
   id: string;
-  curseforgeId: number;
+  curseforgeId: number | null;
   name: string;
   slug: string;
   version: string;
@@ -40,14 +40,33 @@ export function ModsContent() {
   const [installedMods, setInstalledMods] = useState<InstalledMod[]>([]);
   const [loading, setLoading] = useState(true);
   const [installing, setInstalling] = useState(false);
+  const [uploading, setUploading] = useState(false);
   const [selectedMod, setSelectedMod] = useState<CurseForgeMod | null>(null);
   const [selectedFile, setSelectedFile] = useState<number | null>(null);
   const [showInstallDialog, setShowInstallDialog] = useState(false);
   const [restartRequired, setRestartRequired] = useState(false);
+  const [curseforgeEnabled, setCurseforgeEnabled] = useState(false);
+  const [configLoaded, setConfigLoaded] = useState(false);
+  const [dragOver, setDragOver] = useState(false);
 
   useEffect(() => {
     fetchInstalledMods();
+    fetchConfig();
   }, []);
+
+  const fetchConfig = async () => {
+    try {
+      const response = await fetch('/api/mods/config');
+      if (response.ok) {
+        const data = await response.json();
+        setCurseforgeEnabled(data.curseforgeEnabled);
+      }
+    } catch {
+      // CurseForge unavailable, upload-only mode
+    } finally {
+      setConfigLoaded(true);
+    }
+  };
 
   const fetchInstalledMods = async () => {
     try {
@@ -65,14 +84,12 @@ export function ModsContent() {
   };
 
   const handleInstallClick = async (mod: CurseForgeMod) => {
-    // Check if already installed
     const isInstalled = installedMods.some((m) => m.curseforgeId === mod.id);
     if (isInstalled) {
       toast.error('This mod is already installed');
       return;
     }
 
-    // Get the latest file
     const latestFile = mod.latestFiles[0];
     if (!latestFile) {
       toast.error('No files available for this mod');
@@ -92,9 +109,7 @@ export function ModsContent() {
 
       const response = await fetch('/api/mods/install', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           modId: selectedMod.id,
           fileId: selectedFile,
@@ -107,11 +122,8 @@ export function ModsContent() {
       }
 
       const data = await response.json();
-
-      // Show success message
       toast.success(`${selectedMod.name} installed successfully!`);
 
-      // Show warnings if any
       if (data.warnings?.missingDependencies?.length > 0) {
         toast.warning(
           `Missing dependencies: ${data.warnings.missingDependencies.join(', ')}`,
@@ -119,13 +131,8 @@ export function ModsContent() {
         );
       }
 
-      // Refresh installed mods list
       await fetchInstalledMods();
-
-      // Set restart required flag
       setRestartRequired(true);
-
-      // Close dialog
       setShowInstallDialog(false);
       setSelectedMod(null);
       setSelectedFile(null);
@@ -141,9 +148,7 @@ export function ModsContent() {
     try {
       const response = await fetch('/api/mods/installed', {
         method: 'DELETE',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ modId }),
       });
 
@@ -160,6 +165,80 @@ export function ModsContent() {
       toast.error(error instanceof Error ? error.message : 'Failed to uninstall mod');
     }
   };
+
+  const uploadFile = useCallback(async (file: File) => {
+    if (!file.name.endsWith('.jar')) {
+      toast.error('Only .jar files are allowed');
+      return;
+    }
+
+    if (file.size > 100 * 1024 * 1024) {
+      toast.error('File too large (max 100MB)');
+      return;
+    }
+
+    try {
+      setUploading(true);
+      const formData = new FormData();
+      formData.append('file', file);
+
+      const response = await fetch('/api/mods/upload', {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to upload mod');
+      }
+
+      toast.success(`${file.name} uploaded successfully!`);
+      await fetchInstalledMods();
+      setRestartRequired(true);
+    } catch (error) {
+      console.error('Failed to upload mod:', error);
+      toast.error(error instanceof Error ? error.message : 'Failed to upload mod');
+    } finally {
+      setUploading(false);
+    }
+  }, []);
+
+  const handleDrop = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    setDragOver(false);
+
+    const files = Array.from(e.dataTransfer.files);
+    for (const file of files) {
+      uploadFile(file);
+    }
+  }, [uploadFile]);
+
+  const handleDragOver = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    setDragOver(true);
+  }, []);
+
+  const handleDragLeave = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    setDragOver(false);
+  }, []);
+
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files) return;
+    for (const file of Array.from(files)) {
+      uploadFile(file);
+    }
+    e.target.value = '';
+  };
+
+  if (!configLoaded) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#00D4AA]"></div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -224,19 +303,80 @@ export function ModsContent() {
       </div>
 
       {/* Tabs */}
-      <Tabs defaultValue="browse" className="space-y-6">
+      <Tabs defaultValue={curseforgeEnabled ? 'browse' : 'upload'} className="space-y-6">
         <TabsList className="bg-[#1a1f35] border border-gray-800">
-          <TabsTrigger value="browse">Browse Mods</TabsTrigger>
+          {curseforgeEnabled && (
+            <TabsTrigger value="browse">Browse Mods</TabsTrigger>
+          )}
+          <TabsTrigger value="upload">Upload</TabsTrigger>
           <TabsTrigger value="installed">
             Installed ({installedMods.length})
           </TabsTrigger>
         </TabsList>
 
-        <TabsContent value="browse" className="space-y-6">
-          <ModBrowser
-            onInstall={handleInstallClick}
-            installedModIds={installedMods.map((m) => m.curseforgeId)}
-          />
+        {curseforgeEnabled && (
+          <TabsContent value="browse" className="space-y-6">
+            <ModBrowser
+              onInstall={handleInstallClick}
+              installedModIds={installedMods
+                .filter((m) => m.curseforgeId != null)
+                .map((m) => m.curseforgeId!)}
+            />
+          </TabsContent>
+        )}
+
+        <TabsContent value="upload" className="space-y-6">
+          <Card
+            className={`p-8 bg-[#0C1222] border-2 border-dashed transition-colors ${
+              dragOver
+                ? 'border-[#00D4AA] bg-[#00D4AA]/5'
+                : 'border-gray-700 hover:border-gray-600'
+            }`}
+            onDrop={handleDrop}
+            onDragOver={handleDragOver}
+            onDragLeave={handleDragLeave}
+          >
+            <div className="flex flex-col items-center justify-center py-8 text-center">
+              {uploading ? (
+                <>
+                  <div className="w-12 h-12 mb-4 animate-spin rounded-full border-4 border-[#00D4AA] border-t-transparent" />
+                  <p className="text-lg font-semibold text-white">Uploading...</p>
+                  <p className="text-sm text-gray-400 mt-1">
+                    Installing mod to server
+                  </p>
+                </>
+              ) : (
+                <>
+                  <FileUp className="w-12 h-12 mb-4 text-gray-500" />
+                  <p className="text-lg font-semibold text-white">
+                    Drag &amp; drop mod files here
+                  </p>
+                  <p className="text-sm text-gray-400 mt-1">
+                    or click to browse. Only .jar files, max 100MB.
+                  </p>
+                  <label>
+                    <input
+                      type="file"
+                      accept=".jar"
+                      multiple
+                      onChange={handleFileSelect}
+                      className="hidden"
+                    />
+                    <Button
+                      variant="outline"
+                      className="mt-4 border-gray-700"
+                      asChild
+                    >
+                      <span>
+                        <Upload className="w-4 h-4 mr-2" />
+                        Choose Files
+                      </span>
+                    </Button>
+                  </label>
+                </>
+              )}
+            </div>
+          </Card>
         </TabsContent>
 
         <TabsContent value="installed" className="space-y-6">
@@ -267,7 +407,7 @@ export function ModsContent() {
             <p>This will:</p>
             <ul className="list-disc list-inside space-y-1 pl-2">
               <li>Download the mod from CurseForge</li>
-              <li>Install it to the server's mods folder</li>
+              <li>Install it to the server&apos;s mods folder</li>
               <li>Require a server restart to load the mod</li>
             </ul>
           </div>

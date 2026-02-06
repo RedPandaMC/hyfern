@@ -62,11 +62,11 @@ model Session {
 // Minecraft mods installed on the server
 model InstalledMod {
   id           String   @id @default(cuid())
-  curseforgeId Int      @unique
+  curseforgeId Int?     @unique
   name         String
   slug         String
   version      String
-  fileName     String
+  fileName     String   @unique
   installedAt  DateTime @default(now())
   installedBy  String
   isCore       Boolean  @default(false) // Core mods cannot be uninstalled

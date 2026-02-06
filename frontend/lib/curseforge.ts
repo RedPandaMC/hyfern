@@ -312,6 +312,10 @@ export function getCurseForgeClient(): CurseForgeClient {
   return curseforgeClient;
 }
 
+export function isCurseForgeConfigured(): boolean {
+  return !!process.env.CURSEFORGE_API_KEY;
+}
+
 /**
  * Helper function to format file size
  */

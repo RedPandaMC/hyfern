@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
 import { hasPermission } from '@/lib/permissions';
-import { getCurseForgeClient } from '@/lib/curseforge';
+import { getCurseForgeClient, isCurseForgeConfigured } from '@/lib/curseforge';
 import Redis from 'ioredis';
 
 // Initialize Redis client for caching
@@ -33,6 +33,10 @@ export async function GET(request: NextRequest) {
         { error: 'Forbidden: Admin role required' },
         { status: 403 }
       );
+    }
+
+    if (!isCurseForgeConfigured()) {
+      return NextResponse.json({ error: 'CurseForge API is not configured' }, { status: 501 });
     }
 
     // Generate cache key
