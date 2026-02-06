@@ -65,5 +65,8 @@ hytale-downloader/*.zip
 server-data/*
 !server-data/.gitkeep
 
+# Server backups (created by update-server.sh)
+backups/
+
 # Claude Code
 .claude/
