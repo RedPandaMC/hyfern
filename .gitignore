@@ -55,5 +55,13 @@ SETTINGS_ARCHITECTURE.md
 SETTINGS_BUILD_SUMMARY.md
 SETTINGS_FILES_LIST.txt
 
+# Hytale downloader
+hytale-downloader/.hytale-downloader-credentials.json
+hytale-downloader/*.zip
+
+# Hytale server data (bind mounted into container)
+server-data/*
+!server-data/.gitkeep
+
 # Claude Code
 .claude/

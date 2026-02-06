@@ -97,7 +97,7 @@ services:
       CUSTOM_JVM_FLAGS: ${CUSTOM_JVM_FLAGS:-}
       DISABLE_SENTRY: ${DISABLE_SENTRY:-false}
     volumes:
-      - hytale_server_data:/server
+      - ./server-data:/server
     networks:
       - internal
       - public
@@ -242,7 +242,6 @@ volumes:
   caddy_config:
   pelican_data:
   wings_data:
-  hytale_server_data:
   postgresql_data:
   redis_data:
   prometheus_data:

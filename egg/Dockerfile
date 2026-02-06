@@ -13,14 +13,9 @@ RUN apt-get update && \
 # Create non-root user for running the server
 RUN groupadd -r hytale && useradd -r -g hytale -d /server hytale
 
-# Create necessary directories
-RUN mkdir -p /server/mods \
-    /server/mods/Nitrado_WebServer/provisioning \
-    /server/mods/Nitrado_PerformanceSaver \
-    /server/logs
-
-# Copy default plugin configs
-COPY default-configs/ /server/mods/
+# Copy default plugin configs to a staging location
+# They get copied to /server/mods/ on first run by entrypoint.sh
+COPY default-configs/ /opt/default-configs/
 
 # Expose game port (UDP) and WebServer HTTP port (TCP)
 EXPOSE 5520/udp 5523/tcp
@@ -44,8 +39,7 @@ ENV SERVER_MEMORY=4G \
 COPY entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh
 
-# Set ownership and switch to non-root user
-RUN chown -R hytale:hytale /server
-USER hytale
+# Set ownership of staging configs
+RUN chown -R hytale:hytale /opt/default-configs
 
 ENTRYPOINT ["/entrypoint.sh"]

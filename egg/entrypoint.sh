@@ -1,10 +1,30 @@
 #!/bin/bash
 set -e
 
-# Download Hytale server if not present
+# Ensure required directories exist (bind mount may be empty on first run)
+mkdir -p /server/mods /server/logs
+
+# Copy default plugin configs if not already present
+if [ -d "/opt/default-configs" ]; then
+    for dir in /opt/default-configs/*/; do
+        plugin_name=$(basename "$dir")
+        if [ ! -d "/server/mods/$plugin_name" ]; then
+            echo "Provisioning default config for $plugin_name..."
+            cp -r "$dir" "/server/mods/$plugin_name"
+        fi
+    done
+fi
+
+# Check that server jar exists (should be extracted to server-data/ on the host)
 if [ ! -f "/server/HytaleServer.jar" ]; then
-    echo "Downloading Hytale server..."
-    hytale-downloader -download-path /server/HytaleServer.jar
+    echo "ERROR: HytaleServer.jar not found at /server/HytaleServer.jar"
+    echo ""
+    echo "To set up the server:"
+    echo "  1. Run: cd hytale-downloader && ./hytale-downloader-linux-amd64"
+    echo "  2. Extract: unzip -o <downloaded>.zip -d ../server-data/"
+    echo "  3. Move: mv ../server-data/Server/* ../server-data/ && rm -r ../server-data/Server"
+    echo "  4. Restart: docker compose up -d hytale-server"
+    exit 1
 fi
 
 # Build JVM command
