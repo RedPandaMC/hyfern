@@ -1,0 +1,174 @@
+{
+  "_comment": "Pelican Panel Egg for Hytale Server",
+  "meta": {
+    "version": "PTDL_v2",
+    "update_url": null
+  },
+  "exported_at": "2026-02-06T00:00:00+00:00",
+  "name": "Hytale Server",
+  "author": "hyfern@hyfern.us",
+  "description": "Hytale is an upcoming block-based sandbox game. This egg supports official plugins and advanced JVM tuning.",
+  "features": [
+    "steam_disk_space"
+  ],
+  "docker_images": {
+    "Custom": "hyfern/hytale-server:latest"
+  },
+  "file_denylist": [],
+  "startup": "java {{GC_FLAGS}} -Xms{{SERVER_MEMORY}} -Xmx{{SERVER_MEMORY}} {{PERFORMANCE_FLAGS}} {{AOT_FLAGS}} {{SENTRY_FLAGS}} {{CUSTOM_JVM_FLAGS}} -jar HytaleServer.jar nogui",
+  "config": {
+    "files": "{}",
+    "startup": "{\r\n    \"done\": \"Server started\"\r\n}",
+    "logs": "{}",
+    "stop": "stop"
+  },
+  "scripts": {
+    "installation": {
+      "script": "#!/bin/bash\r\n# Hytale Server Installation Script\r\nset -e\r\n\r\ncd /mnt/server\r\n\r\n# Download Hytale server using hytale-downloader\r\necho \"Downloading Hytale server...\"\r\ncurl -L -o hytale-downloader https://downloader.hytale.com/hytale-downloader-linux-amd64\r\nchmod +x hytale-downloader\r\n./hytale-downloader -download-path HytaleServer.jar\r\n\r\n# Create directories\r\nmkdir -p mods logs\r\n\r\necho \"Installation complete!\"",
+      "container": "debian:bookworm-slim",
+      "entrypoint": "bash"
+    }
+  },
+  "variables": [
+    {
+      "name": "Server Memory",
+      "description": "Amount of memory to allocate to the server (e.g., 4G, 8G, 16G)",
+      "env_variable": "SERVER_MEMORY",
+      "default_value": "4G",
+      "user_viewable": true,
+      "user_editable": true,
+      "rules": "required|string|regex:/^[0-9]+[MG]$/",
+      "field_type": "text"
+    },
+    {
+      "name": "Garbage Collector Type",
+      "description": "Choose between G1GC (balanced) or ZGC (low latency, requires Java 17+)",
+      "env_variable": "GC_TYPE",
+      "default_value": "G1GC",
+      "user_viewable": true,
+      "user_editable": true,
+      "rules": "required|in:G1GC,ZGC",
+      "field_type": "text"
+    },
+    {
+      "name": "Max GC Pause (ms)",
+      "description": "Maximum GC pause time target in milliseconds (G1GC only)",
+      "env_variable": "MAX_GC_PAUSE",
+      "default_value": "200",
+      "user_viewable": true,
+      "user_editable": true,
+      "rules": "required|integer|min:50|max:1000",
+      "field_type": "text"
+    },
+    {
+      "name": "Parallel Reference Processing",
+      "description": "Enable parallel reference processing for better GC performance",
+      "env_variable": "PARALLEL_REF_PROC",
+      "default_value": "true",
+      "user_viewable": true,
+      "user_editable": true,
+      "rules": "required|in:true,false",
+      "field_type": "text"
+    },
+    {
+      "name": "AOT Cache File",
+      "description": "Ahead-of-time compilation cache filename (leave empty to disable)",
+      "env_variable": "AOT_CACHE",
+      "default_value": "HytaleServer.aot",
+      "user_viewable": true,
+      "user_editable": true,
+      "rules": "nullable|string|max:255",
+      "field_type": "text"
+    },
+    {
+      "name": "Enable Backups",
+      "description": "Enable automatic backups (requires backup plugin)",
+      "env_variable": "BACKUP_ENABLED",
+      "default_value": "false",
+      "user_viewable": true,
+      "user_editable": true,
+      "rules": "required|in:true,false",
+      "field_type": "text"
+    },
+    {
+      "name": "Backup Frequency (minutes)",
+      "description": "How often to create backups in minutes",
+      "env_variable": "BACKUP_FREQUENCY",
+      "default_value": "60",
+      "user_viewable": true,
+      "user_editable": true,
+      "rules": "required|integer|min:5|max:1440",
+      "field_type": "text"
+    },
+    {
+      "name": "Custom JVM Flags",
+      "description": "Additional custom JVM flags (advanced users only)",
+      "env_variable": "CUSTOM_JVM_FLAGS",
+      "default_value": "",
+      "user_viewable": true,
+      "user_editable": true,
+      "rules": "nullable|string",
+      "field_type": "text"
+    },
+    {
+      "name": "Disable Sentry",
+      "description": "Disable Sentry error reporting",
+      "env_variable": "DISABLE_SENTRY",
+      "default_value": "false",
+      "user_viewable": true,
+      "user_editable": true,
+      "rules": "required|in:true,false",
+      "field_type": "text"
+    },
+    {
+      "name": "GC Flags",
+      "description": "Generated GC flags (do not edit manually)",
+      "env_variable": "GC_FLAGS",
+      "default_value": "-XX:+UseG1GC -XX:MaxGCPauseMillis={{MAX_GC_PAUSE}} -XX:G1HeapRegionSize=16M -XX:G1NewSizePercent=30 -XX:G1MaxNewSizePercent=40 -XX:G1ReservePercent=15 -XX:InitiatingHeapOccupancyPercent=40",
+      "user_viewable": false,
+      "user_editable": false,
+      "rules": "required|string",
+      "field_type": "text"
+    },
+    {
+      "name": "Performance Flags",
+      "description": "Standard performance optimization flags",
+      "env_variable": "PERFORMANCE_FLAGS",
+      "default_value": "-XX:+AlwaysPreTouch -XX:+DisableExplicitGC -XX:+UseStringDeduplication -XX:+UseFastAccessorMethods {{PARALLEL_REF_FLAG}}",
+      "user_viewable": false,
+      "user_editable": false,
+      "rules": "required|string",
+      "field_type": "text"
+    },
+    {
+      "name": "Parallel Ref Flag",
+      "description": "Conditionally adds ParallelRefProc flag",
+      "env_variable": "PARALLEL_REF_FLAG",
+      "default_value": "-XX:+ParallelRefProcEnabled",
+      "user_viewable": false,
+      "user_editable": false,
+      "rules": "nullable|string",
+      "field_type": "text"
+    },
+    {
+      "name": "AOT Flags",
+      "description": "AOT compilation flags",
+      "env_variable": "AOT_FLAGS",
+      "default_value": "-XX:AOTLibrary={{AOT_CACHE}}",
+      "user_viewable": false,
+      "user_editable": false,
+      "rules": "nullable|string",
+      "field_type": "text"
+    },
+    {
+      "name": "Sentry Flags",
+      "description": "Sentry configuration flags",
+      "env_variable": "SENTRY_FLAGS",
+      "default_value": "",
+      "user_viewable": false,
+      "user_editable": false,
+      "rules": "nullable|string",
+      "field_type": "text"
+    }
+  ]
+}
