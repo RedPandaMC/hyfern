@@ -7,5 +7,11 @@
 server-data/*
 !server-data/.gitkeep
 
+# Server backups (created by update-server.sh)
+backups/
+
 # Docker
 docker-compose.override.yml
+
+# Claude Code
+.claude/
