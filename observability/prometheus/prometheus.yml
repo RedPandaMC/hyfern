@@ -11,11 +11,12 @@ scrape_configs:
     scheme: http
     basic_auth:
       username: 'prometheus'
-      # IMPORTANT: Replace this with the actual password from your .env
-      # Prometheus does NOT support environment variable expansion
-      password: 'CHANGE_THIS_TO_WEBSERVER_PASSWORD'
+      # IMPORTANT: Prometheus does NOT support env var expansion.
+      # Replace this with the prometheus user password from your
+      # Hytale WebServer plugin config (mods/WebServer/users.json).
+      password: 'CHANGE_THIS_ON_SERVER'
     static_configs:
-      - targets: ['hytale-server:5523']
+      - targets: ['host.docker.internal:5523']
         labels:
           instance: 'hyfern-main'
           server_type: 'hytale'
