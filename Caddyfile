@@ -1,0 +1,99 @@
+{
+    email {$LETSENCRYPT_EMAIL}
+}
+
+# Main frontend application
+hyfern.us {
+    reverse_proxy hyfern-frontend:3000
+
+    encode gzip
+
+    # Security headers
+    header {
+        # Enable HSTS
+        Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
+        # Prevent clickjacking
+        X-Frame-Options "SAMEORIGIN"
+        # Prevent MIME sniffing
+        X-Content-Type-Options "nosniff"
+        # XSS Protection
+        X-XSS-Protection "1; mode=block"
+        # Referrer Policy
+        Referrer-Policy "strict-origin-when-cross-origin"
+        # Remove server header
+        -Server
+    }
+
+    log {
+        output file /data/logs/hyfern.log
+        format json
+    }
+}
+
+# Pelican Panel management interface
+panel.hyfern.us {
+    reverse_proxy pelican-panel:8080
+
+    encode gzip
+
+    header {
+        Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
+        X-Frame-Options "SAMEORIGIN"
+        X-Content-Type-Options "nosniff"
+        X-XSS-Protection "1; mode=block"
+        Referrer-Policy "strict-origin-when-cross-origin"
+        -Server
+    }
+
+    log {
+        output file /data/logs/panel.log
+        format json
+    }
+}
+
+# Wings API (for frontend server control)
+api.hyfern.us {
+    reverse_proxy wings:8443 {
+        transport http {
+            tls_insecure_skip_verify
+        }
+    }
+
+    encode gzip
+
+    header {
+        Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
+        X-Frame-Options "DENY"
+        X-Content-Type-Options "nosniff"
+        X-XSS-Protection "1; mode=block"
+        Referrer-Policy "no-referrer"
+        -Server
+    }
+
+    log {
+        output file /data/logs/api.log
+        format json
+    }
+}
+
+# Grafana dashboards
+grafana.hyfern.us {
+    reverse_proxy grafana:3001
+
+    encode gzip
+
+    header {
+        Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
+        # Allow Grafana to be embedded in iframes from hyfern.us
+        Content-Security-Policy "frame-ancestors 'self' https://hyfern.us"
+        X-Content-Type-Options "nosniff"
+        X-XSS-Protection "1; mode=block"
+        Referrer-Policy "strict-origin-when-cross-origin"
+        -Server
+    }
+
+    log {
+        output file /data/logs/grafana.log
+        format json
+    }
+}

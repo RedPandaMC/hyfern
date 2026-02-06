@@ -1,0 +1,21 @@
+{
+  "port": 5523,
+  "tls": {
+    "enabled": true,
+    "certFile": "server.crt",
+    "keyFile": "server.key",
+    "allowSelfSigned": true
+  },
+  "cors": {
+    "enabled": true,
+    "allowedOrigins": ["https://hyfern.us", "https://panel.hyfern.us"]
+  },
+  "rateLimit": {
+    "enabled": true,
+    "maxRequestsPerMinute": 60
+  },
+  "logging": {
+    "level": "INFO",
+    "file": "logs/webserver.log"
+  }
+}

@@ -1,0 +1,25 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+  external_labels:
+    cluster: 'hyfern'
+    environment: 'production'
+
+scrape_configs:
+  - job_name: 'hytale'
+    metrics_path: '/ApexHosting/PrometheusExporter/metrics'
+    scheme: http
+    basic_auth:
+      username: 'prometheus'
+      # IMPORTANT: Replace this with the actual password from your .env
+      # Prometheus does NOT support environment variable expansion
+      password: 'CHANGE_THIS_TO_WEBSERVER_PASSWORD'
+    static_configs:
+      - targets: ['hytale-server:5523']
+        labels:
+          instance: 'hyfern-main'
+          server_type: 'hytale'
+
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']

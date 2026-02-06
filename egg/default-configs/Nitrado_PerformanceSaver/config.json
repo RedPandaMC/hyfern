@@ -1,0 +1,12 @@
+{
+  "enabled": true,
+  "minViewDistance": 6,
+  "maxViewDistance": 32,
+  "tpsThreshold": 25,
+  "checkInterval": 5,
+  "adjustmentStep": 2,
+  "logging": {
+    "level": "INFO",
+    "logAdjustments": true
+  }
+}
