@@ -54,6 +54,8 @@ IMPLEMENTATION_PLAN.md
 SETTINGS_ARCHITECTURE.md
 SETTINGS_BUILD_SUMMARY.md
 SETTINGS_FILES_LIST.txt
+frontend/README.md
+hytale-downloader/QUICKSTART.md
 
 # Hytale downloader
 hytale-downloader/.hytale-downloader-credentials.json
