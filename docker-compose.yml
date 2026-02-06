@@ -73,7 +73,7 @@ services:
       WINGS_GID: 988
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
-      - /var/lib/docker/containers:/var/lib/docker/containers:ro
+      - /var/snap/docker/common/var-lib-docker/containers:/var/lib/docker/containers:ro
       - wings_data:/var/lib/pelican
       - /tmp/pelican:/tmp/pelican
       - ./wings-config:/etc/pelican
