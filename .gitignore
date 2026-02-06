@@ -1,0 +1,55 @@
+# Environment variables
+.env
+.env.local
+.env.*.local
+
+# Node/npm
+node_modules/
+dist/
+.next/
+out/
+build/
+*.tsbuildinfo
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# OS
+Thumbs.db
+.DS_Store
+
+# Prisma
+prisma/migrations/
+.prisma/
+
+# Build outputs
+*.o
+*.a
+*.so
+*.dylib
+*.dll
+*.exe
+
+# Temporary files
+*.tmp
+*.log
+.cache/
+
+# Docker
+docker-compose.override.yml
+
+# Project specific
+.env.example  # Keep this, but .env.example in subdirectories may be needed
+HyFern_Implementation_Plan_v3*.pdf
+IMPLEMENTATION_STATUS.md
+SETTINGS_BUILD_SUMMARY.md
+SETTINGS_FILES_LIST.txt
