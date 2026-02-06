@@ -1,0 +1,20 @@
+{
+    auto_https off
+}
+
+:80 {
+    root * /var/www/html/public
+    file_server
+
+    @notStatic {
+        not path /build/* /favicons/* /android-chrome* /apple-touch-icon* /site.webmanifest
+        not file
+    }
+
+    php_fastcgi @notStatic 127.0.0.1:9000 {
+        trusted_proxies private_ranges
+        resolve_root_symlink
+    }
+
+    encode gzip
+}
