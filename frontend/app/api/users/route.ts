@@ -1,9 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth';
+import { auth } from '@/lib/auth';
 import { hasPermission } from '@/lib/permissions';
 import { prisma } from '@/lib/prisma';
-import bcrypt from 'bcryptjs';
+import { hashPassword } from '@/lib/auth-utils';
 
 /**
  * GET /api/users
@@ -12,7 +11,7 @@ import bcrypt from 'bcryptjs';
  */
 export async function GET(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions);
+    const session = await auth();
 
     if (!session?.user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -61,7 +60,7 @@ export async function GET(request: NextRequest) {
  */
 export async function POST(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions);
+    const session = await auth();
 
     if (!session?.user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -109,8 +108,8 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Invalid role' }, { status: 400 });
     }
 
-    // Hash password
-    const passwordHash = await bcrypt.hash(password, 10);
+    // Hash password (uses SALT_ROUNDS=12 from auth-utils)
+    const passwordHash = await hashPassword(password);
 
     // Create user
     const user = await prisma.user.create({
@@ -145,7 +144,7 @@ export async function POST(request: NextRequest) {
  */
 export async function PUT(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions);
+    const session = await auth();
 
     if (!session?.user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -219,7 +218,7 @@ export async function PUT(request: NextRequest) {
  */
 export async function DELETE(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions);
+    const session = await auth();
 
     if (!session?.user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });

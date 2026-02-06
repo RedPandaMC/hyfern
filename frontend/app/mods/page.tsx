@@ -1,6 +1,5 @@
 import { Suspense } from 'react';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth';
+import { auth } from '@/lib/auth';
 import { hasPermission } from '@/lib/permissions';
 import { redirect } from 'next/navigation';
 import { DashboardShell } from '@/components/layout/dashboard-shell';
@@ -12,7 +11,7 @@ export const metadata = {
 };
 
 export default async function ModsPage() {
-  const session = await getServerSession(authOptions);
+  const session = await auth();
 
   // Redirect if not authenticated
   if (!session) {
@@ -25,10 +24,7 @@ export default async function ModsPage() {
   }
 
   return (
-    <DashboardShell
-      title="Mod Manager"
-      description="Browse, install, and manage Hytale mods from CurseForge"
-    >
+    <DashboardShell pageTitle="Mod Manager">
       <Suspense
         fallback={
           <div className="flex items-center justify-center py-12">

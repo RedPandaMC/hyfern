@@ -1,6 +1,5 @@
 import { Suspense } from 'react';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth';
+import { auth } from '@/lib/auth';
 import { hasPermission } from '@/lib/permissions';
 import { redirect } from 'next/navigation';
 import { DashboardShell } from '@/components/layout/dashboard-shell';
@@ -12,7 +11,7 @@ export const metadata = {
 };
 
 export default async function AnalyticsPage() {
-  const session = await getServerSession(authOptions);
+  const session = await auth();
 
   // Redirect if not authenticated
   if (!session) {
@@ -25,10 +24,7 @@ export default async function AnalyticsPage() {
   }
 
   return (
-    <DashboardShell
-      title="Analytics"
-      description="Server performance metrics and player analytics"
-    >
+    <DashboardShell pageTitle="Analytics">
       <Suspense
         fallback={
           <div className="flex items-center justify-center py-12">

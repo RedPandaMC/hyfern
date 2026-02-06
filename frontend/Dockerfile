@@ -1,5 +1,5 @@
 # HyFern Frontend Dockerfile
-# Multi-stage build for Next.js 15 application
+# Multi-stage build for Next.js 16 application
 
 # Stage 1: Dependencies
 FROM node:22-alpine AS deps
@@ -40,12 +40,14 @@ RUN addgroup --system --gid 1001 nodejs
 RUN adduser --system --uid 1001 nextjs
 
 # Copy necessary files from builder
+# Next.js standalone includes node_modules and server.js
 COPY --from=builder /app/public ./public
 COPY --from=builder /app/.next/standalone ./
 COPY --from=builder /app/.next/static ./.next/static
+
+# Copy Prisma client (generated into app/generated/prisma/)
+COPY --from=builder /app/app/generated/prisma ./app/generated/prisma
 COPY --from=builder /app/prisma ./prisma
-COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
-COPY --from=builder /app/app/generated ./app/generated
 
 # Set correct permissions
 RUN chown -R nextjs:nodejs /app

@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth';
+import { auth } from '@/lib/auth';
 import { hasPermission } from '@/lib/permissions';
 import { getCurseForgeClient } from '@/lib/curseforge';
 import Redis from 'ioredis';
@@ -19,11 +18,11 @@ const CACHE_TTL = 60 * 60; // 1 hour
  */
 export async function GET(
   request: NextRequest,
-  { params }: { params: { modId: string } }
+  { params }: { params: Promise<{ modId: string }> }
 ) {
   try {
     // Check authentication
-    const session = await getServerSession(authOptions);
+    const session = await auth();
     if (!session?.user) {
       return NextResponse.json(
         { error: 'Unauthorized' },
@@ -39,7 +38,8 @@ export async function GET(
       );
     }
 
-    const modId = parseInt(params.modId);
+    const { modId: modIdParam } = await params;
+    const modId = parseInt(modIdParam);
     if (isNaN(modId)) {
       return NextResponse.json(
         { error: 'Invalid mod ID' },
@@ -79,7 +79,7 @@ export async function GET(
   } catch (error) {
     console.error('Failed to fetch mod details:', error);
     return NextResponse.json(
-      { error: 'Failed to fetch mod details', details: error instanceof Error ? error.message : 'Unknown error' },
+      { error: 'Failed to fetch mod details' },
       { status: 500 }
     );
   }

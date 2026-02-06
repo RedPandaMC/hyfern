@@ -6,14 +6,14 @@ global:
     environment: 'production'
 
 scrape_configs:
-  - job_name: 'hytale-server'
+  - job_name: 'hytale'
     metrics_path: '/ApexHosting/PrometheusExporter/metrics'
-    scheme: https
-    tls_config:
-      insecure_skip_verify: true
+    scheme: http
     basic_auth:
       username: 'prometheus'
-      password: '${HYTALE_WEBSERVER_PASSWORD}'
+      # IMPORTANT: Replace this with the actual password from your .env
+      # Prometheus does NOT support environment variable expansion
+      password: 'CHANGE_THIS_TO_WEBSERVER_PASSWORD'
     static_configs:
       - targets: ['hytale-server:5523']
         labels:

@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth';
+import { auth } from '@/lib/auth';
 import { hasPermission } from '@/lib/permissions';
 import { getCurseForgeClient } from '@/lib/curseforge';
 import { prisma } from '@/lib/prisma';
@@ -14,7 +13,7 @@ import crypto from 'crypto';
 export async function POST(request: NextRequest) {
   try {
     // Check authentication
-    const session = await getServerSession(authOptions);
+    const session = await auth();
     if (!session?.user) {
       return NextResponse.json(
         { error: 'Unauthorized' },
@@ -67,6 +66,22 @@ export async function POST(request: NextRequest) {
     let downloadUrl = file.downloadUrl;
     if (!downloadUrl) {
       downloadUrl = await client.getFileDownloadUrl(modId, fileId);
+    }
+
+    // Validate download URL to prevent SSRF
+    try {
+      const parsedUrl = new URL(downloadUrl);
+      if (!['https:', 'http:'].includes(parsedUrl.protocol)) {
+        return NextResponse.json({ error: 'Invalid download URL' }, { status: 400 });
+      }
+      const hostname = parsedUrl.hostname.toLowerCase();
+      if (hostname === 'localhost' || hostname === '127.0.0.1' || hostname === '0.0.0.0' ||
+          hostname.startsWith('10.') || hostname.startsWith('192.168.') || hostname.startsWith('172.') ||
+          hostname.endsWith('.internal') || hostname.endsWith('.local')) {
+        return NextResponse.json({ error: 'Invalid download URL' }, { status: 400 });
+      }
+    } catch {
+      return NextResponse.json({ error: 'Invalid download URL' }, { status: 400 });
     }
 
     // Download the mod file
@@ -171,7 +186,7 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     console.error('Failed to install mod:', error);
     return NextResponse.json(
-      { error: 'Failed to install mod', details: error instanceof Error ? error.message : 'Unknown error' },
+      { error: 'Failed to install mod' },
       { status: 500 }
     );
   }

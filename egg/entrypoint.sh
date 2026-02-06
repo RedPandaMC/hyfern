@@ -56,4 +56,4 @@ fi
 
 # Start server
 echo "Starting Hytale server with JVM args: $JVM_ARGS"
-exec java $JVM_ARGS -jar HytaleServer.jar nogui
+exec java $JVM_ARGS -jar /server/HytaleServer.jar nogui

@@ -10,14 +10,17 @@ RUN apt-get update && \
     ca-certificates \
     && rm -rf /var/lib/apt/lists/*
 
+# Create non-root user for running the server
+RUN groupadd -r hytale && useradd -r -g hytale -d /server hytale
+
 # Create necessary directories
 RUN mkdir -p /server/mods \
     /server/mods/Nitrado_WebServer/provisioning \
     /server/mods/Nitrado_PerformanceSaver \
     /server/logs
 
-# Copy hytale-downloader for server updates
-COPY --chmod=755 ../hytale-downloader/hytale-downloader-linux-amd64 /usr/local/bin/hytale-downloader
+# Copy default plugin configs
+COPY default-configs/ /server/mods/
 
 # Expose game port (UDP) and WebServer HTTP port (TCP)
 EXPOSE 5520/udp 5523/tcp
@@ -40,5 +43,9 @@ ENV SERVER_MEMORY=4G \
 # Entrypoint script to construct JVM command
 COPY entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh
+
+# Set ownership and switch to non-root user
+RUN chown -R hytale:hytale /server
+USER hytale
 
 ENTRYPOINT ["/entrypoint.sh"]

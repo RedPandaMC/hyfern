@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth';
+import { auth } from '@/lib/auth';
 import { hasPermission } from '@/lib/permissions';
 import { getCurseForgeClient } from '@/lib/curseforge';
 import Redis from 'ioredis';
@@ -20,7 +19,7 @@ const CACHE_TTL = 60 * 60 * 24; // 24 hours (categories rarely change)
 export async function GET(request: NextRequest) {
   try {
     // Check authentication
-    const session = await getServerSession(authOptions);
+    const session = await auth();
     if (!session?.user) {
       return NextResponse.json(
         { error: 'Unauthorized' },
@@ -60,7 +59,7 @@ export async function GET(request: NextRequest) {
   } catch (error) {
     console.error('Failed to fetch categories:', error);
     return NextResponse.json(
-      { error: 'Failed to fetch categories', details: error instanceof Error ? error.message : 'Unknown error' },
+      { error: 'Failed to fetch categories' },
       { status: 500 }
     );
   }
