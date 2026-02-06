@@ -23,7 +23,7 @@ if [ ! -f "/server/HytaleServer.jar" ]; then
     echo "  1. Run: cd hytale-downloader && ./hytale-downloader-linux-amd64"
     echo "  2. Extract: unzip -o <downloaded>.zip -d ../server-data/"
     echo "  3. Move: mv ../server-data/Server/* ../server-data/ && rm -r ../server-data/Server"
-    echo "  4. Restart: docker compose up -d hytale-server"
+    echo "  4. Restart the server from the Pelican Panel, or: docker compose restart wings"
     exit 1
 fi
 

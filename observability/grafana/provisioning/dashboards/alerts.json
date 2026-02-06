@@ -259,7 +259,7 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "up{job=\"hytale-server\"}",
+          "expr": "up{job=\"hytale\"}",
           "legendFormat": "Server Status",
           "range": true,
           "refId": "A"
@@ -417,7 +417,7 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "(up{job=\"hytale-server\"} == 0) * 1",
+          "expr": "(up{job=\"hytale\"} == 0) * 1",
           "legendFormat": "Server Offline",
           "range": true,
           "refId": "C"
