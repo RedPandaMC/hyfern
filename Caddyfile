@@ -32,7 +32,7 @@ hyfern.us {
 
 # Pelican Panel management interface
 panel.hyfern.us {
-    reverse_proxy pelican-panel:8080
+    reverse_proxy pelican-panel:80
 
     encode gzip
 
