@@ -1,13 +1,13 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Lock, Copy, Check, Users, Activity, ExternalLink } from 'lucide-react';
+import { Lock, Copy, Check, Users, Activity, ExternalLink, Eye, EyeOff } from '@/lib/icons';
 import { toast } from 'sonner';
 
 export default function HomePage() {
@@ -16,22 +16,7 @@ export default function HomePage() {
   const [isLoading, setIsLoading] = useState(false);
   const [serverInfo, setServerInfo] = useState<any>(null);
   const [copied, setCopied] = useState(false);
-  const [isDaytime, setIsDaytime] = useState(true);
-
-  // Determine if it's day or night based on local time
-  useEffect(() => {
-    const checkTime = () => {
-      const hour = new Date().getHours();
-      // Day: 6 AM - 6 PM (6-18), Night: 6 PM - 6 AM (18-6)
-      setIsDaytime(hour >= 6 && hour < 18);
-    };
-
-    checkTime();
-    // Check every minute in case user keeps page open across day/night transition
-    const interval = setInterval(checkTime, 60000);
-
-    return () => clearInterval(interval);
-  }, []);
+  const [showPassword, setShowPassword] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -70,19 +55,8 @@ export default function HomePage() {
 
   return (
     <div className="relative min-h-screen w-full overflow-hidden">
-      {/* Background image with transition */}
-      <div className="absolute inset-0 transition-opacity duration-1000">
-        <Image
-          src={isDaytime ? '/day.jpg' : '/night.jpg'}
-          alt="Background"
-          fill
-          className="object-cover"
-          priority
-          quality={100}
-        />
-        {/* Overlay for better text readability */}
-        <div className="absolute inset-0 bg-black/40" />
-      </div>
+      {/* Overlay for text readability over ANSI background */}
+      <div className="absolute inset-0 bg-black/30" />
 
       {/* Header */}
       <header className="relative z-10 border-b border-white/10 bg-black/20 backdrop-blur-md">
@@ -130,7 +104,7 @@ export default function HomePage() {
             <div className="text-center">
               <h1 className="text-4xl font-bold text-white drop-shadow-lg">Welcome to HyFern</h1>
               <p className="mt-2 text-lg text-white/80 drop-shadow">
-                {isDaytime ? 'Good day, adventurer!' : 'Good evening, adventurer!'}
+                Welcome, adventurer!
               </p>
             </div>
           </div>
@@ -149,14 +123,28 @@ export default function HomePage() {
               </CardHeader>
               <CardContent>
                 <form onSubmit={handleSubmit} className="space-y-4">
-                  <Input
-                    type="password"
-                    placeholder="Enter password..."
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    className="border-white/20 bg-white/10 text-white placeholder:text-white/50"
-                    disabled={isLoading}
-                  />
+                  <div className="relative">
+                    <Input
+                      type={showPassword ? 'text' : 'password'}
+                      placeholder="Enter password..."
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      className="border-white/20 bg-white/10 text-white placeholder:text-white/50 pr-10"
+                      disabled={isLoading}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-white/60 hover:text-white"
+                      tabIndex={-1}
+                    >
+                      {showPassword ? (
+                        <EyeOff className="h-4 w-4" />
+                      ) : (
+                        <Eye className="h-4 w-4" />
+                      )}
+                    </button>
+                  </div>
                   <Button
                     type="submit"
                     className="w-full bg-primary hover:bg-primary/90"
