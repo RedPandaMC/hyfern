@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect } from 'react';
-import { ExternalLink } from 'lucide-react';
+import { ExternalLink } from '@/lib/icons';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 

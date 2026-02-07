@@ -15,7 +15,7 @@ import {
   Database,
   Users,
   LogOut,
-} from "lucide-react";
+} from "@/lib/icons";
 import { cn } from "@/lib/utils";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {

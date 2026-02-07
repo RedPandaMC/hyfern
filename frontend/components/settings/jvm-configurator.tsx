@@ -10,7 +10,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
-import { Save, AlertCircle, Zap, Code } from 'lucide-react';
+import { Save, AlertCircle, Zap, Code } from '@/lib/icons';
 import { JVMConfig, JVMPreset, JVM_PRESETS, jvmConfigToFlags, GCType } from '@/types/jvm';
 
 interface JVMConfiguratorProps {

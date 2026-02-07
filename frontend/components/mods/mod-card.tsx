@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Download, ExternalLink, Check, Lock } from 'lucide-react';
+import { Download, ExternalLink, Check, Lock } from '@/lib/icons';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';

@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { UserPlus, Trash2, Edit, Shield, Key, Users as UsersIcon } from 'lucide-react';
+import { UserPlus, Trash2, Edit, Shield, Key, Users as UsersIcon } from '@/lib/icons';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';

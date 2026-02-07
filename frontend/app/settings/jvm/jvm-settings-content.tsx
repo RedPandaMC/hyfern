@@ -7,7 +7,7 @@ import { LiveMetrics } from '@/components/settings/live-metrics';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
-import { AlertCircle } from 'lucide-react';
+import { AlertCircle } from '@/lib/icons';
 import { JVMConfig, JVMPreset } from '@/types/jvm';
 
 interface JVMResponse {

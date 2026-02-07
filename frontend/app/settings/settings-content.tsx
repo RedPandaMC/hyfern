@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { ConfigEditor } from '@/components/settings/config-editor';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { AlertCircle } from 'lucide-react';
+import { AlertCircle } from '@/lib/icons';
 
 interface ServerConfig {
   ServerName: string;

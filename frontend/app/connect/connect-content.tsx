@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Eye, EyeOff, Copy, Check, Server, Lock, Shield } from 'lucide-react';
+import { Eye, EyeOff, Copy, Check, Server, Lock, Shield } from '@/lib/icons';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';

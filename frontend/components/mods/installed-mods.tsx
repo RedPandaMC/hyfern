@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Trash2, Lock, ExternalLink, AlertTriangle } from 'lucide-react';
+import { Trash2, Lock, ExternalLink, AlertTriangle } from '@/lib/icons';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';

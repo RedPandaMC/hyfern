@@ -1,7 +1,7 @@
 'use client';
 
 import { Card } from '@/components/ui/card';
-import { Activity } from 'lucide-react';
+import { Activity } from '@/lib/icons';
 
 interface TPSGaugeProps {
   tps: number;

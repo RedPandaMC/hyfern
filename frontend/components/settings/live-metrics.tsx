@@ -5,7 +5,7 @@ import useSWR from 'swr';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
-import { Activity, Gauge, TrendingUp, Eye } from 'lucide-react';
+import { Activity, Gauge, TrendingUp, Eye } from '@/lib/icons';
 import { JVMMetrics } from '@/types/jvm';
 
 const fetcher = (url: string) => fetch(url).then((res) => res.json());

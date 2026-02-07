@@ -4,7 +4,7 @@ import { Player } from '@/types/query';
 import { Card } from '@/components/ui/card';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
-import { Users } from 'lucide-react';
+import { Users } from '@/lib/icons';
 
 interface PlayerListProps {
   players: Player[];

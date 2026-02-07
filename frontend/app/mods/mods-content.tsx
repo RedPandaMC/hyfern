@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { toast } from 'sonner';
-import { RefreshCcw, Package, Download, Upload, FileUp } from 'lucide-react';
+import { RefreshCcw, Package, Download, Upload, FileUp } from '@/lib/icons';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
