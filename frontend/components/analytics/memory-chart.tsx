@@ -68,7 +68,7 @@ export function MemoryChart({ range }: MemoryChartProps) {
                   borderRadius: '8px',
                   color: 'hsl(var(--foreground))',
                 }}
-                formatter={(value: number) => [`${value} MB`]}
+                formatter={(value) => [`${value} MB`]}
               />
               <Area
                 type="monotone"
