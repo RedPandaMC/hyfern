@@ -224,6 +224,18 @@ export const authConfig: NextAuthConfig = {
   jwt: {
     maxAge: JWT_MAX_AGE,
   },
+  cookies: {
+    sessionToken: {
+      name: '__Secure-next-auth.session-token',
+      options: {
+        httpOnly: true,
+        sameSite: 'lax' as const,
+        path: '/',
+        secure: true,
+        domain: '.hyfern.us',
+      },
+    },
+  },
 };
 
 export const { handlers, auth, signIn, signOut } = NextAuth(authConfig);

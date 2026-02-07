@@ -76,8 +76,14 @@ api.hyfern.us {
     }
 }
 
-# Grafana dashboards
+# Grafana dashboards (auth via frontend JWT)
 grafana.hyfern.us {
+    # Verify JWT session via frontend auth endpoint
+    forward_auth hyfern-frontend:3000 {
+        uri /api/auth/verify
+        copy_headers X-Auth-User X-Auth-Role
+    }
+
     reverse_proxy grafana:3001
 
     encode gzip
