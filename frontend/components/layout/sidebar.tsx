@@ -5,7 +5,6 @@ import { usePathname } from "next/navigation";
 import { signOut } from "next-auth/react";
 import {
   Home,
-  Terminal,
   Package,
   Settings,
   Cpu,
@@ -18,6 +17,7 @@ import {
 } from "@/lib/icons";
 import { cn } from "@/lib/utils";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Logo } from "@/components/logo";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -73,10 +73,7 @@ export function Sidebar({ userRole = "ADMIN", username = "Admin" }: SidebarProps
       {/* Logo */}
       <div className="flex h-16 items-center border-b border-border px-6">
         <Link href="/dashboard" className="flex items-center space-x-2">
-          <div className="flex h-8 w-8 items-center justify-center rounded-md bg-primary text-primary-foreground">
-            <Terminal className="h-5 w-5" />
-          </div>
-          <span className="text-xl font-bold">HyFern</span>
+          <Logo size={28} showText={true} />
         </Link>
       </div>
 

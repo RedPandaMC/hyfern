@@ -3,12 +3,12 @@
 import { Suspense, useState } from 'react';
 import { signIn } from 'next-auth/react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import Image from 'next/image';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
+import { Logo } from '@/components/logo';
 import { ArrowLeft, Eye, EyeOff } from '@/lib/icons';
 import { toast } from 'sonner';
 
@@ -75,9 +75,9 @@ function LoginForm() {
 
           {/* Logo and title */}
           <div className="flex flex-col items-center gap-4">
-            <Image src="/logo.png" alt="HyFern" width={80} height={80} />
+            <Logo size={60} showText={true} />
             <div className="text-center">
-              <h1 className="text-3xl font-bold">Admin Login</h1>
+              <h1 className="text-3xl font-bitter font-bold">Admin Login</h1>
               <p className="text-muted-foreground">Sign in to access the dashboard</p>
             </div>
           </div>

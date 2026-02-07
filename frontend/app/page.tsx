@@ -1,12 +1,12 @@
 'use client';
 
 import { useState } from 'react';
-import Image from 'next/image';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Logo } from '@/components/logo';
 import { Lock, Copy, Check, Users, Activity, ExternalLink, Eye, EyeOff } from '@/lib/icons';
 import { toast } from 'sonner';
 
@@ -62,8 +62,7 @@ export default function HomePage() {
       <header className="relative z-10 border-b border-white/10 bg-black/20 backdrop-blur-md">
         <div className="container mx-auto flex h-16 items-center justify-between px-4">
           <div className="flex items-center gap-2">
-            <Image src="/logo.png" alt="HyFern" width={32} height={32} />
-            <span className="text-xl font-bold text-white">HyFern</span>
+            <Logo size={32} showText={true} />
           </div>
 
           <nav className="flex items-center gap-4">
@@ -92,21 +91,17 @@ export default function HomePage() {
       {/* Main content */}
       <main className="relative z-10 flex min-h-[calc(100vh-4rem)] items-center justify-center p-4">
         <div className="w-full max-w-md space-y-8">
-          {/* Logo */}
-          <div className="flex flex-col items-center gap-4">
-            <Image
-              src="/logo.png"
-              alt="HyFern Logo"
-              width={120}
-              height={120}
-              className="drop-shadow-2xl"
-            />
-            <div className="text-center">
-              <h1 className="text-4xl font-bold text-white drop-shadow-lg">Welcome to HyFern</h1>
-              <p className="mt-2 text-lg text-white/80 drop-shadow">
-                Welcome, adventurer!
-              </p>
+          {/* Logo and Welcome Section */}
+          <div className="flex flex-col items-center gap-8">
+            <div className="text-center space-y-6">
+              <div className="flex items-center justify-center gap-4">
+                <span className="text-4xl font-bitter font-bold text-white drop-shadow-lg">Welcome to</span>
+                <Logo size={64} showText={false} />
+              </div>
             </div>
+            <p className="text-lg text-white/80 drop-shadow text-center">
+              Welcome, adventurer!
+            </p>
           </div>
 
           {/* Password form or server info */}

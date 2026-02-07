@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Geist, JetBrains_Mono } from "next/font/google";
+import { Geist, JetBrains_Mono, Bitter } from "next/font/google";
 import "./globals.css";
 import { Toaster } from "@/components/ui/toaster";
 import { AnsiBackground } from "@/components/background/ansi-background";
@@ -12,6 +12,12 @@ const geistSans = Geist({
 const jetbrainsMono = JetBrains_Mono({
   variable: "--font-jetbrains-mono",
   subsets: ["latin"],
+});
+
+const bitter = Bitter({
+  variable: "--font-bitter",
+  subsets: ["latin"],
+  weight: ["700", "600"],
 });
 
 export const metadata: Metadata = {
@@ -27,7 +33,7 @@ export default function RootLayout({
   return (
     <html lang="en" className="dark">
       <body
-        className={`${geistSans.variable} ${jetbrainsMono.variable} antialiased`}
+        className={`${geistSans.variable} ${jetbrainsMono.variable} ${bitter.variable} antialiased`}
       >
         <AnsiBackground />
         {children}
