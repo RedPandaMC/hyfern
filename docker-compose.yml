@@ -83,9 +83,7 @@ services:
       - pelican-panel
 
   hyfern-frontend:
-    build:
-      context: ./frontend
-      dockerfile: Dockerfile
+    image: redpandamc/hyfern-frontend:latest
     container_name: hyfern-frontend
     restart: unless-stopped
     extra_hosts:
@@ -191,13 +189,8 @@ services:
     restart: unless-stopped
     environment:
       GF_SERVER_ROOT_URL: ${GRAFANA_ROOT_URL}
-      GF_SECURITY_ADMIN_USER: ${GRAFANA_ADMIN_USER}
+      GF_SECURITY_ADMIN_USER: admin
       GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD}
-      GF_AUTH_ANONYMOUS_ENABLED: true
-      GF_AUTH_ANONYMOUS_ORG_NAME: Main Org.
-      GF_AUTH_ANONYMOUS_ORG_ROLE: Viewer
-      GF_SECURITY_ALLOW_EMBEDDING: true
-      GF_SERVER_HTTP_PORT: 3001
     volumes:
       - ./observability/grafana/grafana.ini:/etc/grafana/grafana.ini:ro
       - ./observability/grafana/provisioning:/etc/grafana/provisioning:ro
