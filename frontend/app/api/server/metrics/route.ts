@@ -64,16 +64,16 @@ export async function GET(request: NextRequest) {
       configuredViewDistance,
       effectiveViewDistance,
     ] = await Promise.all([
-      queryInstant('jvm_memory_used_bytes{area="heap"}'),
-      queryInstant('jvm_memory_max_bytes{area="heap"}'),
-      queryInstant('rate(jvm_gc_pause_seconds_sum[1h]) / rate(jvm_gc_pause_seconds_count[1h]) * 1000'),
-      queryInstant('increase(jvm_gc_pause_seconds_count[1h])'),
-      queryInstant('minecraft_server_tps'),
-      queryInstant('avg_over_time(minecraft_server_tps[5m])'),
-      queryInstant('min_over_time(minecraft_server_tps[5m])'),
-      queryInstant('max_over_time(minecraft_server_tps[5m])'),
-      queryInstant('minecraft_server_view_distance_configured'),
-      queryInstant('minecraft_server_view_distance_effective'),
+      queryInstant('hytale_jvm_memory_heap_used'),
+      queryInstant('hytale_jvm_memory_heap_max'),
+      queryInstant('rate(hytale_jvm_gc_pause_seconds_sum[1h]) / rate(hytale_jvm_gc_pause_seconds_count[1h]) * 1000'),
+      queryInstant('increase(hytale_jvm_gc_pause_seconds_count[1h])'),
+      queryInstant('hytale_server_tps'),
+      queryInstant('avg_over_time(hytale_server_tps[5m])'),
+      queryInstant('min_over_time(hytale_server_tps[5m])'),
+      queryInstant('max_over_time(hytale_server_tps[5m])'),
+      queryInstant('hytale_server_view_distance_current'),
+      queryInstant('hytale_server_view_distance_max'),
     ]);
 
     // Parse metric values

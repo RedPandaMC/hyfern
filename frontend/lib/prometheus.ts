@@ -75,12 +75,12 @@ export class PrometheusClient {
     const jobFilter = `job="${this.config.job}"`;
 
     const [tpsResults, msptResults, heapUsedResults, heapMaxResults, chunksResults, entitiesResults] = await Promise.all([
-      this.query(`minecraft_tps{${jobFilter}}`),
-      this.query(`minecraft_mspt{${jobFilter}}`),
-      this.query(`jvm_memory_used_bytes{${jobFilter},area="heap"}`),
-      this.query(`jvm_memory_max_bytes{${jobFilter},area="heap"}`),
-      this.query(`minecraft_chunks_loaded{${jobFilter}}`),
-      this.query(`minecraft_entities{${jobFilter}}`),
+      this.query(`hytale_server_tps{${jobFilter}}`),
+      this.query(`hytale_server_tick_time_ms{${jobFilter}}`),
+      this.query(`hytale_jvm_memory_heap_used{${jobFilter}}`),
+      this.query(`hytale_jvm_memory_heap_max{${jobFilter}}`),
+      this.query(`hytale_server_chunks_active{${jobFilter}}`),
+      this.query(`hytale_server_entities_active{${jobFilter}}`),
     ]);
 
     return {
@@ -95,21 +95,64 @@ export class PrometheusClient {
   }
 
   async getTPS(): Promise<number | null> {
-    const results = await this.query(`minecraft_tps{job="${this.config.job}"}`);
+    const results = await this.query(`hytale_server_tps{job="${this.config.job}"}`);
     return this.extractValue(results);
   }
 
   async getHeapMemory(): Promise<{ used: number | null; max: number | null }> {
     const jobFilter = `job="${this.config.job}"`;
     const [usedResults, maxResults] = await Promise.all([
-      this.query(`jvm_memory_used_bytes{${jobFilter},area="heap"}`),
-      this.query(`jvm_memory_max_bytes{${jobFilter},area="heap"}`),
+      this.query(`hytale_jvm_memory_heap_used{${jobFilter}}`),
+      this.query(`hytale_jvm_memory_heap_max{${jobFilter}}`),
     ]);
 
     return {
       used: this.extractValue(usedResults),
       max: this.extractValue(maxResults),
     };
+  }
+
+  async getPlayersOnline(): Promise<number | null> {
+    const results = await this.query(`hytale_server_players_online{job="${this.config.job}"}`);
+    return this.extractValue(results);
+  }
+
+  async getUptime(): Promise<number | null> {
+    const results = await this.query(`time() - hytale_server_start_time_seconds{job="${this.config.job}"}`);
+    return this.extractValue(results);
+  }
+
+  async getCPUUsage(): Promise<number | null> {
+    const results = await this.query(`hytale_server_cpu_usage_percent{job="${this.config.job}"}`);
+    return this.extractValue(results);
+  }
+
+  async getTPSHistory(rangeSeconds: number, step: string = '15s'): Promise<any> {
+    const end = Math.floor(Date.now() / 1000);
+    const start = end - rangeSeconds;
+    return this.queryRange(`hytale_server_tps{job="${this.config.job}"}`, start, end, step);
+  }
+
+  async getMemoryHistory(rangeSeconds: number, step: string = '15s'): Promise<any> {
+    const end = Math.floor(Date.now() / 1000);
+    const start = end - rangeSeconds;
+    const [used, max] = await Promise.all([
+      this.queryRange(`hytale_jvm_memory_heap_used{job="${this.config.job}"}`, start, end, step),
+      this.queryRange(`hytale_jvm_memory_heap_max{job="${this.config.job}"}`, start, end, step),
+    ]);
+    return { used, max };
+  }
+
+  async getPlayerHistory(rangeSeconds: number, step: string = '60s'): Promise<any> {
+    const end = Math.floor(Date.now() / 1000);
+    const start = end - rangeSeconds;
+    return this.queryRange(`hytale_server_players_online{job="${this.config.job}"}`, start, end, step);
+  }
+
+  async getGCHistory(rangeSeconds: number, step: string = '60s'): Promise<any> {
+    const end = Math.floor(Date.now() / 1000);
+    const start = end - rangeSeconds;
+    return this.queryRange(`rate(hytale_jvm_gc_pause_seconds_sum{job="${this.config.job}"}[5m]) * 1000`, start, end, step);
   }
 
   async queryRange(promql: string, start: number, end: number, step: string = '15s'): Promise<any> {
