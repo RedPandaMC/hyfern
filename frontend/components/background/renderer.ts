@@ -1,16 +1,17 @@
 /**
  * Canvas-based text renderer for the ANSI terrain background.
- * Draws a grid of monospace characters, handles scrolling and double-buffering.
+ * Ring buffer scrolling, offscreen double-buffering, color-batched draw calls,
+ * and animation system for water shimmer + campfire flicker.
  */
 
 import { Tile, TerrainGenerator } from './terrain-generator';
 import { ColorPalette, getPalette } from './palettes';
 
 export interface RendererConfig {
-  cellSize: number;       // Size of each character cell in pixels
-  scrollSpeed: number;    // Pixels per frame to scroll
-  fontFamily: string;     // Monospace font to use
-  targetFPS: number;      // Target frame rate
+  cellSize: number;
+  scrollSpeed: number;
+  fontFamily: string;
+  targetFPS: number;
 }
 
 const DEFAULT_CONFIG: RendererConfig = {
@@ -20,30 +21,49 @@ const DEFAULT_CONFIG: RendererConfig = {
   targetFPS: 30,
 };
 
+// Animation character cycles
+const WATER_SHIMMER = ['~', '≈', '○', '≈'];
+const CAMPFIRE_FLICKER = ['☼', '♦', '☼', '*'];
+const CAMPFIRE_COLORS = ['warm_glow', 'fire_orange', 'warm_glow', 'fire_orange'];
+
+// Animation timing (in render frames)
+const WATER_INTERVAL = 10;    // ~3Hz at 30fps
+const CAMPFIRE_INTERVAL = 7;  // ~4Hz at 30fps
+
 export class TerrainRenderer {
   private canvas: HTMLCanvasElement;
   private ctx: CanvasRenderingContext2D;
+  private offscreen: HTMLCanvasElement;
+  private offCtx: CanvasRenderingContext2D;
   private config: RendererConfig;
   private generator: TerrainGenerator;
   private palette: ColorPalette;
 
-  // Grid state
+  // Ring buffer state
   private cols: number = 0;
   private rows: number = 0;
-  private buffer: Tile[][] = []; // buffer[col][row]
-  private worldX: number = 0;   // Current world X position (rightmost generated column)
+  private ringBuffer: Tile[][] = [];
+  private ringCapacity: number = 0;
+  private ringHead: number = 0;     // Index of the leftmost visible column
+  private worldX: number = 0;
 
   // Scroll state
-  private scrollOffset: number = 0; // Sub-pixel scroll offset
+  private scrollOffset: number = 0;
 
   // Animation
   private animationId: number = 0;
   private lastFrameTime: number = 0;
   private frameInterval: number;
+  private frameCounter: number = 0;
 
   // Time tracking
-  private currentHour: number = new Date().getHours();
   private lastTimeCheck: number = 0;
+
+  // Color batching
+  private drawBatch: Map<string, [string, number, number][]> = new Map();
+
+  // DPR
+  private dpr: number = 1;
 
   constructor(canvas: HTMLCanvasElement, config?: Partial<RendererConfig>) {
     this.canvas = canvas;
@@ -54,47 +74,73 @@ export class TerrainRenderer {
     this.config = { ...DEFAULT_CONFIG, ...config };
     this.frameInterval = 1000 / this.config.targetFPS;
     this.generator = new TerrainGenerator();
-    this.palette = getPalette(this.currentHour);
+    this.palette = getPalette(new Date().getHours());
+
+    // Create offscreen canvas for double-buffering
+    this.offscreen = document.createElement('canvas');
+    const offCtx = this.offscreen.getContext('2d');
+    if (!offCtx) throw new Error('Could not get offscreen 2D context');
+    this.offCtx = offCtx;
 
     this.resize();
   }
 
   /**
-   * Resize the canvas and regenerate the grid buffer.
+   * Resize canvas, offscreen canvas, and regenerate the ring buffer.
    */
   resize() {
-    const dpr = window.devicePixelRatio || 1;
+    this.dpr = window.devicePixelRatio || 1;
     const width = this.canvas.clientWidth;
     const height = this.canvas.clientHeight;
 
-    this.canvas.width = width * dpr;
-    this.canvas.height = height * dpr;
-    this.ctx.scale(dpr, dpr);
+    // Main canvas
+    this.canvas.width = width * this.dpr;
+    this.canvas.height = height * this.dpr;
 
-    this.cols = Math.ceil(width / this.config.cellSize) + 2; // +2 for scroll buffer
+    // Offscreen canvas matches physical pixels
+    this.offscreen.width = width * this.dpr;
+    this.offscreen.height = height * this.dpr;
+
+    this.cols = Math.ceil(width / this.config.cellSize) + 2;
     this.rows = Math.ceil(height / this.config.cellSize) + 1;
 
-    // Regenerate the buffer
-    this.buffer = [];
-    for (let c = 0; c < this.cols; c++) {
-      this.buffer.push(this.generator.generateColumn(this.worldX + c, this.rows));
+    // Initialize ring buffer
+    this.ringCapacity = this.cols + 4; // Extra slots for smooth scrolling
+    this.ringBuffer = new Array(this.ringCapacity);
+    this.ringHead = 0;
+
+    for (let c = 0; c < this.ringCapacity; c++) {
+      this.ringBuffer[c] = this.generator.generateColumn(this.worldX + c, this.rows);
     }
-    this.worldX += this.cols;
+    this.worldX += this.ringCapacity;
     this.scrollOffset = 0;
+
+    // Cache font settings on both contexts
+    this.setupContext(this.ctx);
+    this.setupContext(this.offCtx);
+  }
+
+  private setupContext(ctx: CanvasRenderingContext2D) {
+    ctx.scale(this.dpr, this.dpr);
+    const fontSize = this.config.cellSize * 0.85;
+    ctx.font = `${fontSize}px ${this.config.fontFamily}`;
+    ctx.textBaseline = 'middle';
+    ctx.textAlign = 'center';
   }
 
   /**
-   * Start the animation loop.
+   * Get a column from the ring buffer by logical index (0 = leftmost visible).
    */
+  private getColumn(logicalIndex: number): Tile[] {
+    return this.ringBuffer[(this.ringHead + logicalIndex) % this.ringCapacity];
+  }
+
   start() {
     this.lastFrameTime = performance.now();
     this.lastTimeCheck = Date.now();
     this.tick(this.lastFrameTime);
   }
 
-  /**
-   * Stop the animation loop.
-   */
   stop() {
     if (this.animationId) {
       cancelAnimationFrame(this.animationId);
@@ -105,7 +151,6 @@ export class TerrainRenderer {
   private tick = (now: number) => {
     this.animationId = requestAnimationFrame(this.tick);
 
-    // Throttle to target FPS
     const delta = now - this.lastFrameTime;
     if (delta < this.frameInterval) return;
     this.lastFrameTime = now - (delta % this.frameInterval);
@@ -118,6 +163,7 @@ export class TerrainRenderer {
       this.palette = getPalette(newHour);
     }
 
+    this.frameCounter++;
     this.update();
     this.draw();
   };
@@ -125,51 +171,90 @@ export class TerrainRenderer {
   private update() {
     this.scrollOffset += this.config.scrollSpeed;
 
-    // When we've scrolled a full cell width, shift the buffer
+    // When scrolled a full cell, advance the ring buffer
     while (this.scrollOffset >= this.config.cellSize) {
       this.scrollOffset -= this.config.cellSize;
-      // Remove the leftmost column
-      this.buffer.shift();
-      // Generate a new column on the right
-      this.buffer.push(this.generator.generateColumn(this.worldX, this.rows));
+
+      // Overwrite the slot the head is leaving behind with new terrain
+      const newSlot = this.ringHead;
+      this.ringBuffer[newSlot] = this.generator.generateColumn(this.worldX, this.rows);
       this.worldX++;
+
+      // Advance head (the old leftmost column scrolls off)
+      this.ringHead = (this.ringHead + 1) % this.ringCapacity;
     }
   }
 
   private draw() {
-    const { cellSize, fontFamily } = this.config;
+    const { cellSize } = this.config;
     const width = this.canvas.clientWidth;
     const height = this.canvas.clientHeight;
+    const ctx = this.offCtx;
+
+    // Reset the scale since we're drawing fresh
+    ctx.setTransform(this.dpr, 0, 0, this.dpr, 0, 0);
 
     // Clear with background color
-    this.ctx.fillStyle = this.palette.bg;
-    this.ctx.fillRect(0, 0, width, height);
+    ctx.fillStyle = this.palette.bg;
+    ctx.fillRect(0, 0, width, height);
 
-    // Set font
-    this.ctx.font = `${cellSize * 0.85}px ${fontFamily}`;
-    this.ctx.textBaseline = 'middle';
-    this.ctx.textAlign = 'center';
+    // Re-apply font (setTransform resets state)
+    const fontSize = cellSize * 0.85;
+    ctx.font = `${fontSize}px ${this.config.fontFamily}`;
+    ctx.textBaseline = 'middle';
+    ctx.textAlign = 'center';
 
-    // Draw each cell
-    for (let c = 0; c < this.buffer.length; c++) {
-      const column = this.buffer[c];
+    // Collect all draws into color-batched map
+    this.drawBatch.clear();
+
+    for (let c = 0; c < this.cols; c++) {
+      const column = this.getColumn(c);
       const x = c * cellSize - this.scrollOffset + cellSize / 2;
 
-      // Skip columns that are fully off-screen
       if (x + cellSize < 0 || x - cellSize > width) continue;
 
       for (let r = 0; r < column.length; r++) {
         const tile = column[r];
         const y = r * cellSize + cellSize / 2;
-
         if (y - cellSize > height) break;
 
-        // Resolve color from palette
-        const color = this.resolveColor(tile.fg);
-        this.ctx.fillStyle = color;
-        this.ctx.fillText(tile.char, x, y);
+        let char = tile.char;
+        let fgKey = tile.fg;
+
+        // Animation overrides
+        if (tile.anim === 'water') {
+          const phase = (tile.hash ?? 0) % WATER_SHIMMER.length;
+          const idx = (phase + Math.floor(this.frameCounter / WATER_INTERVAL)) % WATER_SHIMMER.length;
+          char = WATER_SHIMMER[idx];
+        } else if (tile.anim === 'campfire') {
+          const phase = (tile.hash ?? 0) % CAMPFIRE_FLICKER.length;
+          const idx = (phase + Math.floor(this.frameCounter / CAMPFIRE_INTERVAL)) % CAMPFIRE_FLICKER.length;
+          char = CAMPFIRE_FLICKER[idx];
+          fgKey = CAMPFIRE_COLORS[idx];
+        }
+
+        const color = this.resolveColor(fgKey);
+
+        let batch = this.drawBatch.get(color);
+        if (!batch) {
+          batch = [];
+          this.drawBatch.set(color, batch);
+        }
+        batch.push([char, x, y]);
       }
     }
+
+    // Execute batched draws: one fillStyle change per unique color
+    for (const [color, draws] of this.drawBatch) {
+      ctx.fillStyle = color;
+      for (const [char, x, y] of draws) {
+        ctx.fillText(char, x, y);
+      }
+    }
+
+    // Blit offscreen to main canvas
+    this.ctx.setTransform(1, 0, 0, 1, 0, 0);
+    this.ctx.drawImage(this.offscreen, 0, 0);
   }
 
   private resolveColor(key: string): string {

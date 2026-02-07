@@ -1,6 +1,7 @@
 /**
  * Day/night color palettes for the ANSI terrain background.
  * Each palette maps semantic color keys to hex values.
+ * Pre-computed RGB arrays for fast interpolation during dawn/dusk transitions.
  */
 
 export interface ColorPalette {
@@ -25,6 +26,15 @@ export interface ColorPalette {
   flower_yellow: string;
   flower_purple: string;
   flower_white: string;
+  river_blue: string;
+  river_dark: string;
+  river_shore: string;
+  warm_glow: string;
+  fire_orange: string;
+  building_wall: string;
+  building_roof: string;
+  road: string;
+  bridge: string;
 }
 
 const DAY_PALETTE: ColorPalette = {
@@ -49,6 +59,15 @@ const DAY_PALETTE: ColorPalette = {
   flower_yellow: '#e0d050',
   flower_purple: '#b070d0',
   flower_white: '#e8e8d8',
+  river_blue: '#3a8aee',
+  river_dark: '#2060b0',
+  river_shore: '#6aaa6a',
+  warm_glow: '#ff9933',
+  fire_orange: '#ff5500',
+  building_wall: '#7a6a50',
+  building_roof: '#5a4a3a',
+  road: '#b0a080',
+  bridge: '#9a8a60',
 };
 
 const NIGHT_PALETTE: ColorPalette = {
@@ -73,6 +92,15 @@ const NIGHT_PALETTE: ColorPalette = {
   flower_yellow: '#6e6020',
   flower_purple: '#4a2a5e',
   flower_white: '#6a6a60',
+  river_blue: '#0e2a5e',
+  river_dark: '#081a3e',
+  river_shore: '#0e3a1e',
+  warm_glow: '#cc6600',
+  fire_orange: '#aa3300',
+  building_wall: '#3a3028',
+  building_roof: '#2a2018',
+  road: '#4a4838',
+  bridge: '#3a3828',
 };
 
 const DAWN_PALETTE: ColorPalette = {
@@ -97,7 +125,54 @@ const DAWN_PALETTE: ColorPalette = {
   flower_yellow: '#a09838',
   flower_purple: '#7a4a8a',
   flower_white: '#a0a090',
+  river_blue: '#2a5aaa',
+  river_dark: '#183a7a',
+  river_shore: '#3a6a3a',
+  warm_glow: '#ee8822',
+  fire_orange: '#cc4400',
+  building_wall: '#5a4a3a',
+  building_roof: '#4a3a2a',
+  road: '#7a6a5a',
+  bridge: '#6a5a4a',
 };
+
+// --- Pre-computed RGB arrays for fast interpolation ---
+
+type RGBTuple = [number, number, number];
+type RGBPalette = Record<string, RGBTuple>;
+
+function hexToRGB(hex: string): RGBTuple {
+  return [
+    parseInt(hex.slice(1, 3), 16),
+    parseInt(hex.slice(3, 5), 16),
+    parseInt(hex.slice(5, 7), 16),
+  ];
+}
+
+function paletteToRGB(palette: ColorPalette): RGBPalette {
+  const result: RGBPalette = {};
+  for (const key of Object.keys(palette)) {
+    result[key] = hexToRGB((palette as unknown as Record<string, string>)[key]);
+  }
+  return result;
+}
+
+const DAY_RGB = paletteToRGB(DAY_PALETTE);
+const NIGHT_RGB = paletteToRGB(NIGHT_PALETTE);
+const DAWN_RGB = paletteToRGB(DAWN_PALETTE);
+
+function lerpPaletteRGB(a: RGBPalette, b: RGBPalette, t: number): ColorPalette {
+  const result: Record<string, string> = {};
+  for (const key of Object.keys(a)) {
+    const [r1, g1, b1] = a[key];
+    const [r2, g2, b2] = b[key];
+    const r = Math.round(r1 + (r2 - r1) * t);
+    const g = Math.round(g1 + (g2 - g1) * t);
+    const bl = Math.round(b1 + (b2 - b1) * t);
+    result[key] = `#${r.toString(16).padStart(2, '0')}${g.toString(16).padStart(2, '0')}${bl.toString(16).padStart(2, '0')}`;
+  }
+  return result as unknown as ColorPalette;
+}
 
 /**
  * Get the interpolated color palette based on the current hour.
@@ -108,8 +183,8 @@ export function getPalette(hour: number): ColorPalette {
   if (hour >= 5 && hour < 7) {
     const t = (hour - 5) / 2;
     return t < 0.5
-      ? lerpPalette(NIGHT_PALETTE, DAWN_PALETTE, t * 2)
-      : lerpPalette(DAWN_PALETTE, DAY_PALETTE, (t - 0.5) * 2);
+      ? lerpPaletteRGB(NIGHT_RGB, DAWN_RGB, t * 2)
+      : lerpPaletteRGB(DAWN_RGB, DAY_RGB, (t - 0.5) * 2);
   }
   // Day: 7-17
   if (hour >= 7 && hour < 17) {
@@ -119,30 +194,9 @@ export function getPalette(hour: number): ColorPalette {
   if (hour >= 17 && hour < 19) {
     const t = (hour - 17) / 2;
     return t < 0.5
-      ? lerpPalette(DAY_PALETTE, DAWN_PALETTE, t * 2)
-      : lerpPalette(DAWN_PALETTE, NIGHT_PALETTE, (t - 0.5) * 2);
+      ? lerpPaletteRGB(DAY_RGB, DAWN_RGB, t * 2)
+      : lerpPaletteRGB(DAWN_RGB, NIGHT_RGB, (t - 0.5) * 2);
   }
   // Night: 19-5
   return NIGHT_PALETTE;
-}
-
-function lerpPalette(a: ColorPalette, b: ColorPalette, t: number): ColorPalette {
-  const result: Record<string, string> = {};
-  for (const key of Object.keys(a) as (keyof ColorPalette)[]) {
-    result[key] = lerpColor(a[key], b[key], t);
-  }
-  return result as unknown as ColorPalette;
-}
-
-function lerpColor(hex1: string, hex2: string, t: number): string {
-  const r1 = parseInt(hex1.slice(1, 3), 16);
-  const g1 = parseInt(hex1.slice(3, 5), 16);
-  const b1 = parseInt(hex1.slice(5, 7), 16);
-  const r2 = parseInt(hex2.slice(1, 3), 16);
-  const g2 = parseInt(hex2.slice(3, 5), 16);
-  const b2 = parseInt(hex2.slice(5, 7), 16);
-  const r = Math.round(r1 + (r2 - r1) * t);
-  const g = Math.round(g1 + (g2 - g1) * t);
-  const b = Math.round(b1 + (b2 - b1) * t);
-  return `#${r.toString(16).padStart(2, '0')}${g.toString(16).padStart(2, '0')}${b.toString(16).padStart(2, '0')}`;
 }
