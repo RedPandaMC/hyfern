@@ -1,200 +1,248 @@
 'use client';
 
-import { BarChart, Zap, Users, TrendingUp, ExternalLink } from 'lucide-react';
-import { Card } from '@/components/ui/card';
+import { useState } from 'react';
+import useSWR from 'swr';
+import { BarChart, Zap, Users, TrendingUp, Activity, Gauge, MemoryStick, Server } from '@/lib/icons';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Button } from '@/components/ui/button';
+import { TimeRangeSelector } from '@/components/analytics/time-range-selector';
+import { MetricStatCard } from '@/components/analytics/metric-stat-card';
+import { TPSChart } from '@/components/analytics/tps-chart';
+import { MemoryChart } from '@/components/analytics/memory-chart';
+import { PlayerChart } from '@/components/analytics/player-chart';
+
+const fetcher = (url: string) => fetch(url).then(r => r.json());
+
+function formatUptime(seconds: number | null): string {
+  if (!seconds) return 'N/A';
+  const days = Math.floor(seconds / 86400);
+  const hours = Math.floor((seconds % 86400) / 3600);
+  const mins = Math.floor((seconds % 3600) / 60);
+  if (days > 0) return `${days}d ${hours}h`;
+  if (hours > 0) return `${hours}h ${mins}m`;
+  return `${mins}m`;
+}
 
 export function AnalyticsContent() {
+  const [range, setRange] = useState('1h');
   const grafanaUrl = process.env.NEXT_PUBLIC_GRAFANA_URL || 'http://localhost:3001';
 
-  // Grafana dashboard UIDs (these should match your provisioned dashboards)
+  // Corrected dashboard UIDs to match provisioned JSON files
   const dashboards = {
-    overview: 'server-overview',
-    performance: 'performance-deep-dive',
-    players: 'player-analytics',
-    alerts: 'alerts',
+    overview: 'hytale-server-overview',
+    performance: 'hytale-performance-deep-dive',
+    players: 'hytale-player-analytics',
+    alerts: 'hytale-server-alerts',
   };
+
+  const { data: overviewData } = useSWR('/api/metrics?type=overview', fetcher, {
+    refreshInterval: 15000,
+  });
+  const overview = overviewData?.data;
 
   return (
     <div className="space-y-6">
       <Tabs defaultValue="overview" className="space-y-6">
-        <TabsList className="bg-[#1a1f35] border border-gray-800">
-          <TabsTrigger value="overview">
-            <BarChart className="w-4 h-4 mr-2" />
-            Overview
-          </TabsTrigger>
-          <TabsTrigger value="performance">
-            <Zap className="w-4 h-4 mr-2" />
-            Performance
-          </TabsTrigger>
-          <TabsTrigger value="players">
-            <Users className="w-4 h-4 mr-2" />
-            Players
-          </TabsTrigger>
-          <TabsTrigger value="alerts">
-            <TrendingUp className="w-4 h-4 mr-2" />
-            Alerts
-          </TabsTrigger>
-        </TabsList>
+        <div className="flex items-center justify-between">
+          <TabsList>
+            <TabsTrigger value="overview">
+              <BarChart className="w-4 h-4 mr-2" />
+              Overview
+            </TabsTrigger>
+            <TabsTrigger value="performance">
+              <Zap className="w-4 h-4 mr-2" />
+              Performance
+            </TabsTrigger>
+            <TabsTrigger value="players">
+              <Users className="w-4 h-4 mr-2" />
+              Players
+            </TabsTrigger>
+            <TabsTrigger value="alerts">
+              <TrendingUp className="w-4 h-4 mr-2" />
+              Alerts
+            </TabsTrigger>
+          </TabsList>
+          <TimeRangeSelector value={range} onChange={setRange} />
+        </div>
 
-        <TabsContent value="overview" className="space-y-4">
-          <div className="flex items-center justify-between">
-            <h3 className="text-lg font-semibold text-white">Server Overview</h3>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() =>
-                window.open(
-                  `${grafanaUrl}/d/${dashboards.overview}`,
-                  '_blank'
-                )
-              }
-              className="border-gray-700"
-            >
-              <ExternalLink className="w-4 h-4 mr-2" />
-              Open in Grafana
-            </Button>
-          </div>
-          <Card className="overflow-hidden bg-[#0C1222] border-gray-800">
-            <iframe
-              src={`${grafanaUrl}/d-solo/${dashboards.overview}?orgId=1&theme=dark&panelId=1`}
-              width="100%"
-              height="600"
-              frameBorder="0"
-              className="w-full"
+        {/* Overview Tab */}
+        <TabsContent value="overview" className="space-y-6">
+          {/* Stat cards */}
+          <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
+            <MetricStatCard
+              title="Server TPS"
+              value={overview?.tps != null ? overview.tps.toFixed(1) : 'N/A'}
+              subtitle="Ticks per second"
+              icon={Gauge}
+              color={overview?.tps >= 18 ? 'text-green-500' : overview?.tps >= 15 ? 'text-yellow-500' : 'text-red-500'}
             />
-          </Card>
+            <MetricStatCard
+              title="Players Online"
+              value={overview?.players ?? 'N/A'}
+              icon={Users}
+              color="text-blue-500"
+            />
+            <MetricStatCard
+              title="Active Chunks"
+              value={overview?.chunks ?? 'N/A'}
+              icon={Server}
+              color="text-purple-500"
+            />
+            <MetricStatCard
+              title="Uptime"
+              value={formatUptime(overview?.uptime)}
+              icon={Activity}
+              color="text-primary"
+            />
+          </div>
+
+          {/* Charts */}
+          <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+            <TPSChart range={range} />
+            <PlayerChart range={range} />
+          </div>
         </TabsContent>
 
-        <TabsContent value="performance" className="space-y-4">
-          <div className="flex items-center justify-between">
-            <h3 className="text-lg font-semibold text-white">
-              Performance Deep Dive
-            </h3>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() =>
-                window.open(
-                  `${grafanaUrl}/d/${dashboards.performance}`,
-                  '_blank'
-                )
-              }
-              className="border-gray-700"
-            >
-              <ExternalLink className="w-4 h-4 mr-2" />
-              Open in Grafana
-            </Button>
+        {/* Performance Tab */}
+        <TabsContent value="performance" className="space-y-6">
+          <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
+            <MetricStatCard
+              title="Current TPS"
+              value={overview?.tps != null ? overview.tps.toFixed(1) : 'N/A'}
+              icon={Gauge}
+              color={overview?.tps >= 18 ? 'text-green-500' : 'text-yellow-500'}
+            />
+            <MetricStatCard
+              title="MSPT"
+              value={overview?.mspt != null ? `${overview.mspt.toFixed(1)}ms` : 'N/A'}
+              subtitle="Milliseconds per tick"
+              icon={Zap}
+              color={overview?.mspt <= 50 ? 'text-green-500' : 'text-red-500'}
+            />
+            <MetricStatCard
+              title="Heap Used"
+              value={overview?.heapUsed != null ? `${Math.round(overview.heapUsed / (1024 * 1024))} MB` : 'N/A'}
+              subtitle={overview?.heapMax ? `/ ${Math.round(overview.heapMax / (1024 * 1024))} MB` : ''}
+              icon={MemoryStick}
+              color="text-blue-500"
+            />
+            <MetricStatCard
+              title="CPU Usage"
+              value={overview?.cpu != null ? `${overview.cpu.toFixed(1)}%` : 'N/A'}
+              icon={Activity}
+              color={overview?.cpu <= 70 ? 'text-green-500' : 'text-red-500'}
+            />
           </div>
-          <div className="grid grid-cols-1 gap-4">
-            <Card className="overflow-hidden bg-[#0C1222] border-gray-800">
-              <div className="p-4 border-b border-gray-800">
-                <h4 className="font-semibold text-white">TPS Timeline</h4>
-              </div>
-              <iframe
-                src={`${grafanaUrl}/d-solo/${dashboards.performance}?orgId=1&theme=dark&panelId=2`}
-                width="100%"
-                height="400"
-                frameBorder="0"
-              />
-            </Card>
 
-            <Card className="overflow-hidden bg-[#0C1222] border-gray-800">
-              <div className="p-4 border-b border-gray-800">
-                <h4 className="font-semibold text-white">Heap Memory Usage</h4>
-              </div>
-              <iframe
-                src={`${grafanaUrl}/d-solo/${dashboards.performance}?orgId=1&theme=dark&panelId=3`}
-                width="100%"
-                height="400"
-                frameBorder="0"
-              />
-            </Card>
+          <TPSChart range={range} />
+          <MemoryChart range={range} />
 
-            <Card className="overflow-hidden bg-[#0C1222] border-gray-800">
-              <div className="p-4 border-b border-gray-800">
-                <h4 className="font-semibold text-white">GC Performance</h4>
-              </div>
+          {/* Grafana GC panel as iframe (complex visualization) */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base">GC Pause Times (Grafana)</CardTitle>
+            </CardHeader>
+            <CardContent className="p-0">
               <iframe
                 src={`${grafanaUrl}/d-solo/${dashboards.performance}?orgId=1&theme=dark&panelId=4`}
                 width="100%"
-                height="400"
+                height="350"
                 frameBorder="0"
+                className="rounded-b-lg"
               />
-            </Card>
-          </div>
+            </CardContent>
+          </Card>
         </TabsContent>
 
-        <TabsContent value="players" className="space-y-4">
-          <div className="flex items-center justify-between">
-            <h3 className="text-lg font-semibold text-white">Player Analytics</h3>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() =>
-                window.open(
-                  `${grafanaUrl}/d/${dashboards.players}`,
-                  '_blank'
-                )
-              }
-              className="border-gray-700"
-            >
-              <ExternalLink className="w-4 h-4 mr-2" />
-              Open in Grafana
-            </Button>
+        {/* Players Tab */}
+        <TabsContent value="players" className="space-y-6">
+          <div className="grid grid-cols-2 gap-4 md:grid-cols-3">
+            <MetricStatCard
+              title="Players Online"
+              value={overview?.players ?? 'N/A'}
+              icon={Users}
+              color="text-green-500"
+            />
+            <MetricStatCard
+              title="Active Entities"
+              value={overview?.entities ?? 'N/A'}
+              icon={Activity}
+              color="text-purple-500"
+            />
+            <MetricStatCard
+              title="Active Chunks"
+              value={overview?.chunks ?? 'N/A'}
+              icon={Server}
+              color="text-blue-500"
+            />
           </div>
-          <div className="grid grid-cols-1 gap-4">
-            <Card className="overflow-hidden bg-[#0C1222] border-gray-800">
-              <div className="p-4 border-b border-gray-800">
-                <h4 className="font-semibold text-white">Players Online</h4>
-              </div>
-              <iframe
-                src={`${grafanaUrl}/d-solo/${dashboards.players}?orgId=1&theme=dark&panelId=1`}
-                width="100%"
-                height="400"
-                frameBorder="0"
-              />
-            </Card>
 
-            <Card className="overflow-hidden bg-[#0C1222] border-gray-800">
-              <div className="p-4 border-b border-gray-800">
-                <h4 className="font-semibold text-white">Peak Hours Heatmap</h4>
-              </div>
+          <PlayerChart range={range} />
+
+          {/* Grafana peak hours heatmap (complex visualization) */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base">Peak Hours Heatmap (Grafana)</CardTitle>
+            </CardHeader>
+            <CardContent className="p-0">
               <iframe
                 src={`${grafanaUrl}/d-solo/${dashboards.players}?orgId=1&theme=dark&panelId=2`}
                 width="100%"
-                height="400"
+                height="350"
                 frameBorder="0"
+                className="rounded-b-lg"
               />
-            </Card>
-          </div>
+            </CardContent>
+          </Card>
         </TabsContent>
 
-        <TabsContent value="alerts" className="space-y-4">
-          <div className="flex items-center justify-between">
-            <h3 className="text-lg font-semibold text-white">Alerts & Monitoring</h3>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() =>
-                window.open(`${grafanaUrl}/d/${dashboards.alerts}`, '_blank')
-              }
-              className="border-gray-700"
-            >
-              <ExternalLink className="w-4 h-4 mr-2" />
-              Open in Grafana
-            </Button>
-          </div>
-          <Card className="overflow-hidden bg-[#0C1222] border-gray-800">
-            <iframe
-              src={`${grafanaUrl}/d-solo/${dashboards.alerts}?orgId=1&theme=dark&panelId=1`}
-              width="100%"
-              height="600"
-              frameBorder="0"
-              className="w-full"
-            />
+        {/* Alerts Tab */}
+        <TabsContent value="alerts" className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base">Alert Timeline</CardTitle>
+            </CardHeader>
+            <CardContent className="p-0">
+              <iframe
+                src={`${grafanaUrl}/d-solo/${dashboards.alerts}?orgId=1&theme=dark&panelId=4`}
+                width="100%"
+                height="400"
+                frameBorder="0"
+                className="rounded-b-lg"
+              />
+            </CardContent>
           </Card>
+
+          <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-base">TPS Alerts</CardTitle>
+              </CardHeader>
+              <CardContent className="p-0">
+                <iframe
+                  src={`${grafanaUrl}/d-solo/${dashboards.alerts}?orgId=1&theme=dark&panelId=1`}
+                  width="100%"
+                  height="300"
+                  frameBorder="0"
+                  className="rounded-b-lg"
+                />
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-base">Memory Alerts</CardTitle>
+              </CardHeader>
+              <CardContent className="p-0">
+                <iframe
+                  src={`${grafanaUrl}/d-solo/${dashboards.alerts}?orgId=1&theme=dark&panelId=2`}
+                  width="100%"
+                  height="300"
+                  frameBorder="0"
+                  className="rounded-b-lg"
+                />
+              </CardContent>
+            </Card>
+          </div>
         </TabsContent>
       </Tabs>
     </div>
