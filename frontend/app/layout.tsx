@@ -1,8 +1,7 @@
 import type { Metadata } from "next";
-import { Geist, JetBrains_Mono, Bitter } from "next/font/google";
+import { Geist, JetBrains_Mono, Bitter, Noto_Sans_Symbols_2 } from "next/font/google";
 import "./globals.css";
 import { Toaster } from "@/components/ui/toaster";
-import { AnsiBackground } from "@/components/background/ansi-background";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -20,6 +19,13 @@ const bitter = Bitter({
   weight: ["700", "600"],
 });
 
+const notoSymbols2 = Noto_Sans_Symbols_2({
+  variable: "--font-noto-symbols-2",
+  subsets: ["latin"],
+  display: "swap",
+  weight: "400",
+});
+
 export const metadata: Metadata = {
   title: "HyFern - Minecraft Server Management",
   description: "Modern Minecraft server management panel with real-time monitoring, console access, and advanced configuration tools.",
@@ -33,9 +39,8 @@ export default function RootLayout({
   return (
     <html lang="en" className="dark">
       <body
-        className={`${geistSans.variable} ${jetbrainsMono.variable} ${bitter.variable} antialiased`}
+        className={`${geistSans.variable} ${jetbrainsMono.variable} ${bitter.variable} ${notoSymbols2.variable} antialiased`}
       >
-        <AnsiBackground />
         {children}
         <Toaster />
       </body>

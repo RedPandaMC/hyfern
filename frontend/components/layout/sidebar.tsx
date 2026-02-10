@@ -14,6 +14,7 @@ import {
   Database,
   Users,
   LogOut,
+  Terminal,
 } from "@/lib/icons";
 import { cn } from "@/lib/utils";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
