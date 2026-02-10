@@ -30,6 +30,8 @@ function getClientIp(request: Request): string {
 }
 
 export const authConfig: NextAuthConfig = {
+  trustHost: true,  // Trust X-Forwarded-* headers from Caddy reverse proxy
+  basePath: '/api/auth',  // Explicit base path for auth routes
   providers: [
     Credentials({
       name: 'Credentials',

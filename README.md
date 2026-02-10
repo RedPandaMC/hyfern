@@ -64,6 +64,27 @@ docker compose up -d
 
 Visit `https://panel.hyfern.us` and complete the initial setup. Generate API keys for Wings and the frontend (add them to your `.env` and restart).
 
+### 6. Create Initial Admin User
+
+The frontend dashboard requires an admin account. Set these environment variables in your `.env` file:
+
+```env
+# Initial admin credentials (used on first database setup)
+INIT_ADMIN_USERNAME=admin
+INIT_ADMIN_PASSWORD=your-secure-password-here
+```
+
+**Important:**
+- These credentials are only used to create the initial admin account on first run
+- Change the password immediately after first login at `https://hyfern.us/login`
+- You can enable 2FA (TOTP) from the settings page for additional security
+
+If you need to reset the admin password later, update these ENV vars and run:
+```bash
+docker compose run --rm hyfern-frontend npm run reset-admin
+docker compose restart hyfern-frontend
+```
+
 ## Updating the Hytale Server
 
 ```bash

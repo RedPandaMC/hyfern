@@ -94,9 +94,9 @@ export default function HomePage() {
           {/* Logo and Welcome Section */}
           <div className="flex flex-col items-center gap-8">
             <div className="text-center space-y-6">
-              <div className="flex items-center justify-center gap-4">
+              <div className="flex items-center justify-center gap-2">
                 <span className="text-4xl font-bitter font-bold text-white drop-shadow-lg">Welcome to</span>
-                <Logo size={64} showText={false} />
+                <Logo size={48} showText={true} />
               </div>
             </div>
             <p className="text-lg text-white/80 drop-shadow text-center">

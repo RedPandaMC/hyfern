@@ -10,7 +10,7 @@ interface DashboardShellProps {
 export async function DashboardShell({ children, pageTitle }: DashboardShellProps) {
   return (
     <ConstellationBackground>
-      <div className="flex h-screen overflow-hidden bg-background/90 backdrop-blur-sm">
+      <div className="flex h-screen overflow-hidden bg-background/50 backdrop-blur-sm">
         {/* Sidebar */}
         <SidebarWrapper />
 

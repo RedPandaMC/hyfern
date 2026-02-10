@@ -18,6 +18,7 @@ function LoginForm() {
   const [totpCode, setTotpCode] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [requires2FA, setRequires2FA] = useState(false);
   const router = useRouter();
   const searchParams = useSearchParams();
   const redirectUrl = searchParams.get('redirect');
@@ -30,11 +31,18 @@ function LoginForm() {
       const result = await signIn('credentials', {
         username,
         password,
-        totpCode: totpCode || undefined,
+        totpToken: requires2FA ? totpCode : undefined,
         redirect: false,
       });
 
       if (result?.error) {
+        // Check if 2FA is required
+        if (result.error.includes('2FA token required')) {
+          setRequires2FA(true);
+          toast.error('Please enter your 2FA code');
+          setIsLoading(false);
+          return;
+        }
         toast.error(result.error);
         setIsLoading(false);
         return;
@@ -131,21 +139,24 @@ function LoginForm() {
                   </div>
                 </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="totpCode">2FA Code (if enabled)</Label>
-                  <Input
-                    id="totpCode"
-                    type="text"
-                    placeholder="000000"
-                    value={totpCode}
-                    onChange={(e) => setTotpCode(e.target.value)}
-                    disabled={isLoading}
-                    maxLength={6}
-                  />
-                  <p className="text-xs text-muted-foreground">
-                    Leave blank if 2FA is not enabled
-                  </p>
-                </div>
+                {requires2FA && (
+                  <div className="space-y-2">
+                    <Label htmlFor="totpCode">2FA Code</Label>
+                    <Input
+                      id="totpCode"
+                      type="text"
+                      placeholder="000000"
+                      value={totpCode}
+                      onChange={(e) => setTotpCode(e.target.value)}
+                      disabled={isLoading}
+                      maxLength={6}
+                      autoFocus
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      Enter the 6-digit code from your authenticator app
+                    </p>
+                  </div>
+                )}
 
                 <Button type="submit" className="w-full" disabled={isLoading}>
                   {isLoading ? 'Signing in...' : 'Sign In'}
