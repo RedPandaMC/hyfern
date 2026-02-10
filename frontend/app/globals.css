@@ -134,3 +134,31 @@
     @apply bg-background;
   }
 }
+
+/* Constellation Background Animations */
+@layer base {
+  @keyframes skyRotation {
+    from {
+      transform: rotate(0deg);
+    }
+    to {
+      transform: rotate(360deg);
+    }
+  }
+
+  .sky-rotation-container {
+    will-change: transform;
+  }
+
+  /* Disable rotation for accessibility */
+  @media (prefers-reduced-motion: reduce) {
+    .sky-rotation-container {
+      animation: none !important;
+    }
+  }
+
+  /* Pause animation when page is hidden to save battery */
+  body:not(.page-visible) .sky-rotation-container {
+    animation-play-state: paused !important;
+  }
+}
