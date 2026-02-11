@@ -71,13 +71,13 @@ export function useCanvasRenderer({
           const x2 = end.x + offsetX;
           const y2 = end.y + offsetY;
 
-          // Pride mode: Create STEPPED gradient
+          // Pride mode: Create horizontal STEPPED gradient (left to right)
           if (prideMode && assignedFlag) {
             const gradient = ctx.createLinearGradient(x1, y1, x2, y2);
-            const lineLength = Math.abs(y2 - y1);
+            const lineLength = Math.abs(x2 - x1); // Use horizontal distance
 
             if (lineLength < 1) {
-              const color = getPrideColor(y1, assignedFlag, height);
+              const color = getPrideColor(x1, assignedFlag, width);
               gradient.addColorStop(0, color || 'rgba(180, 200, 255, 0.4)');
               gradient.addColorStop(1, color || 'rgba(180, 200, 255, 0.4)');
             } else {
@@ -85,12 +85,12 @@ export function useCanvasRenderer({
 
               for (let i = 0; i <= steps; i++) {
                 const t = i / steps;
-                const sampleY = y1 + (y2 - y1) * t;
-                const color = getPrideColor(sampleY, assignedFlag, height);
+                const sampleX = x1 + (x2 - x1) * t; // Use X position
+                const color = getPrideColor(sampleX, assignedFlag, width);
 
                 if (i > 0) {
-                  const prevY = y1 + (y2 - y1) * ((i - 1) / steps);
-                  const prevColor = getPrideColor(prevY, assignedFlag, height);
+                  const prevX = x1 + (x2 - x1) * ((i - 1) / steps);
+                  const prevColor = getPrideColor(prevX, assignedFlag, width);
                   gradient.addColorStop(t - 0.001, prevColor || 'rgba(180, 200, 255, 0.4)');
                 }
                 gradient.addColorStop(t, color || 'rgba(180, 200, 255, 0.4)');
@@ -110,8 +110,8 @@ export function useCanvasRenderer({
             ctx.shadowBlur = i * 8;
 
             if (prideMode && assignedFlag) {
-              const midY = (y1 + y2) / 2;
-              ctx.shadowColor = getPrideColor(midY, assignedFlag, height) || 'rgba(200, 220, 255, 0.3)';
+              const midX = (x1 + x2) / 2;
+              ctx.shadowColor = getPrideColor(midX, assignedFlag, width) || 'rgba(200, 220, 255, 0.3)';
             } else {
               ctx.shadowColor = `rgba(200, 220, 255, ${depth * 0.3})`;
             }

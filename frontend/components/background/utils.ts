@@ -11,8 +11,8 @@ import { STAR_CHARS, FLAG_PALETTES } from './constants';
 export function generateConstellations(width: number, height: number): Constellation[] {
   const constellations: Constellation[] = [];
 
-  // Generate 12-15 constellations across layers
-  const constellationCount = 12 + Math.floor(Math.random() * 4);
+  // Generate 6-8 constellations across layers (reduced from 12-15)
+  const constellationCount = 6 + Math.floor(Math.random() * 3);
 
   for (let i = 0; i < constellationCount; i++) {
     // Determine layer (30% layer 1, 40% layer 2, 30% layer 3)
@@ -53,8 +53,8 @@ export function generateConstellations(width: number, height: number): Constella
     constellations.push({ layer, stars, connections });
   }
 
-  // Add scattered individual stars (no connections)
-  for (let i = 0; i < 40; i++) {
+  // Add scattered individual stars (no connections) - reduced from 40 to 20
+  for (let i = 0; i < 20; i++) {
     const layer = (Math.random() < 0.4 ? 1 : Math.random() < 0.7 ? 2 : 3) as 1 | 2 | 3;
     const starChars =
       layer === 1
@@ -189,17 +189,18 @@ function wouldCreateCycle(
 }
 
 /**
- * Get pride color for a star based on Y position and flag type
+ * Get pride color for a star based on X position and flag type
  * Uses STEPPED gradients (hard color transitions) for authentic flag appearance
+ * Horizontal gradient from left to right across the constellation
  */
 export function getPrideColor(
-  yPosition: number,
+  xPosition: number,
   flagType: PrideFlagType | null,
-  containerHeight: number = typeof window !== 'undefined' ? window.innerHeight : 1000
+  containerWidth: number = typeof window !== 'undefined' ? window.innerWidth : 1000
 ): string | null {
   if (!flagType) return null;
 
-  const percentage = yPosition / containerHeight;
+  const percentage = xPosition / containerWidth;
   const colors = FLAG_PALETTES[flagType] || FLAG_PALETTES.rainbow;
 
   // Find which color band we're in (no interpolation - stepped gradient)

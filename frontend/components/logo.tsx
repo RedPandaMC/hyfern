@@ -12,51 +12,26 @@ interface LogoProps {
  * The icon is masked out of the squircle, revealing the background behind it.
  */
 export function Logo({ size = 64, showText = false }: LogoProps) {
-  const iconSize = Math.round(size * 0.55);
-  const maskId = React.useId();
+  const iconSize = Math.round(size * 0.6);
 
   return (
     <div className="flex items-center gap-3">
       <div
         className="relative flex-shrink-0 drop-shadow-lg"
-        style={{ width: size, height: size }}
+        style={{
+          width: size,
+          height: size,
+          isolation: 'isolate', // Required for mix-blend-mode
+        }}
       >
+        {/* White squircle background */}
         <svg
           width={size}
           height={size}
           viewBox="0 0 100 100"
           xmlns="http://www.w3.org/2000/svg"
-          className="block"
+          className="absolute inset-0"
         >
-          <defs>
-            <mask id={`logo-mask-${maskId}`}>
-              {/* White = visible, black = cut out */}
-              <rect width="100" height="100" fill="white" />
-              <foreignObject x="0" y="0" width="100" height="100">
-                <div
-                  style={{
-                    width: '100%',
-                    height: '100%',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                  }}
-                >
-                  <span
-                    className="material-symbols-rounded"
-                    style={{
-                      fontSize: `${iconSize * (100 / size)}px`,
-                      color: 'black',
-                      fontVariationSettings: "'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 48",
-                    }}
-                  >
-                    potted_plant
-                  </span>
-                </div>
-              </foreignObject>
-            </mask>
-          </defs>
-          {/* Squircle path with icon cutout mask */}
           <path
             d="M 50 0
                C 78 0, 100 0, 100 22
@@ -68,9 +43,26 @@ export function Logo({ size = 64, showText = false }: LogoProps) {
                C 0 22, 0 0, 22 0
                C 22 0, 50 0, 50 0 Z"
             fill="white"
-            mask={`url(#logo-mask-${maskId})`}
           />
         </svg>
+
+        {/* Icon cutout using CSS mix-blend-mode */}
+        <div
+          className="absolute inset-0 flex items-center justify-center"
+          style={{ mixBlendMode: 'destination-out' as React.CSSProperties['mixBlendMode'] }}
+        >
+          <span
+            className="material-symbols-rounded"
+            style={{
+              fontSize: `${iconSize}px`,
+              color: 'white',
+              fontVariationSettings: "'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 48",
+              lineHeight: 1,
+            }}
+          >
+            potted_plant
+          </span>
+        </div>
       </div>
 
       {showText && (

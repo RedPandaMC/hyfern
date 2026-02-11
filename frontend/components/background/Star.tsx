@@ -13,13 +13,13 @@ interface StarProps {
   depth: number;
   prideMode: boolean;
   assignedFlag: PrideFlagType | null;
-  containerHeight: number;
+  containerWidth: number;
 }
 
 export const Star = React.memo(
-  function Star({ star, depth, prideMode, assignedFlag, containerHeight }: StarProps) {
+  function Star({ star, depth, prideMode, assignedFlag, containerWidth }: StarProps) {
     const prideColor =
-      prideMode && assignedFlag ? getPrideColor(star.y, assignedFlag, containerHeight) : null;
+      prideMode && assignedFlag ? getPrideColor(star.x, assignedFlag, containerWidth) : null;
 
     const baseColor = `rgba(220, 235, 255, ${0.3 + depth * 0.7})`;
     const glowColor = 'rgba(200, 220, 255, 0.6)';

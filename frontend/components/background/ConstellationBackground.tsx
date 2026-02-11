@@ -156,23 +156,22 @@ export function ConstellationBackground({ children }: ConstellationBackgroundPro
       }}
       onDoubleClick={handleDoubleClick}
     >
-      {/* Canvas for lines and glows */}
-      <canvas
-        ref={canvasRef}
-        className="absolute inset-0 pointer-events-none"
-        style={{ zIndex: 1 }}
-      />
-
-      {/* Sky rotation container - all star layers go inside this */}
+      {/* Sky rotation container - all star layers AND canvas go inside this */}
       <div
         className="sky-rotation-container absolute inset-0"
         style={{
-          transformOrigin: 'center center',
+          transformOrigin: '50% 100%', // Bottom center rotation point
           animation: config.enableRotation
             ? `skyRotation ${config.rotationDuration}s linear infinite`
             : 'none',
         }}
       >
+        {/* Canvas for lines and glows - now inside rotation container */}
+        <canvas
+          ref={canvasRef}
+          className="absolute inset-0 pointer-events-none"
+          style={{ zIndex: 1 }}
+        />
         {/* Render constellations with their assigned flags */}
         {constellations.map((constellation, index) => {
           const depth =
@@ -190,7 +189,7 @@ export function ConstellationBackground({ children }: ConstellationBackgroundPro
               depth={depth}
               prideMode={prideMode}
               assignedFlag={constellationFlags[index] || null}
-              containerHeight={containerSize.height}
+              containerWidth={containerSize.width}
             />
           );
         })}

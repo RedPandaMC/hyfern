@@ -14,7 +14,7 @@ interface StarLayerProps {
   depth: number;
   prideMode: boolean;
   assignedFlag: PrideFlagType | null;
-  containerHeight: number;
+  containerWidth: number;
 }
 
 export const StarLayer = React.memo(function StarLayer({
@@ -23,7 +23,7 @@ export const StarLayer = React.memo(function StarLayer({
   depth,
   prideMode,
   assignedFlag,
-  containerHeight,
+  containerWidth,
 }: StarLayerProps) {
   return (
     <div
@@ -40,7 +40,7 @@ export const StarLayer = React.memo(function StarLayer({
           depth={depth}
           prideMode={prideMode}
           assignedFlag={assignedFlag}
-          containerHeight={containerHeight}
+          containerWidth={containerWidth}
         />
       ))}
     </div>
