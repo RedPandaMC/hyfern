@@ -35,6 +35,9 @@ WORKDIR /app
 ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
 
+# Install runtime dependencies for init script
+RUN npm install -g tsx
+
 # Create non-root user
 RUN addgroup --system --gid 1001 nodejs
 RUN adduser --system --uid 1001 nextjs
@@ -48,6 +51,14 @@ COPY --from=builder /app/.next/static ./.next/static
 # Copy Prisma client (generated into app/generated/prisma/)
 COPY --from=builder /app/app/generated/prisma ./app/generated/prisma
 COPY --from=builder /app/prisma ./prisma
+
+# Copy admin initialization script
+COPY --from=builder /app/scripts ./scripts
+COPY --from=builder /app/lib ./lib
+
+# Copy entrypoint script
+COPY docker-entrypoint.sh /app/docker-entrypoint.sh
+RUN chmod +x /app/docker-entrypoint.sh
 
 # Set correct permissions
 RUN chown -R nextjs:nodejs /app
@@ -66,5 +77,5 @@ ENV HOSTNAME="0.0.0.0"
 HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
   CMD node -e "require('http').get('http://localhost:3000/api/health', (r) => {process.exit(r.statusCode === 200 ? 0 : 1)})"
 
-# Start the application
-CMD ["node", "server.js"]
+# Start the application via entrypoint script
+ENTRYPOINT ["/app/docker-entrypoint.sh"]
