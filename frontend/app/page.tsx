@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Logo } from '@/components/logo';
+import { ConstellationBackground } from '@/components/background';
 import { Lock, Copy, Check, Users, Activity, ExternalLink, Eye, EyeOff } from '@/lib/icons';
 import { toast } from 'sonner';
 
@@ -54,8 +55,9 @@ export default function HomePage() {
   };
 
   return (
+    <ConstellationBackground>
     <div className="relative min-h-screen w-full overflow-hidden">
-      {/* Overlay for text readability over ANSI background */}
+      {/* Overlay for text readability */}
       <div className="absolute inset-0 bg-black/30" />
 
       {/* Header */}
@@ -224,5 +226,6 @@ export default function HomePage() {
         </p>
       </footer>
     </div>
+    </ConstellationBackground>
   );
 }

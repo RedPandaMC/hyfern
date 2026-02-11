@@ -9,6 +9,7 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Logo } from '@/components/logo';
+import { ConstellationBackground } from '@/components/background';
 import { ArrowLeft, Eye, EyeOff } from '@/lib/icons';
 import { toast } from 'sonner';
 
@@ -70,7 +71,8 @@ function LoginForm() {
   };
 
   return (
-    <div className="relative min-h-screen w-full overflow-hidden bg-background/80 backdrop-blur-sm">
+    <ConstellationBackground>
+    <div className="relative min-h-screen w-full overflow-hidden bg-background/50 backdrop-blur-sm">
       <div className="container mx-auto flex min-h-screen items-center justify-center p-4">
         <div className="w-full max-w-md space-y-6">
           {/* Back button */}
@@ -174,6 +176,7 @@ function LoginForm() {
         </div>
       </div>
     </div>
+    </ConstellationBackground>
   );
 }
 
