@@ -14,17 +14,7 @@ export async function GET(request: NextRequest) {
     const session = await auth();
 
     if (!session?.user) {
-      // No valid session — redirect to login with return URL
-      const originalUrl = request.headers.get('x-forwarded-uri') || '/';
-      const originalHost = request.headers.get('x-forwarded-host') || 'hyfern.us';
-      const redirectUrl = `https://hyfern.us/login?redirect=https://${originalHost}${originalUrl}`;
-
-      return new NextResponse(null, {
-        status: 401,
-        headers: {
-          'Location': redirectUrl,
-        },
-      });
+      return new NextResponse(null, { status: 401 });
     }
 
     // Valid session — return auth headers for downstream services

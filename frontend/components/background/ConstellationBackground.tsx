@@ -53,10 +53,15 @@ export function ConstellationBackground({ children }: ConstellationBackgroundPro
     setConstellations(generateConstellations(width, height));
     setContainerSize({ width, height });
 
-    // Initialize canvas size
+    // Initialize canvas size with DPR scaling for crisp lines
     if (canvasRef.current) {
-      canvasRef.current.width = width;
-      canvasRef.current.height = height;
+      const dpr = window.devicePixelRatio || 1;
+      canvasRef.current.width = width * dpr;
+      canvasRef.current.height = height * dpr;
+      canvasRef.current.style.width = `${width}px`;
+      canvasRef.current.style.height = `${height}px`;
+      const ctx = canvasRef.current.getContext('2d', { alpha: true, desynchronized: true });
+      if (ctx) ctx.scale(dpr, dpr);
     }
 
     // Handle resize
@@ -67,8 +72,13 @@ export function ConstellationBackground({ children }: ConstellationBackgroundPro
       setContainerSize({ width: newWidth, height: newHeight });
 
       if (canvasRef.current) {
-        canvasRef.current.width = newWidth;
-        canvasRef.current.height = newHeight;
+        const dpr = window.devicePixelRatio || 1;
+        canvasRef.current.width = newWidth * dpr;
+        canvasRef.current.height = newHeight * dpr;
+        canvasRef.current.style.width = `${newWidth}px`;
+        canvasRef.current.style.height = `${newHeight}px`;
+        const ctx = canvasRef.current.getContext('2d', { alpha: true, desynchronized: true });
+        if (ctx) ctx.scale(dpr, dpr);
       }
     };
 

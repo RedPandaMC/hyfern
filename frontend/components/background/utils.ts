@@ -10,21 +10,33 @@ import { STAR_CHARS, FLAG_PALETTES } from './constants';
  */
 export function generateConstellations(width: number, height: number): Constellation[] {
   const constellations: Constellation[] = [];
+  const centers: { x: number; y: number }[] = [];
+  // Keep constellations well apart — at least 250px between centers
+  const minDistance = 250;
 
-  // Generate 6-8 constellations across layers (reduced from 12-15)
-  const constellationCount = 6 + Math.floor(Math.random() * 3);
+  // Generate 5-7 constellations across layers
+  const constellationCount = 5 + Math.floor(Math.random() * 3);
 
   for (let i = 0; i < constellationCount; i++) {
     // Determine layer (30% layer 1, 40% layer 2, 30% layer 3)
     const rand = Math.random();
     const layer = (rand < 0.3 ? 1 : rand < 0.7 ? 2 : 3) as 1 | 2 | 3;
 
-    // Each constellation has 3-8 stars
-    const starCount = 3 + Math.floor(Math.random() * 6);
+    // Each constellation has 3-6 stars (smaller groups look more natural)
+    const starCount = 3 + Math.floor(Math.random() * 4);
 
-    // Pick a random center point for this constellation
-    const centerX = width * (0.1 + Math.random() * 0.8);
-    const centerY = height * (0.1 + Math.random() * 0.8);
+    // Pick a center point with minimum distance from existing constellations
+    let centerX: number, centerY: number;
+    let attempts = 0;
+    do {
+      centerX = width * (0.05 + Math.random() * 0.9);
+      centerY = height * (0.05 + Math.random() * 0.9);
+      attempts++;
+    } while (
+      attempts < 50 &&
+      centers.some((c) => Math.hypot(c.x - centerX, c.y - centerY) < minDistance)
+    );
+    centers.push({ x: centerX, y: centerY });
 
     // Generate stars clustered around center
     const stars: Star[] = [];
@@ -36,8 +48,8 @@ export function generateConstellations(width: number, height: number): Constella
           : STAR_CHARS.LAYER_3;
 
     for (let j = 0; j < starCount; j++) {
-      // Spread stars within a radius (50-150px depending on layer)
-      const radius = (30 + Math.random() * 70) * layer;
+      // Compact spread: 15-45px, layer only adds a small multiplier
+      const radius = (15 + Math.random() * 30) * (1 + layer * 0.15);
       const angle = Math.random() * Math.PI * 2;
 
       stars.push({
@@ -47,15 +59,17 @@ export function generateConstellations(width: number, height: number): Constella
       });
     }
 
-    // Generate open, branching connections
-    const connections = generateOpenConnections(starCount);
+    // Generate connections using nearest-neighbor spanning tree (no crossing lines)
+    const connections = generateNearestNeighborConnections(stars);
 
     constellations.push({ layer, stars, connections });
   }
 
-  // Add scattered individual stars (no connections) - reduced from 40 to 20
-  for (let i = 0; i < 20; i++) {
-    const layer = (Math.random() < 0.4 ? 1 : Math.random() < 0.7 ? 2 : 3) as 1 | 2 | 3;
+  // Add scattered individual stars (no connections)
+  // Layer distribution: 35 dim (layer 1), 25 medium (layer 2), 10 bright (layer 3)
+  const scatterCounts: [1 | 2 | 3, number][] = [[1, 35], [2, 25], [3, 10]];
+
+  for (const [layer, count] of scatterCounts) {
     const starChars =
       layer === 1
         ? STAR_CHARS.LAYER_1
@@ -63,129 +77,63 @@ export function generateConstellations(width: number, height: number): Constella
           ? STAR_CHARS.LAYER_2
           : STAR_CHARS.LAYER_2.slice(0, 2);
 
-    constellations.push({
-      layer,
-      stars: [
-        {
-          char: starChars[Math.floor(Math.random() * starChars.length)],
-          x: Math.random() * width,
-          y: Math.random() * height,
-        },
-      ],
-      connections: [],
-    });
+    for (let i = 0; i < count; i++) {
+      constellations.push({
+        layer,
+        stars: [
+          {
+            char: starChars[Math.floor(Math.random() * starChars.length)],
+            x: Math.random() * width,
+            y: Math.random() * height,
+          },
+        ],
+        connections: [],
+      });
+    }
   }
 
   return constellations;
 }
 
 /**
- * Generate open constellation connections with branching
- * - No closed loops
- * - Some stars can be branch points (2-3 connections)
- * - Most stars have 1-2 connections
- * - Creates realistic constellation patterns
+ * Generate constellation connections using nearest-neighbor spanning tree.
+ * Connects each unconnected star to its closest connected neighbor,
+ * producing short edges that never cross each other.
  */
-function generateOpenConnections(starCount: number): [number, number][] {
-  if (starCount < 2) return [];
+function generateNearestNeighborConnections(stars: Star[]): [number, number][] {
+  if (stars.length < 2) return [];
 
   const connections: [number, number][] = [];
-  const connectionCounts = new Array(starCount).fill(0);
-
-  // Start with a spanning tree to ensure connectivity
   const connected = new Set([0]);
   const unconnected = new Set(
-    Array.from({ length: starCount }, (_, i) => i).slice(1)
+    Array.from({ length: stars.length }, (_, i) => i).slice(1)
   );
 
+  // Prim-style: always add the globally shortest edge to the tree
   while (unconnected.size > 0) {
-    const connectedArray = Array.from(connected);
-    const from = connectedArray[Math.floor(Math.random() * connectedArray.length)];
+    let bestDist = Infinity;
+    let bestFrom = 0;
+    let bestTo = 1;
 
-    const unconnectedArray = Array.from(unconnected);
-    const to = unconnectedArray[Math.floor(Math.random() * unconnectedArray.length)];
-
-    if (connectionCounts[from] < 3) {
-      connections.push([from, to]);
-      connectionCounts[from]++;
-      connectionCounts[to]++;
-      connected.add(to);
-      unconnected.delete(to);
-    } else {
-      const alternatives = connectedArray.filter((s) => connectionCounts[s] < 3);
-      if (alternatives.length > 0) {
-        const altFrom = alternatives[Math.floor(Math.random() * alternatives.length)];
-        connections.push([altFrom, to]);
-        connectionCounts[altFrom]++;
-        connectionCounts[to]++;
-        connected.add(to);
-        unconnected.delete(to);
+    for (const from of connected) {
+      for (const to of unconnected) {
+        const dx = stars[from].x - stars[to].x;
+        const dy = stars[from].y - stars[to].y;
+        const dist = dx * dx + dy * dy;
+        if (dist < bestDist) {
+          bestDist = dist;
+          bestFrom = from;
+          bestTo = to;
+        }
       }
     }
-  }
 
-  // Optionally add 1-3 more connections to create branches
-  const extraConnections = Math.floor(Math.random() * 3);
-  let attempts = 0;
-  let added = 0;
-
-  while (added < extraConnections && attempts < 20) {
-    attempts++;
-
-    const from = Math.floor(Math.random() * starCount);
-    const to = Math.floor(Math.random() * starCount);
-
-    if (
-      from !== to &&
-      connectionCounts[from] < 3 &&
-      connectionCounts[to] < 3 &&
-      !connections.some(([a, b]) => (a === from && b === to) || (a === to && b === from)) &&
-      !wouldCreateCycle(connections, from, to, starCount)
-    ) {
-      connections.push([from, to]);
-      connectionCounts[from]++;
-      connectionCounts[to]++;
-      added++;
-    }
+    connections.push([bestFrom, bestTo]);
+    connected.add(bestTo);
+    unconnected.delete(bestTo);
   }
 
   return connections;
-}
-
-/**
- * Check if adding a connection would create a cycle using DFS
- */
-function wouldCreateCycle(
-  existingConnections: [number, number][],
-  from: number,
-  to: number,
-  starCount: number
-): boolean {
-  // Build adjacency list
-  const adj: number[][] = Array.from({ length: starCount }, () => []);
-  existingConnections.forEach(([a, b]) => {
-    adj[a].push(b);
-    adj[b].push(a);
-  });
-
-  // DFS from 'from' to see if we can reach 'to'
-  const visited = new Set<number>();
-  const stack = [from];
-
-  while (stack.length > 0) {
-    const current = stack.pop()!;
-    if (current === to) return true;
-    if (visited.has(current)) continue;
-
-    visited.add(current);
-    adj[current].forEach((neighbor) => {
-      if (!visited.has(neighbor)) {
-        stack.push(neighbor);
-      }
-    });
-  }
-
-  return false;
 }
 
 /**

@@ -37,9 +37,12 @@ export function useCanvasRenderer({
       const ctx = canvas.getContext('2d', { alpha: true, desynchronized: true });
       if (!ctx) return;
 
-      const { width, height } = canvas;
+      // Use CSS dimensions (not canvas pixel dimensions which include DPR)
+      const dpr = window.devicePixelRatio || 1;
+      const width = canvas.width / dpr;
+      const height = canvas.height / dpr;
 
-      // Clear canvas
+      // Clear canvas (use CSS dimensions — transform handles DPR scaling)
       ctx.clearRect(0, 0, width, height);
 
       constellations.forEach((constellation, constellationIndex) => {
@@ -66,10 +69,20 @@ export function useCanvasRenderer({
           const end = constellation.stars[endIdx];
 
           // Apply parallax offset
-          const x1 = start.x + offsetX;
-          const y1 = start.y + offsetY;
-          const x2 = end.x + offsetX;
-          const y2 = end.y + offsetY;
+          const rawX1 = start.x + offsetX;
+          const rawY1 = start.y + offsetY;
+          const rawX2 = end.x + offsetX;
+          const rawY2 = end.y + offsetY;
+
+          // Shorten endpoints by 8px so lines don't overlap star glyphs
+          const dx = rawX2 - rawX1;
+          const dy = rawY2 - rawY1;
+          const lineLen = Math.sqrt(dx * dx + dy * dy);
+          const shrink = lineLen > 20 ? 8 / lineLen : 0;
+          const x1 = rawX1 + dx * shrink;
+          const y1 = rawY1 + dy * shrink;
+          const x2 = rawX2 - dx * shrink;
+          const y2 = rawY2 - dy * shrink;
 
           // Pride mode: Create horizontal STEPPED gradient (left to right)
           if (prideMode && assignedFlag) {

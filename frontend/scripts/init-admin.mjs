@@ -1,9 +1,8 @@
-#!/usr/bin/env tsx
+#!/usr/bin/env node
 /**
- * Admin User Initialization Script (self-contained)
+ * Admin User Initialization Script (self-contained ESM)
  * Creates or resets the admin user account using ENV vars.
- * Uses pg + bcryptjs directly to avoid Next.js path alias issues in Docker.
- * Usage: npm run reset-admin
+ * Runs with plain `node` — no tsx/TypeScript needed.
  * ENV vars: INIT_ADMIN_USERNAME, INIT_ADMIN_PASSWORD, DATABASE_URL
  */
 
@@ -19,11 +18,11 @@ async function initAdmin() {
   const databaseUrl = process.env.DATABASE_URL;
 
   if (!databaseUrl) {
-    console.error('❌ DATABASE_URL environment variable is not set');
+    console.error('DATABASE_URL environment variable is not set');
     process.exit(1);
   }
 
-  console.log('\n🔧 Initializing admin user...\n');
+  console.log('\nInitializing admin user...\n');
 
   const client = new pg.Client({ connectionString: databaseUrl });
 
@@ -46,12 +45,12 @@ async function initAdmin() {
       [id, username, hashedPassword]
     );
 
-    console.log(`✅ Admin user created/updated: ${result.rows[0].username}`);
-    console.log(`🔑 Password: ${password}`);
-    console.log('\n⚠️  IMPORTANT: Change this password after first login!\n');
-    console.log(`📍 Login at: ${process.env.NEXTAUTH_URL || 'https://hyfern.us'}/login\n`);
+    console.log(`Admin user created/updated: ${result.rows[0].username}`);
+    console.log(`Password: ${password}`);
+    console.log('\nIMPORTANT: Change this password after first login!\n');
+    console.log(`Login at: ${process.env.NEXTAUTH_URL || 'https://hyfern.us'}/login\n`);
   } catch (error) {
-    console.error('❌ Error creating admin user:', error);
+    console.error('Error creating admin user:', error);
     process.exit(1);
   } finally {
     await client.end();

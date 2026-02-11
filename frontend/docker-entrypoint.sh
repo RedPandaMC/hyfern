@@ -24,9 +24,9 @@ echo "✅ Database is ready!"
 
 # Check if admin user needs to be initialized
 echo "🔧 Checking for admin user..."
-if [ -f "/app/scripts/init-admin.ts" ]; then
+if [ -f "/app/scripts/init-admin.mjs" ]; then
   echo "📝 Running admin initialization..."
-  npx tsx /app/scripts/init-admin.ts || echo "⚠️  Admin init failed (user might already exist)"
+  node /app/scripts/init-admin.mjs || echo "⚠️  Admin init failed (user might already exist)"
 else
   echo "⚠️  Admin init script not found, skipping..."
 fi

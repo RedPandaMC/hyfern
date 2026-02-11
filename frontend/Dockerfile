@@ -35,33 +35,28 @@ WORKDIR /app
 ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
 
-# Install runtime dependencies for init script
-RUN npm install -g tsx
-
 # Create non-root user
 RUN addgroup --system --gid 1001 nodejs
 RUN adduser --system --uid 1001 nextjs
 
-# Copy necessary files from builder
-# Next.js standalone includes node_modules and server.js
-COPY --from=builder /app/public ./public
-COPY --from=builder /app/.next/standalone ./
-COPY --from=builder /app/.next/static ./.next/static
+# Copy necessary files from builder with correct ownership
+COPY --from=builder --chown=nextjs:nodejs /app/public ./public
+COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
+COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 
 # Copy Prisma client (generated into app/generated/prisma/)
-COPY --from=builder /app/app/generated/prisma ./app/generated/prisma
-COPY --from=builder /app/prisma ./prisma
+COPY --from=builder --chown=nextjs:nodejs /app/app/generated/prisma ./app/generated/prisma
+COPY --from=builder --chown=nextjs:nodejs /app/prisma ./prisma
 
-# Copy admin initialization script
-COPY --from=builder /app/scripts ./scripts
-COPY --from=builder /app/lib ./lib
+# Copy admin initialization script (.mjs — runs with plain node, no tsx needed)
+COPY --from=builder --chown=nextjs:nodejs /app/scripts/init-admin.mjs ./scripts/init-admin.mjs
+
+# Install init script dependencies into standalone node_modules
+RUN npm install --no-save pg bcryptjs
 
 # Copy entrypoint script
-COPY docker-entrypoint.sh /app/docker-entrypoint.sh
+COPY --chown=nextjs:nodejs docker-entrypoint.sh /app/docker-entrypoint.sh
 RUN chmod +x /app/docker-entrypoint.sh
-
-# Set correct permissions
-RUN chown -R nextjs:nodejs /app
 
 # Switch to non-root user
 USER nextjs
