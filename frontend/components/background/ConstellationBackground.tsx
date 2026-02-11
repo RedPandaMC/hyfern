@@ -30,8 +30,8 @@ interface ConstellationBackgroundProps {
 export function ConstellationBackground({ children }: ConstellationBackgroundProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const constellationsRef = useRef<Constellation[]>([]);
 
+  const [constellations, setConstellations] = useState<Constellation[]>([]);
   const [prideMode, setPrideMode] = useState(false);
   const [constellationFlags, setConstellationFlags] = useState<Record<number, PrideFlagType>>({});
   const [containerSize, setContainerSize] = useState({ width: 0, height: 0 });
@@ -50,7 +50,7 @@ export function ConstellationBackground({ children }: ConstellationBackgroundPro
     const width = window.innerWidth;
     const height = window.innerHeight;
 
-    constellationsRef.current = generateConstellations(width, height);
+    setConstellations(generateConstellations(width, height));
     setContainerSize({ width, height });
 
     // Initialize canvas size
@@ -79,7 +79,7 @@ export function ConstellationBackground({ children }: ConstellationBackgroundPro
   // Canvas rendering
   const { drawConstellationLines } = useCanvasRenderer({
     canvasRef,
-    constellations: constellationsRef.current,
+    constellations,
     prideMode,
     constellationFlags,
   });
@@ -101,11 +101,11 @@ export function ConstellationBackground({ children }: ConstellationBackgroundPro
       const newMode = !prev;
       if (newMode) {
         // Turning ON: randomize flags
-        setConstellationFlags(randomizeConstellationFlags(constellationsRef.current));
+        setConstellationFlags(randomizeConstellationFlags(constellations));
       }
       return newMode;
     });
-  }, []);
+  }, [constellations]);
 
   // Easter egg activation - Shift + Double Click
   const handleDoubleClick = useCallback(
@@ -174,7 +174,7 @@ export function ConstellationBackground({ children }: ConstellationBackgroundPro
         }}
       >
         {/* Render constellations with their assigned flags */}
-        {constellationsRef.current.map((constellation, index) => {
+        {constellations.map((constellation, index) => {
           const depth =
             constellation.layer === 1
               ? DEPTH_MULTIPLIERS.LAYER_1
