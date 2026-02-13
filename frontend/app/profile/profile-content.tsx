@@ -392,14 +392,12 @@ function TwoFactorCard({ enabled, onUpdate }: { enabled: boolean; onUpdate: () =
                   <Check className="h-5 w-5" />
                   <span className="font-medium">Two-factor authentication is active</span>
                 </div>
-                {step !== 'disable' && (
-                  <Button
-                    variant="destructive"
-                    onClick={() => setStep('disable')}
-                  >
-                    Disable 2FA
-                  </Button>
-                )}
+                <Button
+                  variant="destructive"
+                  onClick={() => setStep('disable')}
+                >
+                  Disable 2FA
+                </Button>
               </div>
             ) : (
               <Button onClick={startSetup} disabled={loading}>

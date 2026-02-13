@@ -14,15 +14,15 @@ export function FilesContent() {
 
   return (
     <div className="space-y-6">
-      <Card className="p-8 bg-[#0C1222] border-gray-800">
+      <Card className="p-8 bg-card ">
         <div className="text-center space-y-4">
-          <p className="text-gray-400">
+          <p className="text-muted-foreground">
             File management is handled through the Pelican Panel.
             A new tab should have opened automatically.
           </p>
           <Button
             onClick={() => window.open(panelUrl, '_blank')}
-            className="bg-[#00D4AA] hover:bg-[#00D4AA]/90 text-[#0C1222]"
+            className="bg-primary hover:bg-primary/90 text-primary-foreground"
           >
             <ExternalLink className="w-4 h-4 mr-2" />
             Open Pelican Panel

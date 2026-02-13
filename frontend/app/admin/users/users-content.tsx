@@ -188,12 +188,12 @@ export function UsersContent() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold text-white">Users</h2>
-          <p className="text-sm text-gray-400">{users.length} total users</p>
+          <h2 className="text-2xl font-bold text-foreground">Users</h2>
+          <p className="text-sm text-muted-foreground">{users.length} total users</p>
         </div>
         <Button
           onClick={() => setShowCreateDialog(true)}
-          className="bg-[#00D4AA] hover:bg-[#00D4AA]/90 text-[#0C1222]"
+          className="bg-primary hover:bg-primary/90 text-primary-foreground"
         >
           <UserPlus className="w-4 h-4 mr-2" />
           Create User
@@ -201,15 +201,15 @@ export function UsersContent() {
       </div>
 
       {/* Role Explanation */}
-      <Card className="p-6 bg-[#0C1222] border-gray-800">
-        <h3 className="text-lg font-semibold text-white mb-4">Role Permissions</h3>
+      <Card className="p-6 bg-card ">
+        <h3 className="text-lg font-semibold text-foreground mb-4">Role Permissions</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {Object.entries(ROLE_DESCRIPTIONS).map(([role, description]) => (
             <div key={role} className="flex items-start gap-3">
               <Badge className={ROLE_COLORS[role as keyof typeof ROLE_COLORS]}>
                 {role}
               </Badge>
-              <p className="text-sm text-gray-400 flex-1">{description}</p>
+              <p className="text-sm text-muted-foreground flex-1">{description}</p>
             </div>
           ))}
         </div>
@@ -218,20 +218,20 @@ export function UsersContent() {
       {/* Users List */}
       {loading ? (
         <div className="flex items-center justify-center py-12">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#00D4AA]"></div>
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
         </div>
       ) : (
         <div className="space-y-3">
           {users.map((user) => (
-            <Card key={user.id} className="p-4 bg-[#0C1222] border-gray-800">
+            <Card key={user.id} className="p-4 bg-card ">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-4">
-                  <div className="flex items-center justify-center w-10 h-10 rounded-full bg-[#00D4AA]/10">
-                    <UsersIcon className="w-5 h-5 text-[#00D4AA]" />
+                  <div className="flex items-center justify-center w-10 h-10 rounded-full bg-primary/10">
+                    <UsersIcon className="w-5 h-5 text-primary" />
                   </div>
                   <div>
                     <div className="flex items-center gap-2 mb-1">
-                      <h4 className="font-semibold text-white">{user.username}</h4>
+                      <h4 className="font-semibold text-foreground">{user.username}</h4>
                       <Badge className={ROLE_COLORS[user.role]}>{user.role}</Badge>
                       {user.totpEnabled && (
                         <Badge className="bg-green-500/20 text-green-500 border-green-500/30">
@@ -240,7 +240,7 @@ export function UsersContent() {
                         </Badge>
                       )}
                     </div>
-                    <div className="flex items-center gap-4 text-sm text-gray-400">
+                    <div className="flex items-center gap-4 text-sm text-muted-foreground">
                       <span>
                         Created {new Date(user.createdAt).toLocaleDateString()}
                       </span>
@@ -260,7 +260,7 @@ export function UsersContent() {
                       variant="outline"
                       size="sm"
                       onClick={() => openEditDialog(user)}
-                      className="border-gray-700 hover:bg-gray-800"
+                      className="border-border hover:bg-accent"
                     >
                       <Edit className="w-4 h-4 mr-2" />
                       Edit
@@ -283,10 +283,10 @@ export function UsersContent() {
 
       {/* Create User Dialog */}
       <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
-        <DialogContent className="bg-[#0C1222] border-gray-800">
+        <DialogContent className="bg-card ">
           <DialogHeader>
             <DialogTitle>Create New User</DialogTitle>
-            <DialogDescription className="text-gray-400">
+            <DialogDescription className="text-muted-foreground">
               Add a new user to the HyFern dashboard
             </DialogDescription>
           </DialogHeader>
@@ -298,7 +298,7 @@ export function UsersContent() {
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
                 placeholder="Enter username"
-                className="bg-[#1a1f35] border-gray-700 text-white"
+                className="bg-secondary border-border text-foreground"
               />
             </div>
             <div>
@@ -309,7 +309,7 @@ export function UsersContent() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="Enter password"
-                className="bg-[#1a1f35] border-gray-700 text-white"
+                className="bg-secondary border-border text-foreground"
               />
             </div>
             <div>
@@ -318,13 +318,13 @@ export function UsersContent() {
                 id="role"
                 value={role}
                 onChange={(e) => setRole(e.target.value as any)}
-                className="w-full px-3 py-2 bg-[#1a1f35] border border-gray-700 rounded-md text-white"
+                className="w-full px-3 py-2 bg-secondary border border-border rounded-md text-foreground"
               >
                 <option value="VIEWER">Viewer</option>
                 <option value="MODERATOR">Moderator</option>
                 <option value="ADMIN">Admin</option>
               </select>
-              <p className="text-xs text-gray-400 mt-1">
+              <p className="text-xs text-muted-foreground mt-1">
                 {ROLE_DESCRIPTIONS[role]}
               </p>
             </div>
@@ -333,14 +333,14 @@ export function UsersContent() {
             <Button
               variant="outline"
               onClick={() => setShowCreateDialog(false)}
-              className="border-gray-700"
+              className="border-border"
             >
               Cancel
             </Button>
             <Button
               onClick={handleCreateUser}
               disabled={submitting}
-              className="bg-[#00D4AA] hover:bg-[#00D4AA]/90 text-[#0C1222]"
+              className="bg-primary hover:bg-primary/90 text-primary-foreground"
             >
               {submitting ? 'Creating...' : 'Create User'}
             </Button>
@@ -350,10 +350,10 @@ export function UsersContent() {
 
       {/* Edit User Dialog */}
       <Dialog open={showEditDialog} onOpenChange={setShowEditDialog}>
-        <DialogContent className="bg-[#0C1222] border-gray-800">
+        <DialogContent className="bg-card ">
           <DialogHeader>
             <DialogTitle>Edit User</DialogTitle>
-            <DialogDescription className="text-gray-400">
+            <DialogDescription className="text-muted-foreground">
               Update role for {selectedUser?.username}
             </DialogDescription>
           </DialogHeader>
@@ -364,13 +364,13 @@ export function UsersContent() {
                 id="edit-role"
                 value={role}
                 onChange={(e) => setRole(e.target.value as any)}
-                className="w-full px-3 py-2 bg-[#1a1f35] border border-gray-700 rounded-md text-white"
+                className="w-full px-3 py-2 bg-secondary border border-border rounded-md text-foreground"
               >
                 <option value="VIEWER">Viewer</option>
                 <option value="MODERATOR">Moderator</option>
                 <option value="ADMIN">Admin</option>
               </select>
-              <p className="text-xs text-gray-400 mt-1">
+              <p className="text-xs text-muted-foreground mt-1">
                 {ROLE_DESCRIPTIONS[role]}
               </p>
             </div>
@@ -379,14 +379,14 @@ export function UsersContent() {
             <Button
               variant="outline"
               onClick={() => setShowEditDialog(false)}
-              className="border-gray-700"
+              className="border-border"
             >
               Cancel
             </Button>
             <Button
               onClick={handleUpdateUser}
               disabled={submitting}
-              className="bg-[#00D4AA] hover:bg-[#00D4AA]/90 text-[#0C1222]"
+              className="bg-primary hover:bg-primary/90 text-primary-foreground"
             >
               {submitting ? 'Updating...' : 'Update User'}
             </Button>
@@ -396,10 +396,10 @@ export function UsersContent() {
 
       {/* Delete User Dialog */}
       <Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
-        <DialogContent className="bg-[#0C1222] border-gray-800">
+        <DialogContent className="bg-card ">
           <DialogHeader>
             <DialogTitle className="text-red-500">Delete User</DialogTitle>
-            <DialogDescription className="text-gray-400">
+            <DialogDescription className="text-muted-foreground">
               Are you sure you want to delete {selectedUser?.username}? This action cannot
               be undone.
             </DialogDescription>
@@ -408,14 +408,14 @@ export function UsersContent() {
             <Button
               variant="outline"
               onClick={() => setShowDeleteDialog(false)}
-              className="border-gray-700"
+              className="border-border"
             >
               Cancel
             </Button>
             <Button
               onClick={handleDeleteUser}
               disabled={submitting}
-              className="bg-red-500 hover:bg-red-600 text-white"
+              className="bg-red-500 hover:bg-red-600 text-foreground"
             >
               {submitting ? 'Deleting...' : 'Delete User'}
             </Button>

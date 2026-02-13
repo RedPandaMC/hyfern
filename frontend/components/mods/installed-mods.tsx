@@ -74,10 +74,10 @@ export function InstalledMods({ mods, onUninstall }: InstalledModsProps) {
 
   if (mods.length === 0) {
     return (
-      <Card className="p-12 bg-[#0C1222] border-gray-800">
+      <Card className="p-12">
         <div className="text-center">
-          <p className="text-gray-400">No mods installed</p>
-          <p className="text-sm text-gray-500 mt-2">
+          <p className="text-muted-foreground">No mods installed</p>
+          <p className="text-sm text-muted-foreground/70 mt-2">
             Browse mods above to get started
           </p>
         </div>
@@ -89,12 +89,12 @@ export function InstalledMods({ mods, onUninstall }: InstalledModsProps) {
     <>
       <div className="space-y-3">
         {mods.map((mod) => (
-          <Card key={mod.id} className="p-4 bg-[#0C1222] border-gray-800">
+          <Card key={mod.id} className="p-4">
             <div className="flex items-center justify-between">
               {/* Mod Info */}
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 mb-1">
-                  <h4 className="font-semibold text-white truncate">
+                  <h4 className="font-semibold text-foreground truncate">
                     {mod.name}
                   </h4>
                   {mod.isCore && (
@@ -104,7 +104,7 @@ export function InstalledMods({ mods, onUninstall }: InstalledModsProps) {
                     </Badge>
                   )}
                 </div>
-                <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-gray-400">
+                <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-muted-foreground">
                   <span>Version: {mod.version}</span>
                   <span>•</span>
                   <span>Installed by {mod.installer.username}</span>
@@ -125,7 +125,6 @@ export function InstalledMods({ mods, onUninstall }: InstalledModsProps) {
                         '_blank'
                       )
                     }
-                    className="border-gray-700 hover:bg-gray-800"
                   >
                     <ExternalLink className="w-4 h-4" />
                   </Button>
@@ -136,7 +135,6 @@ export function InstalledMods({ mods, onUninstall }: InstalledModsProps) {
                     variant="outline"
                     size="sm"
                     disabled
-                    className="border-gray-700 cursor-not-allowed"
                   >
                     <Lock className="w-4 h-4 mr-2" />
                     Protected
@@ -147,11 +145,11 @@ export function InstalledMods({ mods, onUninstall }: InstalledModsProps) {
                     size="sm"
                     onClick={() => handleUninstallClick(mod)}
                     disabled={uninstalling === mod.id}
-                    className="border-red-500/30 text-red-500 hover:bg-red-500/10 hover:border-red-500/50"
+                    className="border-destructive/30 text-destructive hover:bg-destructive/10 hover:border-destructive/50"
                   >
                     {uninstalling === mod.id ? (
                       <>
-                        <div className="w-4 h-4 mr-2 animate-spin rounded-full border-2 border-red-500 border-t-transparent" />
+                        <div className="w-4 h-4 mr-2 animate-spin rounded-full border-2 border-destructive border-t-transparent" />
                         Uninstalling...
                       </>
                     ) : (
@@ -170,21 +168,21 @@ export function InstalledMods({ mods, onUninstall }: InstalledModsProps) {
 
       {/* Confirmation Dialog */}
       <Dialog open={showConfirmDialog} onOpenChange={setShowConfirmDialog}>
-        <DialogContent className="bg-[#0C1222] border-gray-800">
+        <DialogContent>
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-2 text-red-500">
+            <DialogTitle className="flex items-center gap-2 text-destructive">
               <AlertTriangle className="w-5 h-5" />
               Uninstall Mod
             </DialogTitle>
-            <DialogDescription className="text-gray-400">
+            <DialogDescription>
               Are you sure you want to uninstall{' '}
-              <span className="font-semibold text-white">
+              <span className="font-semibold text-foreground">
                 {selectedMod?.name}
               </span>
               ?
             </DialogDescription>
           </DialogHeader>
-          <div className="py-4 space-y-2 text-sm text-gray-400">
+          <div className="py-4 space-y-2 text-sm text-muted-foreground">
             <p>This will:</p>
             <ul className="list-disc list-inside space-y-1 pl-2">
               <li>Remove the mod file from the server</li>
@@ -192,7 +190,7 @@ export function InstalledMods({ mods, onUninstall }: InstalledModsProps) {
               <li>Require a server restart to take effect</li>
             </ul>
             <p className="text-yellow-500 mt-4">
-              ⚠️ This action cannot be undone. Make sure no other mods depend
+              This action cannot be undone. Make sure no other mods depend
               on this mod.
             </p>
           </div>
@@ -200,14 +198,13 @@ export function InstalledMods({ mods, onUninstall }: InstalledModsProps) {
             <Button
               variant="outline"
               onClick={() => setShowConfirmDialog(false)}
-              className="border-gray-700"
             >
               Cancel
             </Button>
             <Button
+              variant="destructive"
               onClick={handleConfirmUninstall}
               disabled={uninstalling !== null}
-              className="bg-red-500 hover:bg-red-600 text-white"
             >
               {uninstalling ? 'Uninstalling...' : 'Uninstall'}
             </Button>

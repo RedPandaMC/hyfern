@@ -99,16 +99,16 @@ export function ModBrowser({ onInstall, installedModIds }: ModBrowserProps) {
   return (
     <div className="space-y-6">
       {/* Search and Filters */}
-      <Card className="p-4 bg-[#0C1222] border-gray-800">
+      <Card className="p-4">
         <div className="flex flex-col md:flex-row gap-4">
           {/* Search Input */}
           <div className="flex-1 relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
               placeholder="Search mods..."
               value={searchQuery}
               onChange={(e) => handleSearch(e.target.value)}
-              className="pl-10 bg-[#1a1f35] border-gray-700 text-white"
+              className="pl-10"
             />
           </div>
 
@@ -116,7 +116,7 @@ export function ModBrowser({ onInstall, installedModIds }: ModBrowserProps) {
           <select
             value={selectedCategory}
             onChange={(e) => handleCategoryChange(e.target.value)}
-            className="px-4 py-2 bg-[#1a1f35] border border-gray-700 rounded-md text-white"
+            className="px-4 py-2 bg-secondary border border-border rounded-md text-foreground"
           >
             <option value="">All Categories</option>
             {categories.map((category) => (
@@ -130,7 +130,7 @@ export function ModBrowser({ onInstall, installedModIds }: ModBrowserProps) {
           <select
             value={sortBy}
             onChange={(e) => handleSortChange(e.target.value)}
-            className="px-4 py-2 bg-[#1a1f35] border border-gray-700 rounded-md text-white"
+            className="px-4 py-2 bg-secondary border border-border rounded-md text-foreground"
           >
             <option value="Popularity">Popularity</option>
             <option value="LastUpdated">Recently Updated</option>
@@ -142,15 +142,15 @@ export function ModBrowser({ onInstall, installedModIds }: ModBrowserProps) {
 
       {/* Error Message */}
       {error && (
-        <Card className="p-4 bg-red-500/10 border-red-500/20">
-          <p className="text-red-500">{error}</p>
+        <Card className="p-4 bg-destructive/10 border-destructive/20">
+          <p className="text-destructive">{error}</p>
         </Card>
       )}
 
       {/* Loading State */}
       {loading && (
         <div className="flex items-center justify-center py-12">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#00D4AA]"></div>
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
         </div>
       )}
 
@@ -175,18 +175,16 @@ export function ModBrowser({ onInstall, installedModIds }: ModBrowserProps) {
                 variant="outline"
                 onClick={() => setPage(Math.max(0, page - 1))}
                 disabled={page === 0 || loading}
-                className="border-gray-700"
               >
                 Previous
               </Button>
-              <span className="text-sm text-gray-400">
+              <span className="text-sm text-muted-foreground">
                 Page {page + 1} of {totalPages}
               </span>
               <Button
                 variant="outline"
                 onClick={() => setPage(Math.min(totalPages - 1, page + 1))}
                 disabled={page >= totalPages - 1 || loading}
-                className="border-gray-700"
               >
                 Next
               </Button>
@@ -196,11 +194,11 @@ export function ModBrowser({ onInstall, installedModIds }: ModBrowserProps) {
       )}
 
       {/* No Results */}
-      {!loading && mods.length === 0 && (
-        <Card className="p-12 bg-[#0C1222] border-gray-800">
+      {!loading && mods.length === 0 && !error && (
+        <Card className="p-12">
           <div className="text-center">
-            <p className="text-gray-400">No mods found</p>
-            <p className="text-sm text-gray-500 mt-2">
+            <p className="text-muted-foreground">No mods found</p>
+            <p className="text-sm text-muted-foreground/70 mt-2">
               Try adjusting your search or filters
             </p>
           </div>

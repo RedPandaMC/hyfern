@@ -235,7 +235,7 @@ export function ModsContent() {
   if (!configLoaded) {
     return (
       <div className="flex items-center justify-center py-12">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#00D4AA]"></div>
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
       </div>
     );
   }
@@ -263,23 +263,23 @@ export function ModsContent() {
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card className="p-4 bg-[#0C1222] border-gray-800">
+        <Card className="p-4 bg-card">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-400">Total Installed</p>
-              <p className="text-2xl font-bold text-white">
+              <p className="text-sm text-muted-foreground">Total Installed</p>
+              <p className="text-2xl font-bold text-foreground">
                 {installedMods.length}
               </p>
             </div>
-            <Package className="w-8 h-8 text-[#00D4AA]" />
+            <Package className="w-8 h-8 text-primary" />
           </div>
         </Card>
 
-        <Card className="p-4 bg-[#0C1222] border-gray-800">
+        <Card className="p-4 bg-card">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-400">Core Plugins</p>
-              <p className="text-2xl font-bold text-white">
+              <p className="text-sm text-muted-foreground">Core Plugins</p>
+              <p className="text-2xl font-bold text-foreground">
                 {installedMods.filter((m) => m.isCore).length}
               </p>
             </div>
@@ -289,22 +289,22 @@ export function ModsContent() {
           </div>
         </Card>
 
-        <Card className="p-4 bg-[#0C1222] border-gray-800">
+        <Card className="p-4 bg-card">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-400">Custom Mods</p>
-              <p className="text-2xl font-bold text-white">
+              <p className="text-sm text-muted-foreground">Custom Mods</p>
+              <p className="text-2xl font-bold text-foreground">
                 {installedMods.filter((m) => !m.isCore).length}
               </p>
             </div>
-            <Download className="w-8 h-8 text-[#00D4AA]" />
+            <Download className="w-8 h-8 text-primary" />
           </div>
         </Card>
       </div>
 
       {/* Tabs */}
       <Tabs defaultValue={curseforgeEnabled ? 'browse' : 'upload'} className="space-y-6">
-        <TabsList className="bg-[#1a1f35] border border-gray-800">
+        <TabsList className="bg-secondary border border-border">
           {curseforgeEnabled && (
             <TabsTrigger value="browse">Browse Mods</TabsTrigger>
           )}
@@ -327,10 +327,10 @@ export function ModsContent() {
 
         <TabsContent value="upload" className="space-y-6">
           <Card
-            className={`p-8 bg-[#0C1222] border-2 border-dashed transition-colors ${
+            className={`p-8 bg-card border-2 border-dashed transition-colors ${
               dragOver
-                ? 'border-[#00D4AA] bg-[#00D4AA]/5'
-                : 'border-gray-700 hover:border-gray-600'
+                ? 'border-primary bg-primary/5'
+                : 'border-border hover:border-muted-foreground/30'
             }`}
             onDrop={handleDrop}
             onDragOver={handleDragOver}
@@ -339,19 +339,19 @@ export function ModsContent() {
             <div className="flex flex-col items-center justify-center py-8 text-center">
               {uploading ? (
                 <>
-                  <div className="w-12 h-12 mb-4 animate-spin rounded-full border-4 border-[#00D4AA] border-t-transparent" />
-                  <p className="text-lg font-semibold text-white">Uploading...</p>
-                  <p className="text-sm text-gray-400 mt-1">
+                  <div className="w-12 h-12 mb-4 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+                  <p className="text-lg font-semibold text-foreground">Uploading...</p>
+                  <p className="text-sm text-muted-foreground mt-1">
                     Installing mod to server
                   </p>
                 </>
               ) : (
                 <>
-                  <FileUp className="w-12 h-12 mb-4 text-gray-500" />
-                  <p className="text-lg font-semibold text-white">
+                  <FileUp className="w-12 h-12 mb-4 text-muted-foreground" />
+                  <p className="text-lg font-semibold text-foreground">
                     Drag &amp; drop mod files here
                   </p>
-                  <p className="text-sm text-gray-400 mt-1">
+                  <p className="text-sm text-muted-foreground mt-1">
                     or click to browse. Only .jar files, max 100MB.
                   </p>
                   <label>
@@ -364,7 +364,7 @@ export function ModsContent() {
                     />
                     <Button
                       variant="outline"
-                      className="mt-4 border-gray-700"
+                      className="mt-4 border-border"
                       asChild
                     >
                       <span>
@@ -382,7 +382,7 @@ export function ModsContent() {
         <TabsContent value="installed" className="space-y-6">
           {loading ? (
             <div className="flex items-center justify-center py-12">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#00D4AA]"></div>
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
             </div>
           ) : (
             <InstalledMods mods={installedMods} onUninstall={handleUninstall} />
@@ -392,18 +392,18 @@ export function ModsContent() {
 
       {/* Install Confirmation Dialog */}
       <Dialog open={showInstallDialog} onOpenChange={setShowInstallDialog}>
-        <DialogContent className="bg-[#0C1222] border-gray-800">
+        <DialogContent className="bg-card">
           <DialogHeader>
             <DialogTitle>Install Mod</DialogTitle>
-            <DialogDescription className="text-gray-400">
+            <DialogDescription className="text-muted-foreground">
               Are you sure you want to install{' '}
-              <span className="font-semibold text-white">
+              <span className="font-semibold text-foreground">
                 {selectedMod?.name}
               </span>
               ?
             </DialogDescription>
           </DialogHeader>
-          <div className="py-4 space-y-2 text-sm text-gray-400">
+          <div className="py-4 space-y-2 text-sm text-muted-foreground">
             <p>This will:</p>
             <ul className="list-disc list-inside space-y-1 pl-2">
               <li>Download the mod from CurseForge</li>
@@ -415,7 +415,7 @@ export function ModsContent() {
             <Button
               variant="outline"
               onClick={() => setShowInstallDialog(false)}
-              className="border-gray-700"
+              className="border-border"
               disabled={installing}
             >
               Cancel
@@ -423,11 +423,11 @@ export function ModsContent() {
             <Button
               onClick={handleConfirmInstall}
               disabled={installing}
-              className="bg-[#00D4AA] hover:bg-[#00D4AA]/90 text-[#0C1222]"
+              className="bg-primary hover:bg-primary/90 text-primary-foreground"
             >
               {installing ? (
                 <>
-                  <div className="w-4 h-4 mr-2 animate-spin rounded-full border-2 border-[#0C1222] border-t-transparent" />
+                  <div className="w-4 h-4 mr-2 animate-spin rounded-full border-2 border-primary-foreground border-t-transparent" />
                   Installing...
                 </>
               ) : (

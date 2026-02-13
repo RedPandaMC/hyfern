@@ -44,9 +44,9 @@ export function ModCard({ mod, isInstalled, onInstall }: ModCardProps) {
   };
 
   return (
-    <Card className="bg-[#0C1222] border-gray-800 hover:border-[#00D4AA]/50 transition-colors overflow-hidden group">
+    <Card className="bg-card hover:border-primary/50 transition-colors overflow-hidden group">
       {/* Mod Logo */}
-      <div className="relative h-40 bg-[#1a1f35] overflow-hidden">
+      <div className="relative h-40 bg-secondary overflow-hidden">
         {mod.logo ? (
           <img
             src={mod.logo.thumbnailUrl}
@@ -55,7 +55,7 @@ export function ModCard({ mod, isInstalled, onInstall }: ModCardProps) {
           />
         ) : (
           <div className="w-full h-full flex items-center justify-center">
-            <span className="text-4xl text-gray-600">📦</span>
+            <span className="text-4xl text-muted-foreground">📦</span>
           </div>
         )}
 
@@ -72,7 +72,7 @@ export function ModCard({ mod, isInstalled, onInstall }: ModCardProps) {
         {/* Featured Badge */}
         {mod.isFeatured && !isCoreMod && (
           <div className="absolute top-2 left-2">
-            <Badge className="bg-[#00D4AA]/20 text-[#00D4AA] border-[#00D4AA]/30">
+            <Badge className="bg-primary/20 text-primary border-primary/30">
               Featured
             </Badge>
           </div>
@@ -93,16 +93,16 @@ export function ModCard({ mod, isInstalled, onInstall }: ModCardProps) {
       <div className="p-4 space-y-3">
         {/* Title and Author */}
         <div>
-          <h3 className="font-semibold text-white text-lg truncate">
+          <h3 className="font-semibold text-foreground text-lg truncate">
             {mod.name}
           </h3>
-          <p className="text-sm text-gray-400 truncate">
+          <p className="text-sm text-muted-foreground truncate">
             by {mod.authors[0]?.name || 'Unknown'}
           </p>
         </div>
 
         {/* Summary */}
-        <p className="text-sm text-gray-300 line-clamp-2">
+        <p className="text-sm text-muted-foreground line-clamp-2">
           {mod.summary}
         </p>
 
@@ -113,7 +113,7 @@ export function ModCard({ mod, isInstalled, onInstall }: ModCardProps) {
               <Badge
                 key={category.id}
                 variant="outline"
-                className="text-xs border-gray-700 text-gray-400"
+                className="text-xs"
               >
                 {category.name}
               </Badge>
@@ -122,7 +122,7 @@ export function ModCard({ mod, isInstalled, onInstall }: ModCardProps) {
         )}
 
         {/* Stats */}
-        <div className="flex items-center justify-between text-sm text-gray-400">
+        <div className="flex items-center justify-between text-sm text-muted-foreground">
           <div className="flex items-center gap-1">
             <Download className="w-4 h-4" />
             <span>{formatDownloads(mod.downloadCount)}</span>
@@ -136,7 +136,8 @@ export function ModCard({ mod, isInstalled, onInstall }: ModCardProps) {
         <div className="flex gap-2 pt-2">
           {isCoreMod ? (
             <Button
-              className="flex-1 bg-gray-700 hover:bg-gray-700 cursor-not-allowed"
+              className="flex-1"
+              variant="secondary"
               disabled
             >
               <Lock className="w-4 h-4 mr-2" />
@@ -153,7 +154,7 @@ export function ModCard({ mod, isInstalled, onInstall }: ModCardProps) {
           ) : (
             <Button
               onClick={onInstall}
-              className="flex-1 bg-[#00D4AA] hover:bg-[#00D4AA]/90 text-[#0C1222]"
+              className="flex-1"
             >
               <Download className="w-4 h-4 mr-2" />
               Install
@@ -163,7 +164,6 @@ export function ModCard({ mod, isInstalled, onInstall }: ModCardProps) {
           <Button
             variant="outline"
             onClick={() => window.open(mod.links.websiteUrl, '_blank')}
-            className="border-gray-700 hover:bg-gray-800"
           >
             <ExternalLink className="w-4 h-4" />
           </Button>

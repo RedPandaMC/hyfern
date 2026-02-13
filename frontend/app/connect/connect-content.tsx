@@ -72,7 +72,7 @@ export function ConnectContent() {
       variant="outline"
       size="sm"
       onClick={() => handleCopy(text, field)}
-      className="border-gray-700 hover:bg-gray-800"
+      className="border-border hover:bg-accent"
     >
       {copiedField === field ? (
         <Check className="w-4 h-4 text-green-500" />
@@ -85,22 +85,22 @@ export function ConnectContent() {
   if (!isUnlocked) {
     return (
       <div className="max-w-md mx-auto">
-        <Card className="p-8 bg-[#0C1222] border-gray-800">
+        <Card className="p-8 bg-card ">
           <div className="text-center mb-6">
-            <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-[#00D4AA]/10 mb-4">
-              <Lock className="w-8 h-8 text-[#00D4AA]" />
+            <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-primary/10 mb-4">
+              <Lock className="w-8 h-8 text-primary" />
             </div>
-            <h2 className="text-2xl font-bold text-white mb-2">
+            <h2 className="text-2xl font-bold text-foreground mb-2">
               Protected Content
             </h2>
-            <p className="text-gray-400">
+            <p className="text-muted-foreground">
               Enter the server access password to view connection information
             </p>
           </div>
 
           <div className="space-y-4">
             <div>
-              <Label htmlFor="password" className="text-white">
+              <Label htmlFor="password" className="text-foreground">
                 Access Password
               </Label>
               <Input
@@ -110,7 +110,7 @@ export function ConnectContent() {
                 value={accessPassword}
                 onChange={(e) => setAccessPassword(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && handleUnlock()}
-                className="bg-[#1a1f35] border-gray-700 text-white"
+                className="bg-secondary border-border text-foreground"
               />
             </div>
 
@@ -123,11 +123,11 @@ export function ConnectContent() {
             <Button
               onClick={handleUnlock}
               disabled={loading}
-              className="w-full bg-[#00D4AA] hover:bg-[#00D4AA]/90 text-[#0C1222]"
+              className="w-full bg-primary hover:bg-primary/90 text-primary-foreground"
             >
               {loading ? (
                 <>
-                  <div className="w-4 h-4 mr-2 animate-spin rounded-full border-2 border-[#0C1222] border-t-transparent" />
+                  <div className="w-4 h-4 mr-2 animate-spin rounded-full border-2 border-primary-foreground border-t-transparent" />
                   Unlocking...
                 </>
               ) : (
@@ -146,7 +146,7 @@ export function ConnectContent() {
   if (!serverInfo) {
     return (
       <div className="flex items-center justify-center py-12">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#00D4AA]"></div>
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
       </div>
     );
   }
@@ -164,16 +164,16 @@ export function ConnectContent() {
       </Card>
 
       {/* Server Address */}
-      <Card className="p-6 bg-[#0C1222] border-gray-800">
+      <Card className="p-6 bg-card ">
         <div className="flex items-center gap-3 mb-4">
-          <Server className="w-5 h-5 text-[#00D4AA]" />
-          <h3 className="text-lg font-semibold text-white">Server Address</h3>
+          <Server className="w-5 h-5 text-primary" />
+          <h3 className="text-lg font-semibold text-foreground">Server Address</h3>
         </div>
         <div className="space-y-4">
           <div className="flex items-end gap-2">
             <div className="flex-1">
-              <Label className="text-gray-400 text-sm">IP Address</Label>
-              <div className="text-2xl font-mono font-bold text-white">
+              <Label className="text-muted-foreground text-sm">IP Address</Label>
+              <div className="text-2xl font-mono font-bold text-foreground">
                 {serverInfo.address}
               </div>
             </div>
@@ -182,8 +182,8 @@ export function ConnectContent() {
 
           <div className="flex items-end gap-2">
             <div className="flex-1">
-              <Label className="text-gray-400 text-sm">Port</Label>
-              <div className="text-2xl font-mono font-bold text-white">
+              <Label className="text-muted-foreground text-sm">Port</Label>
+              <div className="text-2xl font-mono font-bold text-foreground">
                 {serverInfo.port}
               </div>
             </div>
@@ -192,8 +192,8 @@ export function ConnectContent() {
 
           <div className="flex items-end gap-2">
             <div className="flex-1">
-              <Label className="text-gray-400 text-sm">Full Address</Label>
-              <div className="text-xl font-mono font-bold text-[#00D4AA]">
+              <Label className="text-muted-foreground text-sm">Full Address</Label>
+              <div className="text-xl font-mono font-bold text-primary">
                 {serverInfo.address}:{serverInfo.port}
               </div>
             </div>
@@ -206,10 +206,10 @@ export function ConnectContent() {
       </Card>
 
       {/* Server Password */}
-      <Card className="p-6 bg-[#0C1222] border-gray-800">
+      <Card className="p-6 bg-card ">
         <div className="flex items-center gap-3 mb-4">
-          <Lock className="w-5 h-5 text-[#00D4AA]" />
-          <h3 className="text-lg font-semibold text-white">Server Password</h3>
+          <Lock className="w-5 h-5 text-primary" />
+          <h3 className="text-lg font-semibold text-foreground">Server Password</h3>
         </div>
         <div className="flex items-center gap-2">
           <div className="flex-1">
@@ -218,11 +218,11 @@ export function ConnectContent() {
                 type={showPassword ? 'text' : 'password'}
                 value={serverInfo.password}
                 readOnly
-                className="bg-[#1a1f35] border-gray-700 text-white font-mono pr-10"
+                className="bg-secondary border-border text-foreground font-mono pr-10"
               />
               <button
                 onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white"
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
               >
                 {showPassword ? (
                   <EyeOff className="w-4 h-4" />
@@ -237,20 +237,20 @@ export function ConnectContent() {
       </Card>
 
       {/* Server Info */}
-      <Card className="p-6 bg-[#0C1222] border-gray-800">
-        <h3 className="text-lg font-semibold text-white mb-4">
+      <Card className="p-6 bg-card ">
+        <h3 className="text-lg font-semibold text-foreground mb-4">
           Server Information
         </h3>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
-            <Label className="text-gray-400 text-sm">Version</Label>
-            <div className="text-lg font-semibold text-white">
+            <Label className="text-muted-foreground text-sm">Version</Label>
+            <div className="text-lg font-semibold text-foreground">
               {serverInfo.version}
             </div>
           </div>
           <div>
-            <Label className="text-gray-400 text-sm">Max Players</Label>
-            <div className="text-lg font-semibold text-white">
+            <Label className="text-muted-foreground text-sm">Max Players</Label>
+            <div className="text-lg font-semibold text-foreground">
               {serverInfo.maxPlayers}
             </div>
           </div>
@@ -258,30 +258,30 @@ export function ConnectContent() {
       </Card>
 
       {/* How to Connect */}
-      <Card className="p-6 bg-[#0C1222] border-gray-800">
-        <h3 className="text-lg font-semibold text-white mb-4">
+      <Card className="p-6 bg-card ">
+        <h3 className="text-lg font-semibold text-foreground mb-4">
           How to Connect
         </h3>
         <ol className="space-y-3 text-gray-300">
           <li className="flex gap-3">
-            <span className="flex-shrink-0 flex items-center justify-center w-6 h-6 rounded-full bg-[#00D4AA] text-[#0C1222] text-sm font-bold">
+            <span className="flex-shrink-0 flex items-center justify-center w-6 h-6 rounded-full bg-primary text-primary-foreground text-sm font-bold">
               1
             </span>
             <span>Launch Hytale and navigate to Multiplayer</span>
           </li>
           <li className="flex gap-3">
-            <span className="flex-shrink-0 flex items-center justify-center w-6 h-6 rounded-full bg-[#00D4AA] text-[#0C1222] text-sm font-bold">
+            <span className="flex-shrink-0 flex items-center justify-center w-6 h-6 rounded-full bg-primary text-primary-foreground text-sm font-bold">
               2
             </span>
             <span>
               Click "Add Server" and enter the server address:{' '}
-              <code className="px-2 py-1 rounded bg-[#1a1f35] text-[#00D4AA] font-mono">
+              <code className="px-2 py-1 rounded bg-secondary text-primary font-mono">
                 {serverInfo.address}:{serverInfo.port}
               </code>
             </span>
           </li>
           <li className="flex gap-3">
-            <span className="flex-shrink-0 flex items-center justify-center w-6 h-6 rounded-full bg-[#00D4AA] text-[#0C1222] text-sm font-bold">
+            <span className="flex-shrink-0 flex items-center justify-center w-6 h-6 rounded-full bg-primary text-primary-foreground text-sm font-bold">
               3
             </span>
             <span>
@@ -289,7 +289,7 @@ export function ConnectContent() {
             </span>
           </li>
           <li className="flex gap-3">
-            <span className="flex-shrink-0 flex items-center justify-center w-6 h-6 rounded-full bg-[#00D4AA] text-[#0C1222] text-sm font-bold">
+            <span className="flex-shrink-0 flex items-center justify-center w-6 h-6 rounded-full bg-primary text-primary-foreground text-sm font-bold">
               4
             </span>
             <span>Join and enjoy!</span>
