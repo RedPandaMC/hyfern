@@ -10,7 +10,7 @@ import type { CurseForgeMod } from '@/types/curseforge';
 interface ModCardProps {
   mod: CurseForgeMod;
   isInstalled: boolean;
-  onInstall: () => void;
+  onViewDetails: () => void;
 }
 
 // Core plugin IDs that cannot be uninstalled
@@ -21,7 +21,7 @@ const CORE_PLUGINS = [
   'apexhosting-prometheusexporter'
 ];
 
-export function ModCard({ mod, isInstalled, onInstall }: ModCardProps) {
+export function ModCard({ mod, isInstalled, onViewDetails }: ModCardProps) {
   const [showDetails, setShowDetails] = useState(false);
   const isCoreMod = CORE_PLUGINS.includes(mod.slug.toLowerCase());
 
@@ -153,11 +153,11 @@ export function ModCard({ mod, isInstalled, onInstall }: ModCardProps) {
             </Button>
           ) : (
             <Button
-              onClick={onInstall}
+              onClick={onViewDetails}
               className="flex-1"
             >
               <Download className="w-4 h-4 mr-2" />
-              Install
+              View Details
             </Button>
           )}
 

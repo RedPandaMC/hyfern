@@ -4,7 +4,7 @@
  */
 
 const CURSEFORGE_API_BASE = 'https://api.curseforge.com';
-const HYTALE_GAME_ID = process.env.CURSEFORGE_GAME_ID || '73247'; // Hytale game ID
+const HYTALE_GAME_ID = process.env.CURSEFORGE_GAME_ID || '70216'; // Hytale game ID
 const MOD_CLASS_ID = process.env.CURSEFORGE_MOD_CLASS_ID || '1'; // Mods class
 
 export interface CurseForgeMod {

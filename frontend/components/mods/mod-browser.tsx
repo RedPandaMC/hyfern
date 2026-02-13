@@ -11,11 +11,11 @@ import { ModCard } from './mod-card';
 import type { CurseForgeMod, CurseForgeCategory } from '@/types/curseforge';
 
 interface ModBrowserProps {
-  onInstall: (mod: CurseForgeMod) => void;
+  onViewDetails: (mod: CurseForgeMod) => void;
   installedModIds: number[];
 }
 
-export function ModBrowser({ onInstall, installedModIds }: ModBrowserProps) {
+export function ModBrowser({ onViewDetails, installedModIds }: ModBrowserProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('');
   const [sortBy, setSortBy] = useState<string>('Popularity');
@@ -163,7 +163,7 @@ export function ModBrowser({ onInstall, installedModIds }: ModBrowserProps) {
                 key={mod.id}
                 mod={mod}
                 isInstalled={installedModIds.includes(mod.id)}
-                onInstall={() => onInstall(mod)}
+                onViewDetails={() => onViewDetails(mod)}
               />
             ))}
           </div>

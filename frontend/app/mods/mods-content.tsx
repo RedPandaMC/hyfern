@@ -17,6 +17,8 @@ import {
 } from '@/components/ui/dialog';
 import { ModBrowser } from '@/components/mods/mod-browser';
 import { InstalledMods } from '@/components/mods/installed-mods';
+import { ModDetailsDialog } from '@/components/mods/mod-details-dialog';
+import { DownloadProgressList, type DownloadProgress } from '@/components/mods/download-progress';
 import type { CurseForgeMod } from '@/types/curseforge';
 
 interface InstalledMod {
@@ -39,15 +41,18 @@ interface InstalledMod {
 export function ModsContent() {
   const [installedMods, setInstalledMods] = useState<InstalledMod[]>([]);
   const [loading, setLoading] = useState(true);
-  const [installing, setInstalling] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [selectedMod, setSelectedMod] = useState<CurseForgeMod | null>(null);
-  const [selectedFile, setSelectedFile] = useState<number | null>(null);
-  const [showInstallDialog, setShowInstallDialog] = useState(false);
+  const [showDetailsDialog, setShowDetailsDialog] = useState(false);
   const [restartRequired, setRestartRequired] = useState(false);
   const [curseforgeEnabled, setCurseforgeEnabled] = useState(false);
   const [configLoaded, setConfigLoaded] = useState(false);
   const [dragOver, setDragOver] = useState(false);
+
+  // Download queue management
+  const [downloads, setDownloads] = useState<DownloadProgress[]>([]);
+  const [activeDownloadsCount, setActiveDownloadsCount] = useState(0);
+  const MAX_PARALLEL_DOWNLOADS = 5;
 
   useEffect(() => {
     fetchInstalledMods();
@@ -83,64 +88,130 @@ export function ModsContent() {
     }
   };
 
-  const handleInstallClick = async (mod: CurseForgeMod) => {
-    const isInstalled = installedMods.some((m) => m.curseforgeId === mod.id);
-    if (isInstalled) {
-      toast.error('This mod is already installed');
-      return;
-    }
-
-    const latestFile = mod.latestFiles[0];
-    if (!latestFile) {
-      toast.error('No files available for this mod');
-      return;
-    }
-
+  const handleViewDetails = (mod: CurseForgeMod) => {
     setSelectedMod(mod);
-    setSelectedFile(latestFile.id);
-    setShowInstallDialog(true);
+    setShowDetailsDialog(true);
   };
 
-  const handleConfirmInstall = async () => {
-    if (!selectedMod || !selectedFile) return;
+  const handleInstall = async (modId: number, fileId: number) => {
+    if (!modId || !fileId) return;
 
+    // Get mod info from selectedMod or fetch it
+    const modName = selectedMod?.name || `Mod ${modId}`;
+    const fileName = selectedMod?.latestFiles.find(f => f.id === fileId)?.fileName || 'Unknown';
+
+    // Create download entry
+    const downloadId = `${modId}-${fileId}-${Date.now()}`;
+    const newDownload: DownloadProgress = {
+      id: downloadId,
+      modId,
+      fileId,
+      modName,
+      fileName,
+      stage: 'queued',
+      progress: 0,
+      message: 'Waiting in queue...',
+    };
+
+    setDownloads(prev => [...prev, newDownload]);
+    setShowDetailsDialog(false);
+    setSelectedMod(null);
+
+    // Process queue
+    processDownloadQueue();
+  };
+
+  const processDownloadQueue = useCallback(async () => {
+    setDownloads(prev => {
+      const queued = prev.filter(d => d.stage === 'queued');
+      const active = prev.filter(d => d.stage !== 'queued' && d.stage !== 'complete' && d.stage !== 'error');
+
+      // Start new downloads if under limit
+      if (active.length < MAX_PARALLEL_DOWNLOADS && queued.length > 0) {
+        const toStart = queued.slice(0, MAX_PARALLEL_DOWNLOADS - active.length);
+
+        toStart.forEach(download => {
+          startDownload(download.id, download.modId, download.fileId);
+        });
+      }
+
+      return prev;
+    });
+  }, [MAX_PARALLEL_DOWNLOADS]);
+
+  const startDownload = async (downloadId: string, modId: number, fileId: number) => {
     try {
-      setInstalling(true);
-
-      const response = await fetch('/api/mods/install', {
+      const response = await fetch('/api/mods/install-stream', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          modId: selectedMod.id,
-          fileId: selectedFile,
-        }),
+        body: JSON.stringify({ modId, fileId }),
       });
 
       if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || 'Failed to install mod');
+        throw new Error('Failed to start download');
       }
 
-      const data = await response.json();
-      toast.success(`${selectedMod.name} installed successfully!`);
+      const reader = response.body?.getReader();
+      const decoder = new TextDecoder();
 
-      if (data.warnings?.missingDependencies?.length > 0) {
-        toast.warning(
-          `Missing dependencies: ${data.warnings.missingDependencies.join(', ')}`,
-          { duration: 10000 }
-        );
+      if (!reader) {
+        throw new Error('No response body');
       }
 
-      await fetchInstalledMods();
-      setRestartRequired(true);
-      setShowInstallDialog(false);
-      setSelectedMod(null);
-      setSelectedFile(null);
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        const chunk = decoder.decode(value);
+        const lines = chunk.split('\n');
+
+        for (const line of lines) {
+          if (line.startsWith('data: ')) {
+            const data = JSON.parse(line.slice(6));
+
+            setDownloads(prev => prev.map(d =>
+              d.id === downloadId
+                ? {
+                    ...d,
+                    stage: data.stage,
+                    progress: data.progress || d.progress,
+                    message: data.message || d.message,
+                    downloaded: data.downloaded,
+                    fileSize: data.fileSize || d.fileSize,
+                    error: data.error,
+                  }
+                : d
+            ));
+
+            if (data.stage === 'complete') {
+              const modName = downloads.find(dl => dl.id === downloadId)?.modName || 'Mod';
+              toast.success(`${modName} installed successfully!`);
+
+              if (data.warnings?.missingDependencies?.length > 0) {
+                toast.warning(
+                  `Missing dependencies: ${data.warnings.missingDependencies.join(', ')}`,
+                  { duration: 10000 }
+                );
+              }
+
+              await fetchInstalledMods();
+              setRestartRequired(true);
+              processDownloadQueue(); // Start next in queue
+            } else if (data.stage === 'error') {
+              toast.error(`Failed to install: ${data.error}`);
+              processDownloadQueue(); // Start next in queue
+            }
+          }
+        }
+      }
     } catch (error) {
-      console.error('Failed to install mod:', error);
-      toast.error(error instanceof Error ? error.message : 'Failed to install mod');
-    } finally {
-      setInstalling(false);
+      console.error('Download failed:', error);
+      setDownloads(prev => prev.map(d =>
+        d.id === downloadId
+          ? { ...d, stage: 'error', error: error instanceof Error ? error.message : 'Download failed' }
+          : d
+      ));
+      processDownloadQueue(); // Start next in queue
     }
   };
 
@@ -242,6 +313,11 @@ export function ModsContent() {
 
   return (
     <div className="space-y-6">
+      {/* Download Progress */}
+      {downloads.length > 0 && (
+        <DownloadProgressList downloads={downloads} />
+      )}
+
       {/* Restart Required Banner */}
       {restartRequired && (
         <Card className="p-4 bg-yellow-500/10 border-yellow-500/20">
@@ -317,7 +393,7 @@ export function ModsContent() {
         {curseforgeEnabled && (
           <TabsContent value="browse" className="space-y-6">
             <ModBrowser
-              onInstall={handleInstallClick}
+              onViewDetails={handleViewDetails}
               installedModIds={installedMods
                 .filter((m) => m.curseforgeId != null)
                 .map((m) => m.curseforgeId!)}
@@ -390,56 +466,18 @@ export function ModsContent() {
         </TabsContent>
       </Tabs>
 
-      {/* Install Confirmation Dialog */}
-      <Dialog open={showInstallDialog} onOpenChange={setShowInstallDialog}>
-        <DialogContent className="bg-card">
-          <DialogHeader>
-            <DialogTitle>Install Mod</DialogTitle>
-            <DialogDescription className="text-muted-foreground">
-              Are you sure you want to install{' '}
-              <span className="font-semibold text-foreground">
-                {selectedMod?.name}
-              </span>
-              ?
-            </DialogDescription>
-          </DialogHeader>
-          <div className="py-4 space-y-2 text-sm text-muted-foreground">
-            <p>This will:</p>
-            <ul className="list-disc list-inside space-y-1 pl-2">
-              <li>Download the mod from CurseForge</li>
-              <li>Install it to the server&apos;s mods folder</li>
-              <li>Require a server restart to load the mod</li>
-            </ul>
-          </div>
-          <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => setShowInstallDialog(false)}
-              className="border-border"
-              disabled={installing}
-            >
-              Cancel
-            </Button>
-            <Button
-              onClick={handleConfirmInstall}
-              disabled={installing}
-              className="bg-primary hover:bg-primary/90 text-primary-foreground"
-            >
-              {installing ? (
-                <>
-                  <div className="w-4 h-4 mr-2 animate-spin rounded-full border-2 border-primary-foreground border-t-transparent" />
-                  Installing...
-                </>
-              ) : (
-                <>
-                  <Download className="w-4 h-4 mr-2" />
-                  Install
-                </>
-              )}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      {/* Mod Details Dialog */}
+      <ModDetailsDialog
+        mod={selectedMod}
+        open={showDetailsDialog}
+        onClose={() => {
+          setShowDetailsDialog(false);
+          setSelectedMod(null);
+        }}
+        onInstall={handleInstall}
+        installing={false}
+        isInstalled={selectedMod ? installedMods.some((m) => m.curseforgeId === selectedMod.id) : false}
+      />
     </div>
   );
 }
