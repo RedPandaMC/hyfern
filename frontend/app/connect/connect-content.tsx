@@ -241,7 +241,7 @@ export function ConnectContent() {
         <h3 className="text-lg font-semibold text-white mb-4">
           Server Information
         </h3>
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
             <Label className="text-gray-400 text-sm">Version</Label>
             <div className="text-lg font-semibold text-white">

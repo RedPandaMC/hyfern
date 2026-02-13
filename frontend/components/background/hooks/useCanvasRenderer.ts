@@ -6,7 +6,7 @@
 
 import { useCallback, useRef } from 'react';
 import type { Constellation, PrideFlagType } from '../types';
-import { getPrideColor } from '../utils';
+import { getPrideColor, getConstellationBounds, toRelativeX } from '../utils';
 import { DEPTH_MULTIPLIERS } from '../constants';
 
 interface UseCanvasRendererOptions {
@@ -58,6 +58,9 @@ export function useCanvasRenderer({
 
         const assignedFlag = prideMode ? constellationFlags[constellationIndex] : null;
 
+        // Pre-compute constellation bounds for pride color mapping
+        const bounds = assignedFlag ? getConstellationBounds(constellation.stars) : null;
+
         // Calculate parallax offset for this layer
         const maxMove = 40;
         const offsetX = deltaX * depth * maxMove;
@@ -84,30 +87,27 @@ export function useCanvasRenderer({
           const x2 = rawX2 - dx * shrink;
           const y2 = rawY2 - dy * shrink;
 
-          // Pride mode: Create horizontal STEPPED gradient (left to right)
-          if (prideMode && assignedFlag) {
+          // Pride mode: Create gradient using constellation-relative positions
+          if (prideMode && assignedFlag && bounds) {
             const gradient = ctx.createLinearGradient(x1, y1, x2, y2);
-            const lineLength = Math.abs(x2 - x1); // Use horizontal distance
 
-            if (lineLength < 1) {
-              const color = getPrideColor(x1, assignedFlag, width);
-              gradient.addColorStop(0, color || 'rgba(180, 200, 255, 0.4)');
-              gradient.addColorStop(1, color || 'rgba(180, 200, 255, 0.4)');
-            } else {
-              const steps = Math.max(3, Math.floor(lineLength / 50));
+            // Map start/end to constellation-relative percentages
+            const relStart = toRelativeX(start.x, bounds);
+            const relEnd = toRelativeX(end.x, bounds);
 
-              for (let i = 0; i <= steps; i++) {
-                const t = i / steps;
-                const sampleX = x1 + (x2 - x1) * t; // Use X position
-                const color = getPrideColor(sampleX, assignedFlag, width);
+            const steps = Math.max(3, Math.ceil(Math.abs(relEnd - relStart) * 10));
 
-                if (i > 0) {
-                  const prevX = x1 + (x2 - x1) * ((i - 1) / steps);
-                  const prevColor = getPrideColor(prevX, assignedFlag, width);
-                  gradient.addColorStop(t - 0.001, prevColor || 'rgba(180, 200, 255, 0.4)');
-                }
-                gradient.addColorStop(t, color || 'rgba(180, 200, 255, 0.4)');
+            for (let i = 0; i <= steps; i++) {
+              const t = i / steps;
+              const relX = relStart + (relEnd - relStart) * t;
+              const color = getPrideColor(relX, assignedFlag);
+
+              if (i > 0) {
+                const prevRelX = relStart + (relEnd - relStart) * ((i - 1) / steps);
+                const prevColor = getPrideColor(prevRelX, assignedFlag);
+                gradient.addColorStop(t - 0.001, prevColor || 'rgba(180, 200, 255, 0.4)');
               }
+              gradient.addColorStop(t, color || 'rgba(180, 200, 255, 0.4)');
             }
 
             ctx.strokeStyle = gradient;
@@ -122,9 +122,9 @@ export function useCanvasRenderer({
           for (let i = 3; i > 0; i--) {
             ctx.shadowBlur = i * 8;
 
-            if (prideMode && assignedFlag) {
-              const midX = (x1 + x2) / 2;
-              ctx.shadowColor = getPrideColor(midX, assignedFlag, width) || 'rgba(200, 220, 255, 0.3)';
+            if (prideMode && assignedFlag && bounds) {
+              const midRelX = toRelativeX((start.x + end.x) / 2, bounds);
+              ctx.shadowColor = getPrideColor(midRelX, assignedFlag) || 'rgba(200, 220, 255, 0.3)';
             } else {
               ctx.shadowColor = `rgba(200, 220, 255, ${depth * 0.3})`;
             }

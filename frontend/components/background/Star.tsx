@@ -13,13 +13,14 @@ interface StarProps {
   depth: number;
   prideMode: boolean;
   assignedFlag: PrideFlagType | null;
-  containerWidth: number;
+  /** Constellation-relative X percentage [0..1] for pride color mapping */
+  relativeX: number;
 }
 
 export const Star = React.memo(
-  function Star({ star, depth, prideMode, assignedFlag, containerWidth }: StarProps) {
+  function Star({ star, depth, prideMode, assignedFlag, relativeX }: StarProps) {
     const prideColor =
-      prideMode && assignedFlag ? getPrideColor(star.x, assignedFlag, containerWidth) : null;
+      prideMode && assignedFlag ? getPrideColor(relativeX, assignedFlag) : null;
 
     const baseColor = `rgba(220, 235, 255, ${0.3 + depth * 0.7})`;
     const glowColor = 'rgba(200, 220, 255, 0.6)';
@@ -44,7 +45,6 @@ export const Star = React.memo(
     );
   },
   (prev, next) => {
-    // Only re-render if pride mode changes or flag assignment changes
     return (
       prev.prideMode === next.prideMode &&
       prev.assignedFlag === next.assignedFlag &&

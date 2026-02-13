@@ -34,7 +34,6 @@ export function ConstellationBackground({ children }: ConstellationBackgroundPro
   const [constellations, setConstellations] = useState<Constellation[]>([]);
   const [prideMode, setPrideMode] = useState(false);
   const [constellationFlags, setConstellationFlags] = useState<Record<number, PrideFlagType>>({});
-  const [containerSize, setContainerSize] = useState({ width: 0, height: 0 });
 
   // Performance tier detection
   const performanceTier = usePerformanceTier();
@@ -51,7 +50,6 @@ export function ConstellationBackground({ children }: ConstellationBackgroundPro
     const height = window.innerHeight;
 
     setConstellations(generateConstellations(width, height));
-    setContainerSize({ width, height });
 
     // Initialize canvas size with DPR scaling for crisp lines
     if (canvasRef.current) {
@@ -68,8 +66,6 @@ export function ConstellationBackground({ children }: ConstellationBackgroundPro
     const handleResize = () => {
       const newWidth = window.innerWidth;
       const newHeight = window.innerHeight;
-
-      setContainerSize({ width: newWidth, height: newHeight });
 
       if (canvasRef.current) {
         const dpr = window.devicePixelRatio || 1;
@@ -199,7 +195,6 @@ export function ConstellationBackground({ children }: ConstellationBackgroundPro
               depth={depth}
               prideMode={prideMode}
               assignedFlag={constellationFlags[index] || null}
-              containerWidth={containerSize.width}
             />
           );
         })}

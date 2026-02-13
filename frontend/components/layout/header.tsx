@@ -1,7 +1,9 @@
 "use client";
 
-import { useState } from "react";
-import { Moon, Sun, User } from "@/lib/icons";
+import { signOut } from "next-auth/react";
+import { useTheme } from "next-themes";
+import Link from "next/link";
+import { Moon, Sun, User, Settings, LogOut } from "@/lib/icons";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -40,7 +42,7 @@ export function Header({
   tps = 20,
   username = "Admin",
 }: HeaderProps) {
-  const [isDark, setIsDark] = useState(true);
+  const { theme, setTheme } = useTheme();
 
   const statusConfig = {
     online: {
@@ -62,26 +64,21 @@ export function Header({
 
   const status = statusConfig[serverStatus];
 
-  const handleLogout = async () => {
-    // TODO: Implement logout functionality
-    console.log("Logout clicked");
-  };
-
   return (
-    <header className="flex h-16 items-center justify-between border-b border-border bg-card px-6">
+    <header className="flex h-16 items-center justify-between border-b border-border bg-card pl-14 pr-4 md:px-6">
       {/* Left side - Page title and server status */}
-      <div className="flex items-center space-x-6">
-        <h1 className="text-xl font-semibold">{pageTitle}</h1>
+      <div className="flex items-center space-x-3 sm:space-x-6 min-w-0">
+        <h1 className="text-lg sm:text-xl font-semibold truncate">{pageTitle}</h1>
 
-        <Separator orientation="vertical" className="h-8" />
+        <Separator orientation="vertical" className="h-8 hidden sm:block" />
 
         {/* Server Status */}
         <TooltipProvider>
           <Tooltip>
             <TooltipTrigger asChild>
-              <div className="flex items-center space-x-2">
+              <div className="flex items-center space-x-2 flex-shrink-0">
                 <div className={`h-2 w-2 rounded-full ${status.color} animate-pulse`} />
-                <span className="text-sm font-medium">{status.text}</span>
+                <span className="text-sm font-medium hidden sm:inline">{status.text}</span>
               </div>
             </TooltipTrigger>
             <TooltipContent>
@@ -93,9 +90,9 @@ export function Header({
         {/* Quick Stats */}
         {serverStatus === "online" && (
           <>
-            <Separator orientation="vertical" className="h-8" />
+            <Separator orientation="vertical" className="h-8 hidden md:block" />
 
-            <div className="flex items-center space-x-4">
+            <div className="hidden md:flex items-center space-x-4">
               <TooltipProvider>
                 <Tooltip>
                   <TooltipTrigger asChild>
@@ -132,7 +129,7 @@ export function Header({
       </div>
 
       {/* Right side - Theme toggle and user menu */}
-      <div className="flex items-center space-x-4">
+      <div className="flex items-center space-x-2 sm:space-x-4 flex-shrink-0">
         {/* Theme Toggle */}
         <TooltipProvider>
           <Tooltip>
@@ -140,10 +137,10 @@ export function Header({
               <Button
                 variant="ghost"
                 size="icon"
-                onClick={() => setIsDark(!isDark)}
+                onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
                 className="h-9 w-9"
               >
-                {isDark ? (
+                {theme === "dark" ? (
                   <Moon className="h-5 w-5" />
                 ) : (
                   <Sun className="h-5 w-5" />
@@ -172,19 +169,30 @@ export function Header({
               <div className="flex flex-col space-y-1">
                 <p className="text-sm font-medium leading-none">{username}</p>
                 <p className="text-xs leading-none text-muted-foreground">
-                  admin@hyfern.local
+                  Administrator
                 </p>
               </div>
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
-            <DropdownMenuItem>Profile</DropdownMenuItem>
-            <DropdownMenuItem>Settings</DropdownMenuItem>
+            <DropdownMenuItem asChild>
+              <Link href="/profile" className="cursor-pointer">
+                <User className="mr-2 h-4 w-4" />
+                <span>Profile</span>
+              </Link>
+            </DropdownMenuItem>
+            <DropdownMenuItem asChild>
+              <Link href="/settings" className="cursor-pointer">
+                <Settings className="mr-2 h-4 w-4" />
+                <span>Settings</span>
+              </Link>
+            </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem
-              onClick={handleLogout}
+              onClick={() => signOut({ callbackUrl: "/login" })}
               className="cursor-pointer text-destructive focus:text-destructive"
             >
-              Logout
+              <LogOut className="mr-2 h-4 w-4" />
+              <span>Logout</span>
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>

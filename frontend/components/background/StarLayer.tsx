@@ -4,9 +4,10 @@
 
 'use client';
 
-import React from 'react';
+import React, { useMemo } from 'react';
 import { Star } from './Star';
 import type { Star as StarType, PrideFlagType } from './types';
+import { getConstellationBounds, toRelativeX } from './utils';
 
 interface StarLayerProps {
   constellationId: number;
@@ -14,7 +15,6 @@ interface StarLayerProps {
   depth: number;
   prideMode: boolean;
   assignedFlag: PrideFlagType | null;
-  containerWidth: number;
 }
 
 export const StarLayer = React.memo(function StarLayer({
@@ -23,8 +23,10 @@ export const StarLayer = React.memo(function StarLayer({
   depth,
   prideMode,
   assignedFlag,
-  containerWidth,
 }: StarLayerProps) {
+  // Compute constellation X bounds once for pride color mapping
+  const bounds = useMemo(() => getConstellationBounds(stars), [stars]);
+
   return (
     <div
       className="star-layer absolute inset-0 pointer-events-none will-change-transform font-mono"
@@ -40,7 +42,7 @@ export const StarLayer = React.memo(function StarLayer({
           depth={depth}
           prideMode={prideMode}
           assignedFlag={assignedFlag}
-          containerWidth={containerWidth}
+          relativeX={toRelativeX(star.x, bounds)}
         />
       ))}
     </div>

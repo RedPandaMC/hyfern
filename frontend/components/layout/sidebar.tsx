@@ -1,5 +1,6 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { signOut } from "next-auth/react";
@@ -15,10 +16,12 @@ import {
   Users,
   LogOut,
   Terminal,
+  User,
 } from "@/lib/icons";
 import { cn } from "@/lib/utils";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Logo } from "@/components/logo";
+import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -62,20 +65,68 @@ interface SidebarProps {
   username?: string;
 }
 
+// Menu icon as inline SVG to avoid dependency on icons lib for layout-critical component
+function MenuIcon({ className }: { className?: string }) {
+  return (
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+      stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+      className={className}>
+      <line x1="3" y1="6" x2="21" y2="6" />
+      <line x1="3" y1="12" x2="21" y2="12" />
+      <line x1="3" y1="18" x2="21" y2="18" />
+    </svg>
+  );
+}
+
+function XIcon({ className }: { className?: string }) {
+  return (
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+      stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+      className={className}>
+      <line x1="18" y1="6" x2="6" y2="18" />
+      <line x1="6" y1="6" x2="18" y2="18" />
+    </svg>
+  );
+}
+
 export function Sidebar({ userRole = "ADMIN", username = "Admin" }: SidebarProps) {
   const pathname = usePathname();
+  const [mobileOpen, setMobileOpen] = useState(false);
+
+  // Close mobile sidebar on navigation
+  useEffect(() => {
+    setMobileOpen(false);
+  }, [pathname]);
+
+  // Close on escape key
+  useEffect(() => {
+    const handleKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setMobileOpen(false);
+    };
+    window.addEventListener("keydown", handleKey);
+    return () => window.removeEventListener("keydown", handleKey);
+  }, []);
 
   const visibleLinks = navLinks.filter(
     (link) => ROLE_LEVEL[userRole] >= ROLE_LEVEL[link.minRole]
   );
 
-  return (
-    <aside className="flex w-64 flex-col border-r border-border bg-card">
+  const sidebarContent = (
+    <>
       {/* Logo */}
-      <div className="flex h-16 items-center border-b border-border px-6">
+      <div className="flex h-16 items-center justify-between border-b border-border px-6">
         <Link href="/dashboard" className="flex items-center space-x-2">
           <Logo size={28} showText={true} />
         </Link>
+        {/* Close button on mobile */}
+        <Button
+          variant="ghost"
+          size="icon"
+          className="md:hidden h-8 w-8"
+          onClick={() => setMobileOpen(false)}
+        >
+          <XIcon className="h-5 w-5" />
+        </Button>
       </div>
 
       {/* Navigation */}
@@ -97,7 +148,7 @@ export function Sidebar({ userRole = "ADMIN", username = "Admin" }: SidebarProps
                   : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
               )}
             >
-              <Icon className="h-5 w-5" />
+              <Icon className="h-5 w-5 flex-shrink-0" />
               <span>{link.label}</span>
             </Link>
           );
@@ -109,13 +160,13 @@ export function Sidebar({ userRole = "ADMIN", username = "Admin" }: SidebarProps
         <DropdownMenu>
           <DropdownMenuTrigger className="w-full">
             <div className="flex items-center space-x-3 rounded-lg px-3 py-2 transition-colors hover:bg-accent">
-              <Avatar className="h-8 w-8">
+              <Avatar className="h-8 w-8 flex-shrink-0">
                 <AvatarFallback className="bg-primary text-primary-foreground text-xs">
                   {username.slice(0, 2).toUpperCase()}
                 </AvatarFallback>
               </Avatar>
-              <div className="flex flex-1 flex-col items-start text-left">
-                <span className="text-sm font-medium">{username}</span>
+              <div className="flex flex-1 flex-col items-start text-left min-w-0">
+                <span className="text-sm font-medium truncate w-full">{username}</span>
                 <span className="text-xs text-muted-foreground">{userRole}</span>
               </div>
             </div>
@@ -123,6 +174,12 @@ export function Sidebar({ userRole = "ADMIN", username = "Admin" }: SidebarProps
           <DropdownMenuContent align="end" className="w-56">
             <DropdownMenuLabel>My Account</DropdownMenuLabel>
             <DropdownMenuSeparator />
+            <DropdownMenuItem asChild>
+              <Link href="/profile" className="cursor-pointer">
+                <User className="mr-2 h-4 w-4" />
+                <span>Profile</span>
+              </Link>
+            </DropdownMenuItem>
             <DropdownMenuItem asChild>
               <Link href="/settings" className="cursor-pointer">
                 <Settings className="mr-2 h-4 w-4" />
@@ -140,6 +197,40 @@ export function Sidebar({ userRole = "ADMIN", username = "Admin" }: SidebarProps
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
-    </aside>
+    </>
+  );
+
+  return (
+    <>
+      {/* Mobile hamburger button - positioned fixed at top-left */}
+      <Button
+        variant="ghost"
+        size="icon"
+        className="fixed top-3 left-3 z-50 md:hidden h-10 w-10 bg-card/80 backdrop-blur-sm border border-border"
+        onClick={() => setMobileOpen(true)}
+      >
+        <MenuIcon className="h-5 w-5" />
+      </Button>
+
+      {/* Mobile overlay */}
+      {mobileOpen && (
+        <div
+          className="fixed inset-0 z-40 bg-black/50 backdrop-blur-sm md:hidden"
+          onClick={() => setMobileOpen(false)}
+        />
+      )}
+
+      {/* Sidebar - hidden on mobile, slide-in when open */}
+      <aside
+        className={cn(
+          "flex w-64 flex-col border-r border-border bg-card flex-shrink-0",
+          // Mobile: fixed overlay sidebar
+          "fixed inset-y-0 left-0 z-50 transition-transform duration-200 ease-in-out md:relative md:translate-x-0",
+          mobileOpen ? "translate-x-0" : "-translate-x-full"
+        )}
+      >
+        {sidebarContent}
+      </aside>
+    </>
   );
 }

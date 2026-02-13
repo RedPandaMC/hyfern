@@ -1,54 +1,92 @@
 @import "tailwindcss";
 
-/* HyFern Dark Theme - Navy & Teal */
+/* HyFern Theme System */
 @layer base {
+  /* Light theme (default) */
   :root {
     /* Background colors */
-    --background: 222 47% 11%;           /* #0C1222 - Deep navy */
-    --foreground: 210 40% 98%;           /* #F8FAFC - Light text */
+    --background: 210 40% 98%;           /* #F8FAFC - Light background */
+    --foreground: 222 47% 11%;           /* #0C1222 - Dark text */
 
     /* Card/Surface colors */
-    --card: 222 47% 15%;                 /* Slightly lighter navy */
-    --card-foreground: 210 40% 98%;
+    --card: 0 0% 100%;                   /* White */
+    --card-foreground: 222 47% 11%;
 
     /* Popover colors */
-    --popover: 222 47% 15%;
-    --popover-foreground: 210 40% 98%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 222 47% 11%;
 
     /* Primary/Accent - Teal */
-    --primary: 172 100% 42%;             /* #00D4AA - Bright teal */
-    --primary-foreground: 222 47% 11%;   /* Dark text on teal */
+    --primary: 172 100% 35%;             /* #00B392 - Slightly deeper teal for light */
+    --primary-foreground: 0 0% 100%;     /* White text on teal */
 
     /* Secondary colors */
-    --secondary: 217 33% 17%;            /* Darker navy variant */
-    --secondary-foreground: 210 40% 98%;
+    --secondary: 210 40% 96%;            /* Light gray */
+    --secondary-foreground: 222 47% 11%;
 
     /* Muted colors */
-    --muted: 217 33% 17%;
-    --muted-foreground: 215 20% 65%;     /* Muted gray-blue text */
+    --muted: 210 40% 96%;
+    --muted-foreground: 215 16% 47%;     /* Muted gray text */
 
     /* Accent colors */
-    --accent: 217 33% 17%;
-    --accent-foreground: 210 40% 98%;
+    --accent: 210 40% 96%;
+    --accent-foreground: 222 47% 11%;
 
     /* Destructive/Error colors */
-    --destructive: 0 84% 60%;            /* Red for errors */
-    --destructive-foreground: 210 40% 98%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
 
     /* Border colors */
-    --border: 217 33% 17%;               /* Subtle borders */
-    --input: 217 33% 17%;                /* Input borders */
-    --ring: 172 100% 42%;                /* Teal focus ring */
+    --border: 214 32% 91%;              /* Light border */
+    --input: 214 32% 91%;
+    --ring: 172 100% 35%;               /* Teal focus ring */
 
-    /* Chart colors (for recharts) */
-    --chart-1: 172 100% 42%;             /* Teal */
-    --chart-2: 197 71% 52%;              /* Blue */
-    --chart-3: 142 71% 45%;              /* Green */
-    --chart-4: 48 96% 53%;               /* Yellow */
-    --chart-5: 340 75% 55%;              /* Red-pink */
+    /* Chart colors */
+    --chart-1: 172 100% 35%;
+    --chart-2: 197 71% 45%;
+    --chart-3: 142 71% 40%;
+    --chart-4: 48 96% 48%;
+    --chart-5: 340 75% 50%;
 
     /* Border radius */
     --radius: 0.5rem;
+  }
+
+  /* Dark theme */
+  .dark {
+    --background: 222 47% 11%;           /* #0C1222 - Deep navy */
+    --foreground: 210 40% 98%;           /* #F8FAFC - Light text */
+
+    --card: 222 47% 15%;
+    --card-foreground: 210 40% 98%;
+
+    --popover: 222 47% 15%;
+    --popover-foreground: 210 40% 98%;
+
+    --primary: 172 100% 42%;             /* #00D4AA - Bright teal */
+    --primary-foreground: 222 47% 11%;
+
+    --secondary: 217 33% 17%;
+    --secondary-foreground: 210 40% 98%;
+
+    --muted: 217 33% 17%;
+    --muted-foreground: 215 20% 65%;
+
+    --accent: 217 33% 17%;
+    --accent-foreground: 210 40% 98%;
+
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 210 40% 98%;
+
+    --border: 217 33% 17%;
+    --input: 217 33% 17%;
+    --ring: 172 100% 42%;
+
+    --chart-1: 172 100% 42%;
+    --chart-2: 197 71% 52%;
+    --chart-3: 142 71% 45%;
+    --chart-4: 48 96% 53%;
+    --chart-5: 340 75% 55%;
   }
 }
 

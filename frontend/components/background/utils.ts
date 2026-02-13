@@ -14,8 +14,15 @@ export function generateConstellations(width: number, height: number): Constella
   // Keep constellations well apart — at least 250px between centers
   const minDistance = 250;
 
-  // Generate 5-7 constellations across layers
-  const constellationCount = 5 + Math.floor(Math.random() * 3);
+  // Generate across a 3x3 area centered on the viewport so rotations
+  // (especially 180° around bottom-center) never show an empty sky.
+  const genWidth = width * 3;
+  const genHeight = height * 3;
+  const offsetX = -width;   // shift left by 1 viewport
+  const offsetY = -height;  // shift up by 1 viewport
+
+  // Generate 12-16 constellations to fill the larger area
+  const constellationCount = 12 + Math.floor(Math.random() * 5);
 
   for (let i = 0; i < constellationCount; i++) {
     // Determine layer (30% layer 1, 40% layer 2, 30% layer 3)
@@ -25,12 +32,12 @@ export function generateConstellations(width: number, height: number): Constella
     // Each constellation has 3-6 stars (smaller groups look more natural)
     const starCount = 3 + Math.floor(Math.random() * 4);
 
-    // Pick a center point with minimum distance from existing constellations
+    // Pick a center point within the extended 3x area
     let centerX: number, centerY: number;
     let attempts = 0;
     do {
-      centerX = width * (0.05 + Math.random() * 0.9);
-      centerY = height * (0.05 + Math.random() * 0.9);
+      centerX = offsetX + Math.random() * genWidth;
+      centerY = offsetY + Math.random() * genHeight;
       attempts++;
     } while (
       attempts < 50 &&
@@ -65,9 +72,9 @@ export function generateConstellations(width: number, height: number): Constella
     constellations.push({ layer, stars, connections });
   }
 
-  // Add scattered individual stars (no connections)
-  // Layer distribution: 35 dim (layer 1), 25 medium (layer 2), 10 bright (layer 3)
-  const scatterCounts: [1 | 2 | 3, number][] = [[1, 35], [2, 25], [3, 10]];
+  // Add scattered individual stars (no connections) across the extended area
+  // Scaled up for 3x3 coverage area
+  const scatterCounts: [1 | 2 | 3, number][] = [[1, 100], [2, 70], [3, 30]];
 
   for (const [layer, count] of scatterCounts) {
     const starChars =
@@ -83,8 +90,8 @@ export function generateConstellations(width: number, height: number): Constella
         stars: [
           {
             char: starChars[Math.floor(Math.random() * starChars.length)],
-            x: Math.random() * width,
-            y: Math.random() * height,
+            x: offsetX + Math.random() * genWidth,
+            y: offsetY + Math.random() * genHeight,
           },
         ],
         connections: [],
@@ -137,18 +144,17 @@ function generateNearestNeighborConnections(stars: Star[]): [number, number][] {
 }
 
 /**
- * Get pride color for a star based on X position and flag type
- * Uses STEPPED gradients (hard color transitions) for authentic flag appearance
- * Horizontal gradient from left to right across the constellation
+ * Get pride color for a star based on its relative position within the constellation.
+ * Uses STEPPED gradients (hard color transitions) for authentic flag appearance.
+ * The percentage is relative to the constellation's bounding box, not the screen.
  */
 export function getPrideColor(
-  xPosition: number,
+  relativePercentage: number,
   flagType: PrideFlagType | null,
-  containerWidth: number = typeof window !== 'undefined' ? window.innerWidth : 1000
 ): string | null {
   if (!flagType) return null;
 
-  const percentage = xPosition / containerWidth;
+  const percentage = Math.max(0, Math.min(1, relativePercentage));
   const colors = FLAG_PALETTES[flagType] || FLAG_PALETTES.rainbow;
 
   // Find which color band we're in (no interpolation - stepped gradient)
@@ -159,6 +165,32 @@ export function getPrideColor(
   }
 
   return colors[colors.length - 1].color;
+}
+
+/**
+ * Compute the X bounding box of a constellation's stars.
+ * Returns [minX, maxX] with a minimum spread so colours are distributed.
+ */
+export function getConstellationBounds(stars: Star[]): [number, number] {
+  if (stars.length === 0) return [0, 1];
+  let minX = Infinity, maxX = -Infinity;
+  for (const s of stars) {
+    if (s.x < minX) minX = s.x;
+    if (s.x > maxX) maxX = s.x;
+  }
+  // Ensure minimum spread so colours are distributed even for tight clusters
+  if (maxX - minX < 1) {
+    minX -= 0.5;
+    maxX += 0.5;
+  }
+  return [minX, maxX];
+}
+
+/**
+ * Convert an absolute X position to a constellation-relative percentage [0..1].
+ */
+export function toRelativeX(x: number, bounds: [number, number]): number {
+  return (x - bounds[0]) / (bounds[1] - bounds[0]);
 }
 
 /**

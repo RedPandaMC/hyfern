@@ -9,6 +9,7 @@ import { Badge } from '@/components/ui/badge';
 import { Logo } from '@/components/logo';
 import { ConstellationBackground } from '@/components/background';
 import { Lock, Copy, Check, Users, Activity, ExternalLink, Eye, EyeOff } from '@/lib/icons';
+import { ThemeToggle } from '@/components/theme-toggle';
 import { toast } from 'sonner';
 
 export default function HomePage() {
@@ -67,20 +68,21 @@ export default function HomePage() {
             <Logo size={32} showText={true} />
           </div>
 
-          <nav className="flex items-center gap-4">
-            <Link href="https://grafana.hyfern.us" target="_blank" rel="noopener noreferrer">
+          <nav className="flex items-center gap-2 sm:gap-4">
+            <Link href="https://grafana.hyfern.us" target="_blank" rel="noopener noreferrer" className="hidden sm:block">
               <Button variant="ghost" size="sm" className="text-white hover:bg-white/10">
                 <Activity className="mr-2 h-4 w-4" />
                 Analytics
                 <ExternalLink className="ml-1 h-3 w-3" />
               </Button>
             </Link>
-            <Link href="https://panel.hyfern.us" target="_blank" rel="noopener noreferrer">
+            <Link href="https://panel.hyfern.us" target="_blank" rel="noopener noreferrer" className="hidden sm:block">
               <Button variant="ghost" size="sm" className="text-white hover:bg-white/10">
                 Panel
                 <ExternalLink className="ml-1 h-3 w-3" />
               </Button>
             </Link>
+            <ThemeToggle className="text-white hover:bg-white/10 h-9 w-9" />
             <Link href="/login">
               <Button variant="outline" size="sm" className="border-white/20 bg-white/10 text-white hover:bg-white/20">
                 Admin Login
@@ -96,9 +98,9 @@ export default function HomePage() {
           {/* Logo and Welcome Section */}
           <div className="flex flex-col items-center gap-8">
             <div className="text-center space-y-6">
-              <div className="flex items-center justify-center gap-2">
-                <span className="text-4xl font-bitter font-bold text-white drop-shadow-lg">Welcome to</span>
-                <Logo size={48} showText={true} />
+              <div className="flex flex-col sm:flex-row items-center justify-center gap-2">
+                <span className="text-2xl sm:text-4xl font-bitter font-bold text-white drop-shadow-lg">Welcome to</span>
+                <Logo size={40} showText={true} />
               </div>
             </div>
             <p className="text-lg text-white/80 drop-shadow text-center">

@@ -11,6 +11,7 @@ import { Label } from '@/components/ui/label';
 import { Logo } from '@/components/logo';
 import { ConstellationBackground } from '@/components/background';
 import { ArrowLeft, Eye, EyeOff } from '@/lib/icons';
+import { ThemeToggle } from '@/components/theme-toggle';
 import { toast } from 'sonner';
 
 function LoginForm() {
@@ -75,13 +76,16 @@ function LoginForm() {
     <div className="relative min-h-screen w-full overflow-hidden bg-background/50 backdrop-blur-sm">
       <div className="container mx-auto flex min-h-screen items-center justify-center p-4">
         <div className="w-full max-w-md space-y-6">
-          {/* Back button */}
-          <Link href="/">
-            <Button variant="ghost" size="sm" className="gap-2">
-              <ArrowLeft className="h-4 w-4" />
-              Back to Home
-            </Button>
-          </Link>
+          {/* Back button and theme toggle */}
+          <div className="flex items-center justify-between">
+            <Link href="/">
+              <Button variant="ghost" size="sm" className="gap-2">
+                <ArrowLeft className="h-4 w-4" />
+                Back to Home
+              </Button>
+            </Link>
+            <ThemeToggle className="h-9 w-9" />
+          </div>
 
           {/* Logo and title */}
           <div className="flex flex-col items-center gap-4">

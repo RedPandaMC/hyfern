@@ -25,7 +25,7 @@ export default async function ConsolePage() {
 
   return (
     <DashboardShell pageTitle="Server Console">
-      <div className="flex flex-col h-[calc(100vh-8rem)] gap-4">
+      <div className="flex flex-col h-[calc(100vh-7rem)] sm:h-[calc(100vh-8rem)] gap-3 sm:gap-4">
         {/* Role-based message */}
         {isModerator && (
           <div className="rounded-lg border border-yellow-500/20 bg-yellow-500/10 p-4">

@@ -85,7 +85,8 @@ grafana.hyfern.us {
 
         @unauthorized status 401
         handle_response @unauthorized {
-            redir https://hyfern.us/login?redirect=https://{http.request.host}{http.request.uri} 302
+            # Redirect to login — user will be sent back after authentication
+            redir https://hyfern.us/login?redirect=https://grafana.hyfern.us 302
         }
     }
 
