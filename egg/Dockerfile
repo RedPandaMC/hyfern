@@ -8,6 +8,7 @@ RUN apt-get update && \
     apt-get install -y --no-install-recommends \
     curl \
     ca-certificates \
+    gettext-base \
     && rm -rf /var/lib/apt/lists/*
 
 # Create non-root user for running the server

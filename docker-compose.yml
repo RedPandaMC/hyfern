@@ -101,13 +101,12 @@ services:
       PELICAN_API_KEY: ${PELICAN_API_KEY}
       PELICAN_SERVER_UUID: ${PELICAN_SERVER_UUID:-default}
       HYTALE_WEBSERVER_URL: ${HYTALE_WEBSERVER_URL:-http://host.docker.internal:5523}
-      HYTALE_WEBSERVER_USERNAME: hyfern
+      HYTALE_WEBSERVER_USERNAME: ${HYTALE_WEBSERVER_USERNAME:-hyfern}
       HYTALE_WEBSERVER_PASSWORD: ${HYTALE_WEBSERVER_PASSWORD}
       CURSEFORGE_API_KEY: ${CURSEFORGE_API_KEY}
       INIT_ADMIN_USERNAME: ${INIT_ADMIN_USERNAME:-admin}
       INIT_ADMIN_PASSWORD: ${INIT_ADMIN_PASSWORD:-admin123}
       SERVER_ACCESS_PASSWORD: ${SERVER_ACCESS_PASSWORD}
-      SERVER_PASSWORD: ${SERVER_PASSWORD:-}
       NEXT_PUBLIC_SERVER_ADDRESS: ${NEXT_PUBLIC_SERVER_ADDRESS:-hyfern.us}
       NEXT_PUBLIC_GRAFANA_URL: ${GRAFANA_ROOT_URL}
       NEXT_PUBLIC_PANEL_URL: ${PELICAN_APP_URL}
@@ -209,8 +208,6 @@ services:
     restart: unless-stopped
     environment:
       GF_SERVER_ROOT_URL: ${GRAFANA_ROOT_URL}
-      GF_SECURITY_ADMIN_USER: admin
-      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD}
     volumes:
       - ./observability/grafana/grafana.ini:/etc/grafana/grafana.ini:ro
       - ./observability/grafana/provisioning:/etc/grafana/provisioning:ro

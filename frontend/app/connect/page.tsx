@@ -13,15 +13,8 @@ export const metadata = {
 export default async function ConnectPage() {
   const session = await auth();
 
-  // Redirect if not authenticated
-  if (!session) {
-    redirect('/login');
-  }
-
-  // Check if user has VIEWER role or higher (everyone)
-  if (!hasPermission(session.user.role, 'VIEWER')) {
-    redirect('/dashboard');
-  }
+  // Allow both authenticated and unauthenticated access
+  // Authenticated users will bypass password gate, others see password form
 
   return (
     <DashboardShell pageTitle="Connection Info">
@@ -32,7 +25,7 @@ export default async function ConnectPage() {
           </div>
         }
       >
-        <ConnectContent />
+        <ConnectContent initialSession={session} />
       </Suspense>
     </DashboardShell>
   );

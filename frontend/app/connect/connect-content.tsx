@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { Session } from 'next-auth';
 import { Eye, EyeOff, Copy, Check, Server, Lock, Shield } from '@/lib/icons';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -11,22 +12,32 @@ import { toast } from 'sonner';
 interface ServerInfo {
   address: string;
   port: number;
-  password: string;
   version: string;
   maxPlayers: number;
 }
 
-export function ConnectContent() {
+interface ConnectContentProps {
+  initialSession: Session | null;
+}
+
+export function ConnectContent({ initialSession }: ConnectContentProps) {
   const [serverInfo, setServerInfo] = useState<ServerInfo | null>(null);
   const [accessPassword, setAccessPassword] = useState('');
-  const [isUnlocked, setIsUnlocked] = useState(false);
+  const [isUnlocked, setIsUnlocked] = useState(!!initialSession);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showPassword, setShowPassword] = useState(false);
   const [copiedField, setCopiedField] = useState<string | null>(null);
 
-  const handleUnlock = async () => {
-    if (!accessPassword) {
+  // Auto-fetch for authenticated users
+  useEffect(() => {
+    if (initialSession && !serverInfo) {
+      handleUnlock(null);
+    }
+  }, [initialSession]);
+
+  const handleUnlock = async (password: string | null = accessPassword) => {
+    if (!initialSession && !password) {
       setError('Please enter the access password');
       return;
     }
@@ -40,7 +51,7 @@ export function ConnectContent() {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ password: accessPassword }),
+        body: JSON.stringify({ password }),
       });
 
       if (!response.ok) {
@@ -51,10 +62,14 @@ export function ConnectContent() {
       const data = await response.json();
       setServerInfo(data);
       setIsUnlocked(true);
-      toast.success('Connection info unlocked!');
+      if (!initialSession) {
+        toast.success('Connection info unlocked!');
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to unlock');
-      toast.error('Failed to unlock connection info');
+      if (!initialSession) {
+        toast.error('Failed to unlock connection info');
+      }
     } finally {
       setLoading(false);
     }
@@ -205,37 +220,6 @@ export function ConnectContent() {
         </div>
       </Card>
 
-      {/* Server Password */}
-      <Card className="p-6 bg-card ">
-        <div className="flex items-center gap-3 mb-4">
-          <Lock className="w-5 h-5 text-primary" />
-          <h3 className="text-lg font-semibold text-foreground">Server Password</h3>
-        </div>
-        <div className="flex items-center gap-2">
-          <div className="flex-1">
-            <div className="relative">
-              <Input
-                type={showPassword ? 'text' : 'password'}
-                value={serverInfo.password}
-                readOnly
-                className="bg-secondary border-border text-foreground font-mono pr-10"
-              />
-              <button
-                onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-              >
-                {showPassword ? (
-                  <EyeOff className="w-4 h-4" />
-                ) : (
-                  <Eye className="w-4 h-4" />
-                )}
-              </button>
-            </div>
-          </div>
-          <CopyButton text={serverInfo.password} field="password" />
-        </div>
-      </Card>
-
       {/* Server Info */}
       <Card className="p-6 bg-card ">
         <h3 className="text-lg font-semibold text-foreground mb-4">
@@ -283,14 +267,6 @@ export function ConnectContent() {
           <li className="flex gap-3">
             <span className="flex-shrink-0 flex items-center justify-center w-6 h-6 rounded-full bg-primary text-primary-foreground text-sm font-bold">
               3
-            </span>
-            <span>
-              When prompted, enter the server password shown above
-            </span>
-          </li>
-          <li className="flex gap-3">
-            <span className="flex-shrink-0 flex items-center justify-center w-6 h-6 rounded-full bg-primary text-primary-foreground text-sm font-bold">
-              4
             </span>
             <span>Join and enjoy!</span>
           </li>

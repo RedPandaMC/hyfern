@@ -11,6 +11,23 @@ if [ -d "/opt/default-configs" ]; then
         if [ ! -d "/server/mods/$plugin_name" ]; then
             echo "Provisioning default config for $plugin_name..."
             cp -r "$dir" "/server/mods/$plugin_name"
+
+            # Substitute environment variables in provisioned JSON files
+            if [ "$plugin_name" = "Nitrado_WebServer" ]; then
+                echo "  Templating service account credentials..."
+
+                # Set defaults if not provided
+                export HYTALE_WEBSERVER_USERNAME="${HYTALE_WEBSERVER_USERNAME:-hyfern}"
+                export PROMETHEUS_USERNAME="${PROMETHEUS_USERNAME:-prometheus}"
+
+                # Substitute variables in service account files
+                for json_file in "/server/mods/$plugin_name/provisioning/"*.json; do
+                    if [ -f "$json_file" ]; then
+                        envsubst < "$json_file" > "$json_file.tmp"
+                        mv "$json_file.tmp" "$json_file"
+                    fi
+                done
+            fi
         fi
     done
 fi

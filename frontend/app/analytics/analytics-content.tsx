@@ -7,9 +7,6 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { TimeRangeSelector } from '@/components/analytics/time-range-selector';
 import { MetricStatCard } from '@/components/analytics/metric-stat-card';
-import { TPSChart } from '@/components/analytics/tps-chart';
-import { MemoryChart } from '@/components/analytics/memory-chart';
-import { PlayerChart } from '@/components/analytics/player-chart';
 
 const fetcher = (url: string) => fetch(url).then(r => r.json());
 
@@ -98,8 +95,35 @@ export function AnalyticsContent() {
 
           {/* Charts */}
           <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-            <TPSChart range={range} />
-            <PlayerChart range={range} />
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-base">TPS Over Time</CardTitle>
+              </CardHeader>
+              <CardContent className="p-0">
+                <iframe
+                  src={`${grafanaUrl}/d-solo/${dashboards.performance}/hytale-performance-deep-dive?orgId=1&theme=dark&panelId=1&from=now-${range}`}
+                  width="100%"
+                  height="350"
+                  frameBorder="0"
+                  className="rounded-b-lg"
+                />
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-base">Players Online</CardTitle>
+              </CardHeader>
+              <CardContent className="p-0">
+                <iframe
+                  src={`${grafanaUrl}/d-solo/${dashboards.players}/hytale-player-analytics?orgId=1&theme=dark&panelId=1&from=now-${range}`}
+                  width="100%"
+                  height="350"
+                  frameBorder="0"
+                  className="rounded-b-lg"
+                />
+              </CardContent>
+            </Card>
           </div>
         </TabsContent>
 
@@ -134,8 +158,37 @@ export function AnalyticsContent() {
             />
           </div>
 
-          <TPSChart range={range} />
-          <MemoryChart range={range} />
+          <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-base">TPS Over Time</CardTitle>
+              </CardHeader>
+              <CardContent className="p-0">
+                <iframe
+                  src={`${grafanaUrl}/d-solo/${dashboards.performance}/hytale-performance-deep-dive?orgId=1&theme=dark&panelId=1&from=now-${range}`}
+                  width="100%"
+                  height="350"
+                  frameBorder="0"
+                  className="rounded-b-lg"
+                />
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-base">Heap Memory Usage</CardTitle>
+              </CardHeader>
+              <CardContent className="p-0">
+                <iframe
+                  src={`${grafanaUrl}/d-solo/${dashboards.performance}/hytale-performance-deep-dive?orgId=1&theme=dark&panelId=3&from=now-${range}`}
+                  width="100%"
+                  height="350"
+                  frameBorder="0"
+                  className="rounded-b-lg"
+                />
+              </CardContent>
+            </Card>
+          </div>
 
           {/* Grafana GC panel as iframe (complex visualization) */}
           <Card>
@@ -177,7 +230,20 @@ export function AnalyticsContent() {
             />
           </div>
 
-          <PlayerChart range={range} />
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base">Players Online - Last 7 Days</CardTitle>
+            </CardHeader>
+            <CardContent className="p-0">
+              <iframe
+                src={`${grafanaUrl}/d-solo/${dashboards.players}/hytale-player-analytics?orgId=1&theme=dark&panelId=1&from=now-7d`}
+                width="100%"
+                height="400"
+                frameBorder="0"
+                className="rounded-b-lg"
+              />
+            </CardContent>
+          </Card>
 
           {/* Grafana peak hours heatmap (complex visualization) */}
           <Card>

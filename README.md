@@ -42,17 +42,32 @@ nano .env  # Fill in all values
 
 This will authenticate with your Hytale account (first run only), download the latest server build, and extract it to `server-data/`.
 
-### 3. Hash your WebServer plugin passwords
+### 3. Configure WebServer plugin credentials
 
-The Hytale WebServer plugin requires bcrypt-hashed passwords for service accounts. Generate hashes for the passwords you set in `.env`:
+The Hytale WebServer plugin service accounts are automatically configured from environment variables on first run:
 
+**Required environment variables** (set in `.env`):
+- `HYTALE_WEBSERVER_USERNAME` - Service account username (default: `hyfern`)
+- `HYTALE_WEBSERVER_PASSWORD_HASH` - Bcrypt hash of the password
+- `PROMETHEUS_USERNAME` - Prometheus scraper username (default: `prometheus`)
+- `PROMETHEUS_PASSWORD_HASH` - Bcrypt hash of the Prometheus password
+
+**Generate password hashes:**
 ```bash
-npx bcryptjs-cli "your-HYTALE_WEBSERVER_PASSWORD-here"
+# Hash the HyFern service account password
+npx bcryptjs-cli "$(grep '^HYTALE_WEBSERVER_PASSWORD=' .env | cut -d= -f2)"
+
+# Hash the Prometheus password
+npx bcryptjs-cli "$(grep '^PROMETHEUS_PASSWORD=' .env | cut -d= -f2)"
 ```
 
-Update the hashes in:
-- `server-data/mods/Nitrado_WebServer/provisioning/hyfern.serviceaccount.json`
-- `server-data/mods/Nitrado_WebServer/provisioning/prometheus.serviceaccount.json`
+Add the generated hashes to your `.env` file:
+```env
+HYTALE_WEBSERVER_PASSWORD_HASH=$2b$10$your_generated_hash_here
+PROMETHEUS_PASSWORD_HASH=$2b$10$your_generated_hash_here
+```
+
+The entrypoint script will automatically template these values into the service account JSON files on container startup.
 
 ### 4. Start everything
 
@@ -91,6 +106,39 @@ docker compose restart hyfern-frontend
 ./update-server.sh
 docker compose restart hytale-server
 ```
+
+## Authentication
+
+HyFern uses unified authentication across all services:
+
+- **Frontend Dashboard**: NextAuth v5 with JWT sessions
+- **Grafana**: Proxy authentication via frontend (no separate password)
+- **Pelican Panel**: Separate API key authentication
+
+### Single Sign-On (SSO)
+
+JWT cookies are set on the `.hyfern.us` domain, enabling seamless authentication across:
+- `hyfern.us` (main dashboard)
+- `grafana.hyfern.us` (monitoring dashboards)
+
+When you log in to the frontend, you're automatically authenticated on Grafana.
+
+### Admin Credentials
+
+Set one admin account via environment variables:
+- `INIT_ADMIN_USERNAME` (default: admin)
+- `INIT_ADMIN_PASSWORD` (default: admin123)
+
+These credentials work for:
+- Frontend dashboard
+- Grafana dashboards (via proxy auth)
+- All authenticated API endpoints
+
+### Connect Page Access
+
+The `/connect` page shows server connection information:
+- **Authenticated users**: Immediate access to connection details
+- **Unauthenticated users**: Must enter `SERVER_ACCESS_PASSWORD` to view
 
 ## Project Structure
 

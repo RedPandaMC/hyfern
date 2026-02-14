@@ -61,9 +61,8 @@ if [ ! -f "$SCRIPT_DIR/.env" ]; then
     sed -i "s|REDIS_PASSWORD=change_this_redis_password|REDIS_PASSWORD=$(gen_pass 30)|" "$SCRIPT_DIR/.env"
     sed -i "s|NEXTAUTH_SECRET=change_this_to_random_32_byte_secret|NEXTAUTH_SECRET=$(openssl rand -base64 32)|" "$SCRIPT_DIR/.env"
     sed -i "s|SERVER_ACCESS_PASSWORD=change_this_server_password|SERVER_ACCESS_PASSWORD=$(gen_pass 16)|" "$SCRIPT_DIR/.env"
-    sed -i "s|SERVER_PASSWORD=change_this_server_password|SERVER_PASSWORD=$(gen_pass 12)|" "$SCRIPT_DIR/.env"
     sed -i "s|HYTALE_WEBSERVER_PASSWORD=change_this_webserver_password|HYTALE_WEBSERVER_PASSWORD=$(gen_pass 24)|" "$SCRIPT_DIR/.env"
-    sed -i "s|GRAFANA_ADMIN_PASSWORD=change_this_grafana_password|GRAFANA_ADMIN_PASSWORD=$(gen_pass 20)|" "$SCRIPT_DIR/.env"
+    sed -i "s|PROMETHEUS_PASSWORD=change_this_prometheus_password|PROMETHEUS_PASSWORD=$(gen_pass 24)|" "$SCRIPT_DIR/.env"
 
     # Generate Pelican APP_KEY
     APP_KEY=$(openssl rand -base64 32)

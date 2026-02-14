@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getQueryClient } from '@/lib/query';
 import { getPelicanClient } from '@/lib/pelican';
 import { timingSafeEqual } from 'crypto';
+import { auth } from '@/lib/auth';
 
 function constantTimeCompare(a: string, b: string): boolean {
   if (a.length !== b.length) {
@@ -15,12 +16,21 @@ function constantTimeCompare(a: string, b: string): boolean {
 
 export async function POST(request: NextRequest) {
   try {
+    // Check if user is authenticated
+    const session = await auth();
     const { password } = await request.json();
 
     const accessPassword = process.env.SERVER_ACCESS_PASSWORD;
-    if (!accessPassword || !password || !constantTimeCompare(String(password), accessPassword)) {
+
+    // Allow access if:
+    // 1. User is authenticated (session exists), OR
+    // 2. User provides correct SERVER_ACCESS_PASSWORD
+    const isAuthenticated = !!session;
+    const hasValidPassword = password && constantTimeCompare(String(password), accessPassword);
+
+    if (!isAuthenticated && !hasValidPassword) {
       return NextResponse.json(
-        { error: 'Invalid password' },
+        { error: 'Authentication required' },
         { status: 401 }
       );
     }
@@ -55,7 +65,6 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       address,
       port,
-      password: process.env.SERVER_PASSWORD || 'password',
       version: serverData?.version || 'Unknown',
       maxPlayers: serverData?.players?.max || 100,
     });

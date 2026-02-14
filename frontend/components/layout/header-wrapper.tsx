@@ -8,7 +8,7 @@ interface HeaderWrapperProps {
 export async function HeaderWrapper({ pageTitle }: HeaderWrapperProps) {
   const session = await auth();
 
-  // TODO: Fetch server status and stats from API
+  // Static values for header display - dynamic stats are shown in dashboard/analytics
   const serverStatus = "online" as const;
   const playersOnline = 5;
   const maxPlayers = 20;

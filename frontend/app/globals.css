@@ -5,48 +5,48 @@
   /* Light theme (default) */
   :root {
     /* Background colors */
-    --background: 210 40% 98%;           /* #F8FAFC - Light background */
-    --foreground: 222 47% 11%;           /* #0C1222 - Dark text */
+    --background: 0 0% 99%;              /* #FCFCFC - Paper white */
+    --foreground: 0 0% 5%;               /* #0D0D0D - Near-black text */
 
     /* Card/Surface colors */
-    --card: 0 0% 100%;                   /* White */
-    --card-foreground: 222 47% 11%;
+    --card: 0 0% 100%;                   /* Pure white */
+    --card-foreground: 0 0% 5%;
 
     /* Popover colors */
     --popover: 0 0% 100%;
-    --popover-foreground: 222 47% 11%;
+    --popover-foreground: 0 0% 5%;
 
-    /* Primary/Accent - Teal */
-    --primary: 172 100% 35%;             /* #00B392 - Slightly deeper teal for light */
-    --primary-foreground: 0 0% 100%;     /* White text on teal */
+    /* Primary/Accent - Olive Green */
+    --primary: 60 100% 25%;              /* #808000 - Classic olive green */
+    --primary-foreground: 0 0% 100%;     /* White text on olive */
 
     /* Secondary colors */
-    --secondary: 210 40% 96%;            /* Light gray */
-    --secondary-foreground: 222 47% 11%;
+    --secondary: 0 0% 96%;               /* Subtle gray */
+    --secondary-foreground: 0 0% 5%;
 
     /* Muted colors */
-    --muted: 210 40% 96%;
-    --muted-foreground: 215 16% 47%;     /* Muted gray text */
+    --muted: 0 0% 96%;
+    --muted-foreground: 0 0% 40%;        /* Muted gray text */
 
     /* Accent colors */
-    --accent: 210 40% 96%;
-    --accent-foreground: 222 47% 11%;
+    --accent: 0 0% 96%;
+    --accent-foreground: 0 0% 5%;
 
     /* Destructive/Error colors */
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 100%;
 
     /* Border colors */
-    --border: 214 32% 91%;              /* Light border */
-    --input: 214 32% 91%;
-    --ring: 172 100% 35%;               /* Teal focus ring */
+    --border: 0 0% 90%;                  /* Light gray border */
+    --input: 0 0% 90%;
+    --ring: 60 100% 25%;                 /* Olive focus ring */
 
     /* Chart colors */
-    --chart-1: 172 100% 35%;
-    --chart-2: 197 71% 45%;
-    --chart-3: 142 71% 40%;
-    --chart-4: 48 96% 48%;
-    --chart-5: 340 75% 50%;
+    --chart-1: 60 100% 25%;              /* Olive green */
+    --chart-2: 0 0% 30%;                 /* Dark gray */
+    --chart-3: 0 0% 50%;                 /* Medium gray */
+    --chart-4: 0 0% 70%;                 /* Light gray */
+    --chart-5: 60 50% 40%;               /* Muted olive */
 
     /* Border radius */
     --radius: 0.5rem;
@@ -54,39 +54,39 @@
 
   /* Dark theme */
   .dark {
-    --background: 222 47% 11%;           /* #0C1222 - Deep navy */
-    --foreground: 210 40% 98%;           /* #F8FAFC - Light text */
+    --background: 240 10% 10%;           /* #18181D - Near-black */
+    --foreground: 0 0% 98%;              /* #FAFAFA - Off-white text */
 
-    --card: 222 47% 15%;
-    --card-foreground: 210 40% 98%;
+    --card: 240 10% 15%;                 /* Slightly lighter than background */
+    --card-foreground: 0 0% 98%;
 
-    --popover: 222 47% 15%;
-    --popover-foreground: 210 40% 98%;
+    --popover: 240 10% 15%;
+    --popover-foreground: 0 0% 98%;
 
-    --primary: 172 100% 42%;             /* #00D4AA - Bright teal */
-    --primary-foreground: 222 47% 11%;
+    --primary: 60 50% 35%;               /* Muted olive green for dark mode */
+    --primary-foreground: 0 0% 98%;
 
-    --secondary: 217 33% 17%;
-    --secondary-foreground: 210 40% 98%;
+    --secondary: 0 0% 20%;               /* Dark gray */
+    --secondary-foreground: 0 0% 98%;
 
-    --muted: 217 33% 17%;
-    --muted-foreground: 215 20% 65%;
+    --muted: 0 0% 20%;
+    --muted-foreground: 0 0% 65%;        /* Muted gray text */
 
-    --accent: 217 33% 17%;
-    --accent-foreground: 210 40% 98%;
+    --accent: 0 0% 20%;
+    --accent-foreground: 0 0% 98%;
 
     --destructive: 0 84% 60%;
-    --destructive-foreground: 210 40% 98%;
+    --destructive-foreground: 0 0% 98%;
 
-    --border: 217 33% 17%;
-    --input: 217 33% 17%;
-    --ring: 172 100% 42%;
+    --border: 240 10% 20%;               /* Subtle dark border */
+    --input: 240 10% 20%;
+    --ring: 60 50% 35%;                  /* Olive focus ring */
 
-    --chart-1: 172 100% 42%;
-    --chart-2: 197 71% 52%;
-    --chart-3: 142 71% 45%;
-    --chart-4: 48 96% 53%;
-    --chart-5: 340 75% 55%;
+    --chart-1: 60 50% 35%;               /* Muted olive */
+    --chart-2: 0 0% 60%;                 /* Light gray */
+    --chart-3: 0 0% 45%;                 /* Medium gray */
+    --chart-4: 0 0% 30%;                 /* Dark gray */
+    --chart-5: 60 30% 50%;               /* Very muted olive */
   }
 }
 
