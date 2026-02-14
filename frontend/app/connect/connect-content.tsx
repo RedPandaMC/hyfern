@@ -136,7 +136,7 @@ export function ConnectContent({ initialSession }: ConnectContentProps) {
             )}
 
             <Button
-              onClick={handleUnlock}
+              onClick={() => handleUnlock()}
               disabled={loading}
               className="w-full bg-primary hover:bg-primary/90 text-primary-foreground"
             >

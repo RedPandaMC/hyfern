@@ -26,7 +26,7 @@ export async function POST(request: NextRequest) {
     // 1. User is authenticated (session exists), OR
     // 2. User provides correct SERVER_ACCESS_PASSWORD
     const isAuthenticated = !!session;
-    const hasValidPassword = password && constantTimeCompare(String(password), accessPassword);
+    const hasValidPassword = password && accessPassword && constantTimeCompare(String(password), accessPassword);
 
     if (!isAuthenticated && !hasValidPassword) {
       return NextResponse.json(

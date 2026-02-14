@@ -1,17 +1,26 @@
 # HyFern Frontend Dockerfile
-# Multi-stage build for Next.js 16 application
+# Optimized multi-stage build for Next.js 16 application
 
 # Stage 1: Dependencies
 FROM node:22-alpine AS deps
 WORKDIR /app
 
+# Install libc6-compat for compatibility (sometimes needed for Prisma)
+RUN apk add --no-cache libc6-compat
+
 # Install dependencies based on the preferred package manager
 COPY package.json package-lock.json* ./
-RUN npm ci
+RUN npm ci --omit=dev --ignore-scripts
+
+# Install dev dependencies separately for Prisma generation
+RUN npm ci --only=dev --ignore-scripts
 
 # Stage 2: Builder
 FROM node:22-alpine AS builder
 WORKDIR /app
+
+# Install libc6-compat for Prisma
+RUN apk add --no-cache libc6-compat
 
 # Copy dependencies from deps stage
 COPY --from=deps /app/node_modules ./node_modules
@@ -20,6 +29,7 @@ COPY . .
 # Set environment variables for build
 ENV NEXT_TELEMETRY_DISABLED=1
 ENV NODE_ENV=production
+ENV SKIP_ENV_VALIDATION=1
 
 # Generate Prisma Client
 RUN npx prisma generate
@@ -27,17 +37,23 @@ RUN npx prisma generate
 # Build Next.js application
 RUN npm run build
 
-# Stage 3: Runner
+# Stage 3: Runner (optimized minimal image)
 FROM node:22-alpine AS runner
 WORKDIR /app
+
+# Install only runtime dependencies (Prisma needs openssl)
+RUN apk add --no-cache \
+    libc6-compat \
+    openssl \
+    && rm -rf /var/cache/apk/*
 
 # Set environment variables
 ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
 
 # Create non-root user
-RUN addgroup --system --gid 1001 nodejs
-RUN adduser --system --uid 1001 nextjs
+RUN addgroup --system --gid 1001 nodejs && \
+    adduser --system --uid 1001 nextjs
 
 # Copy necessary files from builder with correct ownership
 COPY --from=builder --chown=nextjs:nodejs /app/public ./public
@@ -46,13 +62,14 @@ COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 
 # Copy Prisma client (generated into app/generated/prisma/)
 COPY --from=builder --chown=nextjs:nodejs /app/app/generated/prisma ./app/generated/prisma
-COPY --from=builder --chown=nextjs:nodejs /app/prisma ./prisma
+COPY --from=builder --chown=nextjs:nodejs /app/prisma/schema.prisma ./prisma/schema.prisma
 
 # Copy admin initialization script (.mjs — runs with plain node, no tsx needed)
 COPY --from=builder --chown=nextjs:nodejs /app/scripts/init-admin.mjs ./scripts/init-admin.mjs
 
-# Install init script dependencies into standalone node_modules
-RUN npm install --no-save pg bcryptjs
+# Install ONLY production runtime dependencies for init script (minimize layer size)
+RUN npm install --omit=dev --no-save --no-audit --no-fund pg@8.13.1 bcryptjs@2.4.3 && \
+    npm cache clean --force
 
 # Copy entrypoint script
 COPY --chown=nextjs:nodejs docker-entrypoint.sh /app/docker-entrypoint.sh
