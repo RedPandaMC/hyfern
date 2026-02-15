@@ -56,6 +56,8 @@ services:
     networks:
       - internal
     depends_on:
+      init-permissions:
+        condition: service_completed_successfully
       redis:
         condition: service_healthy
 
