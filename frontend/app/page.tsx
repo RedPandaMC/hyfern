@@ -57,12 +57,12 @@ export default function HomePage() {
 
   return (
     <ConstellationBackground>
-    <div className="relative min-h-screen w-full overflow-hidden">
-      {/* Overlay for text readability */}
-      <div className="absolute inset-0 bg-black/30" />
+    <div className="relative min-h-screen w-full overflow-hidden text-foreground">
+      {/* Overlay for text readability - lighter in light mode */}
+      <div className="absolute inset-0 bg-white/20 dark:bg-black/30" />
 
       {/* Header */}
-      <header className="relative z-10 border-b border-white/10 bg-black/20 backdrop-blur-md">
+      <header className="relative z-10 border-b border-border/50 dark:border-white/10 bg-white/90 dark:bg-black/20 backdrop-blur-md">
         <div className="container mx-auto flex h-16 items-center justify-between px-4">
           <div className="flex items-center gap-2">
             <Logo size={32} showText={true} />
@@ -70,21 +70,21 @@ export default function HomePage() {
 
           <nav className="flex items-center gap-2 sm:gap-4">
             <Link href="https://grafana.hyfern.us" target="_blank" rel="noopener noreferrer" className="hidden sm:block">
-              <Button variant="ghost" size="sm" className="text-white hover:bg-white/10">
+              <Button variant="ghost" size="sm" className="hover:bg-accent">
                 <Activity className="mr-2 h-4 w-4" />
                 Analytics
                 <ExternalLink className="ml-1 h-3 w-3" />
               </Button>
             </Link>
             <Link href="https://panel.hyfern.us" target="_blank" rel="noopener noreferrer" className="hidden sm:block">
-              <Button variant="ghost" size="sm" className="text-white hover:bg-white/10">
+              <Button variant="ghost" size="sm" className="hover:bg-accent">
                 Panel
                 <ExternalLink className="ml-1 h-3 w-3" />
               </Button>
             </Link>
-            <ThemeToggle className="text-white hover:bg-white/10 h-9 w-9" />
+            <ThemeToggle className="h-9 w-9" />
             <Link href="/login">
-              <Button variant="outline" size="sm" className="border-white/20 bg-white/10 text-white hover:bg-white/20">
+              <Button variant="outline" size="sm">
                 Admin Login
               </Button>
             </Link>
@@ -99,24 +99,24 @@ export default function HomePage() {
           <div className="flex flex-col items-center gap-8">
             <div className="text-center space-y-6">
               <div className="flex flex-col sm:flex-row items-center justify-center gap-2">
-                <span className="text-2xl sm:text-4xl font-bitter font-bold text-white drop-shadow-lg">Welcome to</span>
+                <span className="text-2xl sm:text-4xl font-bitter font-bold drop-shadow-lg">Welcome to</span>
                 <Logo size={40} showText={true} />
               </div>
             </div>
-            <p className="text-lg text-white/80 drop-shadow text-center">
+            <p className="text-lg text-muted-foreground drop-shadow text-center">
               Welcome, adventurer!
             </p>
           </div>
 
           {/* Password form or server info */}
           {!isUnlocked ? (
-            <Card className="border-white/20 bg-black/40 backdrop-blur-md">
+            <Card className="border-border/50 dark:border-white/20 bg-white/95 dark:bg-black/40 backdrop-blur-md shadow-lg">
               <CardHeader>
-                <CardTitle className="flex items-center gap-2 text-white">
+                <CardTitle className="flex items-center gap-2">
                   <Lock className="h-5 w-5" />
                   Server Access
                 </CardTitle>
-                <CardDescription className="text-white/70">
+                <CardDescription>
                   Enter the password to reveal server connection details
                 </CardDescription>
               </CardHeader>
@@ -128,13 +128,13 @@ export default function HomePage() {
                       placeholder="Enter password..."
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
-                      className="border-white/20 bg-white/10 text-white placeholder:text-white/50 pr-10"
+                      className="pr-10"
                       disabled={isLoading}
                     />
                     <button
                       type="button"
                       onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-white/60 hover:text-white"
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
                       tabIndex={-1}
                     >
                       {showPassword ? (
@@ -146,7 +146,7 @@ export default function HomePage() {
                   </div>
                   <Button
                     type="submit"
-                    className="w-full bg-primary hover:bg-primary/90"
+                    className="w-full"
                     disabled={isLoading || !password}
                   >
                     {isLoading ? 'Verifying...' : 'Unlock Server Info'}
@@ -155,10 +155,10 @@ export default function HomePage() {
               </CardContent>
             </Card>
           ) : (
-            <Card className="border-white/20 bg-black/40 backdrop-blur-md">
+            <Card className="border-border/50 dark:border-white/20 bg-white/95 dark:bg-black/40 backdrop-blur-md shadow-lg">
               <CardHeader>
                 <div className="flex items-center justify-between">
-                  <CardTitle className="text-white">Server Information</CardTitle>
+                  <CardTitle>Server Information</CardTitle>
                   {serverInfo?.status && (
                     <Badge
                       variant={serverInfo.status === 'online' ? 'default' : 'destructive'}
@@ -168,35 +168,34 @@ export default function HomePage() {
                     </Badge>
                   )}
                 </div>
-                <CardDescription className="text-white/70">
+                <CardDescription>
                   Connect to the server using the details below
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
                 {/* Direct Connect address */}
                 <div className="space-y-2">
-                  <label className="text-sm font-medium text-white/90">Direct Connect</label>
+                  <label className="text-sm font-medium">Direct Connect</label>
                   <div className="flex gap-2">
                     <Input
                       value={serverInfo ? `${serverInfo.address}:${serverInfo.port}` : 'Loading...'}
                       readOnly
-                      className="border-white/20 bg-white/10 text-white font-mono"
+                      className="font-mono"
                     />
                     <Button
                       size="icon"
                       variant="outline"
-                      className="border-white/20 bg-white/10 hover:bg-white/20"
                       onClick={() => copyToClipboard(`${serverInfo?.address}:${serverInfo?.port}`, 'Address')}
                     >
-                      {copied ? <Check className="h-4 w-4 text-green-500" /> : <Copy className="h-4 w-4 text-white" />}
+                      {copied ? <Check className="h-4 w-4 text-green-500" /> : <Copy className="h-4 w-4" />}
                     </Button>
                   </div>
                 </div>
 
                 {/* Server stats */}
                 {serverInfo?.players !== undefined && (
-                  <div className="flex items-center justify-between rounded-lg border border-white/20 bg-white/5 p-4">
-                    <div className="flex items-center gap-2 text-white">
+                  <div className="flex items-center justify-between rounded-lg border p-4">
+                    <div className="flex items-center gap-2">
                       <Users className="h-5 w-5" />
                       <span>Players Online</span>
                     </div>
@@ -206,10 +205,10 @@ export default function HomePage() {
                   </div>
                 )}
 
-                <p className="text-center text-sm text-white/60">
+                <p className="text-center text-sm text-muted-foreground">
                   See you in-game, adventurer!
                 </p>
-                <p className="text-center text-sm text-white/50">
+                <p className="text-center text-sm text-muted-foreground">
                   Need help?{' '}
                   <a href="mailto:hyfern-admin@hyfern.us" className="text-primary hover:underline">
                     hyfern-admin@hyfern.us
@@ -222,8 +221,8 @@ export default function HomePage() {
       </main>
 
       {/* Footer */}
-      <footer className="relative z-10 border-t border-white/10 bg-black/20 py-4 backdrop-blur-md">
-        <p className="text-center text-sm text-white/60">
+      <footer className="relative z-10 border-t border-border/50 dark:border-white/10 bg-white/90 dark:bg-black/20 py-4 backdrop-blur-md">
+        <p className="text-center text-sm text-muted-foreground">
           &copy; {new Date().getFullYear()} HyFern. Powered by Hytale.
         </p>
       </footer>

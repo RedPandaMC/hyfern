@@ -5,6 +5,7 @@ import React from 'react';
 interface LogoProps {
   size?: number;
   showText?: boolean;
+  className?: string;
 }
 
 /**
@@ -12,11 +13,11 @@ interface LogoProps {
  * Uses the official Material Symbols Rounded potted_plant (filled) SVG path
  * as a mask cutout, revealing the background behind it.
  */
-export function Logo({ size = 64, showText = false }: LogoProps) {
+export function Logo({ size = 64, showText = false, className }: LogoProps) {
   const maskId = React.useId();
 
   return (
-    <div className="flex items-center gap-3">
+    <div className={`flex items-center gap-3 ${className || ''}`}>
       <div
         className="relative flex-shrink-0 drop-shadow-lg"
         style={{ width: size, height: size }}
@@ -53,7 +54,7 @@ export function Logo({ size = 64, showText = false }: LogoProps) {
                C 0 78, 0 50, 0 50
                C 0 22, 0 0, 22 0
                C 22 0, 50 0, 50 0 Z"
-            fill="white"
+            fill="currentColor"
             mask={`url(#${maskId})`}
           />
         </svg>
@@ -61,7 +62,7 @@ export function Logo({ size = 64, showText = false }: LogoProps) {
 
       {showText && (
         <span
-          className="font-bitter font-bold text-white"
+          className="font-bitter font-bold"
           style={{ fontSize: `${size * 0.55}px` }}
         >
           HyFern

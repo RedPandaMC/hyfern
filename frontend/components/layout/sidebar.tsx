@@ -19,7 +19,7 @@ import {
   User,
 } from "@/lib/icons";
 import { cn } from "@/lib/utils";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Logo } from "@/components/logo";
 import { Button } from "@/components/ui/button";
 import {
@@ -63,6 +63,7 @@ const navLinks: NavLink[] = [
 interface SidebarProps {
   userRole?: Role;
   username?: string;
+  userImage?: string | null;
 }
 
 // Menu icon as inline SVG to avoid dependency on icons lib for layout-critical component
@@ -89,7 +90,7 @@ function XIcon({ className }: { className?: string }) {
   );
 }
 
-export function Sidebar({ userRole = "ADMIN", username = "Admin" }: SidebarProps) {
+export function Sidebar({ userRole = "ADMIN", username = "Admin", userImage }: SidebarProps) {
   const pathname = usePathname();
   const [mobileOpen, setMobileOpen] = useState(false);
 
@@ -161,6 +162,7 @@ export function Sidebar({ userRole = "ADMIN", username = "Admin" }: SidebarProps
           <DropdownMenuTrigger className="w-full">
             <div className="flex items-center space-x-3 rounded-lg px-3 py-2 transition-colors hover:bg-accent">
               <Avatar className="h-8 w-8 flex-shrink-0">
+                {userImage && <AvatarImage src={userImage} alt={username} />}
                 <AvatarFallback className="bg-primary text-primary-foreground text-xs">
                   {username.slice(0, 2).toUpperCase()}
                 </AvatarFallback>
