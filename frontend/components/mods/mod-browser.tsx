@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Search, Filter, Download, ExternalLink } from '@/lib/icons';
+import { Search, Filter, Download, ExternalLink, Sparkles } from '@/lib/icons';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Select } from '@/components/ui/select';
@@ -9,6 +9,8 @@ import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { ModCard } from './mod-card';
 import type { CurseForgeMod, CurseForgeCategory } from '@/types/curseforge';
+
+type FeaturedSection = 'featured' | 'popular' | 'recentlyUpdated';
 
 interface ModBrowserProps {
   onViewDetails: (mod: CurseForgeMod) => void;
@@ -25,15 +27,24 @@ export function ModBrowser({ onViewDetails, installedModIds }: ModBrowserProps) 
   const [error, setError] = useState<string | null>(null);
   const [page, setPage] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
+  const [featuredMods, setFeaturedMods] = useState<{
+    featured: CurseForgeMod[];
+    popular: CurseForgeMod[];
+    recentlyUpdated: CurseForgeMod[];
+  } | null>(null);
+  const [activeFeaturedSection, setActiveFeaturedSection] = useState<FeaturedSection>('featured');
 
-  // Fetch categories on mount
+  // Fetch categories and featured mods on mount
   useEffect(() => {
     fetchCategories();
+    fetchFeaturedMods();
   }, []);
 
   // Fetch mods when search parameters change
   useEffect(() => {
-    fetchMods();
+    if (searchQuery || selectedCategory) {
+      fetchMods();
+    }
   }, [searchQuery, selectedCategory, sortBy, page]);
 
   const fetchCategories = async () => {
@@ -44,6 +55,25 @@ export function ModBrowser({ onViewDetails, installedModIds }: ModBrowserProps) 
       setCategories(data.data || []);
     } catch (err) {
       console.error('Failed to fetch categories:', err);
+    }
+  };
+
+  const fetchFeaturedMods = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+
+      const excludedIds = installedModIds.join(',');
+      const response = await fetch(`/api/mods/featured?excluded=${excludedIds}`);
+      if (!response.ok) throw new Error('Failed to fetch featured mods');
+
+      const result = await response.json();
+      setFeaturedMods(result.data);
+    } catch (err) {
+      console.error('Failed to fetch featured mods:', err);
+      // Don't show error for featured mods, just fall back to empty state
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -193,8 +223,73 @@ export function ModBrowser({ onViewDetails, installedModIds }: ModBrowserProps) 
         </>
       )}
 
+      {/* Featured Mods Sections - Show when no search */}
+      {!loading && !searchQuery && !selectedCategory && featuredMods && (
+        <div className="space-y-8">
+          {/* Featured Section Tabs */}
+          <div className="flex items-center gap-2 border-b border-border">
+            <button
+              onClick={() => setActiveFeaturedSection('featured')}
+              className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
+                activeFeaturedSection === 'featured'
+                  ? 'border-primary text-primary'
+                  : 'border-transparent text-muted-foreground hover:text-foreground'
+              }`}
+            >
+              <span className="flex items-center gap-2">
+                <Sparkles className="w-4 h-4" />
+                Featured
+              </span>
+            </button>
+            <button
+              onClick={() => setActiveFeaturedSection('popular')}
+              className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
+                activeFeaturedSection === 'popular'
+                  ? 'border-primary text-primary'
+                  : 'border-transparent text-muted-foreground hover:text-foreground'
+              }`}
+            >
+              Popular
+            </button>
+            <button
+              onClick={() => setActiveFeaturedSection('recentlyUpdated')}
+              className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
+                activeFeaturedSection === 'recentlyUpdated'
+                  ? 'border-primary text-primary'
+                  : 'border-transparent text-muted-foreground hover:text-foreground'
+              }`}
+            >
+              Recently Updated
+            </button>
+          </div>
+
+          {/* Featured Mods Grid */}
+          {featuredMods[activeFeaturedSection].length > 0 ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+              {featuredMods[activeFeaturedSection].map((mod) => (
+                <ModCard
+                  key={mod.id}
+                  mod={mod}
+                  isInstalled={installedModIds.includes(mod.id)}
+                  onViewDetails={() => onViewDetails(mod)}
+                />
+              ))}
+            </div>
+          ) : (
+            <Card className="p-12">
+              <div className="text-center">
+                <p className="text-muted-foreground">No {activeFeaturedSection === 'featured' ? 'featured' : activeFeaturedSection === 'popular' ? 'popular' : 'recently updated'} mods found</p>
+                <p className="text-sm text-muted-foreground/70 mt-2">
+                  Check back later for new mods
+                </p>
+              </div>
+            </Card>
+          )}
+        </div>
+      )}
+
       {/* No Results */}
-      {!loading && mods.length === 0 && !error && (
+      {!loading && mods.length === 0 && !error && (searchQuery || selectedCategory) && (
         <Card className="p-12">
           <div className="text-center">
             <p className="text-muted-foreground">No mods found</p>
