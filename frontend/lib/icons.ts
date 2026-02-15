@@ -52,6 +52,7 @@ export {
   MdEdit as Edit,
   MdWarning as AlertTriangle,
   MdKey as Key,
+  MdAutoAwesome as Sparkles,
 
   // Settings
   MdSave as Save,
