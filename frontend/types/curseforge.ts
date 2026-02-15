@@ -116,3 +116,9 @@ export interface CurseForgePagination {
   resultCount: number;
   totalCount: number;
 }
+
+export interface FeaturedModsResponse {
+  featured: CurseForgeMod[];
+  popular: CurseForgeMod[];
+  recentlyUpdated: CurseForgeMod[];
+}
