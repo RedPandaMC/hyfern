@@ -6,6 +6,7 @@ export interface SessionUser {
   id: string;
   username: string;
   role: Role;
+  image?: string | null;
 }
 
 // Extend NextAuth session type to include custom user fields
@@ -18,6 +19,7 @@ declare module 'next-auth' {
     id: string;
     username: string;
     role: Role;
+    image?: string | null;
   }
 }
 
@@ -27,5 +29,6 @@ declare module '@auth/core/jwt' {
     id: string;
     username: string;
     role: Role;
+    image?: string | null;
   }
 }

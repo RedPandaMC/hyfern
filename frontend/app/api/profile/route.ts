@@ -19,6 +19,7 @@ export async function GET() {
         id: true,
         username: true,
         role: true,
+        avatarPath: true,
         totpEnabled: true,
         createdAt: true,
         updatedAt: true,

@@ -141,17 +141,27 @@ export const authConfig: NextAuthConfig = {
           id: user.id,
           username: user.username,
           role: user.role,
+          image: user.avatarPath ? `/uploads/avatars/${user.avatarPath.split('/').pop()}` : null,
         };
       },
     }),
   ],
   callbacks: {
-    async jwt({ token, user }) {
+    async jwt({ token, user, trigger }) {
       // Initial sign in
       if (user) {
         token.id = user.id;
         token.username = user.username;
         token.role = user.role;
+        token.image = user.image;
+      }
+      // Refresh avatar on session update
+      if (trigger === 'update') {
+        const dbUser = await prisma.user.findUnique({
+          where: { id: token.id as string },
+          select: { avatarPath: true },
+        });
+        token.image = dbUser?.avatarPath ? `/uploads/avatars/${dbUser.avatarPath.split('/').pop()}` : null;
       }
       return token;
     },
@@ -163,6 +173,7 @@ export const authConfig: NextAuthConfig = {
           id: token.id as string,
           username: token.username as string,
           role: token.role as Role,
+          image: token.image as string | null,
         };
 
         // Update session activity

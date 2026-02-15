@@ -1,20 +1,21 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Separator } from '@/components/ui/separator';
-import { User, Shield, Key, Eye, EyeOff, AlertCircle, Check, Copy, Lock } from '@/lib/icons';
+import { User, Shield, Key, Eye, EyeOff, AlertCircle, Check, Copy, Lock, Upload } from '@/lib/icons';
 import { toast } from 'sonner';
 
 interface UserProfile {
   id: string;
   username: string;
   role: string;
+  avatarPath: string | null;
   totpEnabled: boolean;
   createdAt: string;
   updatedAt: string;
@@ -82,11 +83,11 @@ export function ProfileContent() {
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="flex items-center gap-4">
-            <Avatar className="h-16 w-16">
-              <AvatarFallback className="bg-primary text-primary-foreground text-xl">
-                {profile.username.slice(0, 2).toUpperCase()}
-              </AvatarFallback>
-            </Avatar>
+            <AvatarUpload
+              avatarPath={profile.avatarPath}
+              username={profile.username}
+              onUpload={(newPath) => setProfile({ ...profile, avatarPath: newPath })}
+            />
             <div>
               <h3 className="text-lg font-semibold">{profile.username}</h3>
               <div className="flex items-center gap-2 mt-1">
@@ -123,6 +124,81 @@ export function ProfileContent() {
       <TwoFactorCard
         enabled={profile.totpEnabled}
         onUpdate={fetchProfile}
+      />
+    </div>
+  );
+}
+
+function AvatarUpload({
+  avatarPath,
+  username,
+  onUpload,
+}: {
+  avatarPath: string | null;
+  username: string;
+  onUpload: (newPath: string | null) => void;
+}) {
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [uploading, setUploading] = useState(false);
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (file.size > 2 * 1024 * 1024) {
+      toast.error('File too large. Maximum size is 2MB');
+      return;
+    }
+
+    setUploading(true);
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+
+      const res = await fetch('/api/profile/avatar', {
+        method: 'POST',
+        body: formData,
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        toast.error(data.error || 'Failed to upload avatar');
+        return;
+      }
+
+      onUpload(data.avatarPath);
+      toast.success('Profile picture updated!');
+    } catch {
+      toast.error('Failed to upload avatar');
+    } finally {
+      setUploading(false);
+      if (fileInputRef.current) fileInputRef.current.value = '';
+    }
+  };
+
+  return (
+    <div className="relative group">
+      <Avatar className="h-16 w-16">
+        {avatarPath && <AvatarImage src={avatarPath} alt={username} />}
+        <AvatarFallback className="bg-primary text-primary-foreground text-xl">
+          {username.slice(0, 2).toUpperCase()}
+        </AvatarFallback>
+      </Avatar>
+      <button
+        type="button"
+        onClick={() => fileInputRef.current?.click()}
+        disabled={uploading}
+        className="absolute inset-0 flex items-center justify-center rounded-full bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
+      >
+        <Upload className="h-5 w-5 text-white" />
+      </button>
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/jpeg,image/png,image/gif,image/webp"
+        onChange={handleFileChange}
+        className="hidden"
       />
     </div>
   );
