@@ -1,7 +1,0 @@
-Grafana still has redirect issue on login and not login
-
-docker exec -it hyfern-pelican-panel php artisan p:user:make
-Database file at path [/var/www/html/database/database.sqlite] does not exist. Ensure this is an absolute path to the database.
-
-Light mode front page should be white not grey and the colors should be better
-
