@@ -5,15 +5,63 @@
 'use client';
 
 import { useCallback, useRef } from 'react';
-import type { Constellation, PrideFlagType } from '../types';
+import type { Constellation, PrideFlagType, Star } from '../types';
 import { getPrideColor, getConstellationBounds, toRelativeX } from '../utils';
 import { DEPTH_MULTIPLIERS } from '../constants';
+
+/**
+ * Find the longest path (pair of stars with maximum distance) in a constellation.
+ * This is used for pride mode to maximize the gradient space for flag visibility.
+ */
+function findLongestPath(stars: Star[]): { start: Star; end: Star; distance: number } | null {
+  if (stars.length < 2) return null;
+
+  let maxDist = 0;
+  let startStar = stars[0];
+  let endStar = stars[1];
+
+  for (let i = 0; i < stars.length; i++) {
+    for (let j = i + 1; j < stars.length; j++) {
+      const dx = stars[i].x - stars[j].x;
+      const dy = stars[i].y - stars[j].y;
+      const dist = Math.sqrt(dx * dx + dy * dy);
+
+      if (dist > maxDist) {
+        maxDist = dist;
+        startStar = stars[i];
+        endStar = stars[j];
+      }
+    }
+  }
+
+  return { start: startStar, end: endStar, distance: maxDist };
+}
+
+/**
+ * Project a point onto the longest path line and get relative position [0..1]
+ */
+function projectOntoLongestPath(
+  point: Star,
+  pathStart: Star,
+  pathEnd: Star
+): number {
+  const dx = pathEnd.x - pathStart.x;
+  const dy = pathEnd.y - pathStart.y;
+  const lenSq = dx * dx + dy * dy;
+
+  if (lenSq === 0) return 0;
+
+  // Project point onto line
+  const t = ((point.x - pathStart.x) * dx + (point.y - pathStart.y) * dy) / lenSq;
+  return Math.max(0, Math.min(1, t));
+}
 
 interface UseCanvasRendererOptions {
   canvasRef: React.RefObject<HTMLCanvasElement | null>;
   constellations: Constellation[];
   prideMode: boolean;
   constellationFlags: Record<number, PrideFlagType>;
+  isDark: boolean;
 }
 
 export function useCanvasRenderer({
@@ -21,6 +69,7 @@ export function useCanvasRenderer({
   constellations,
   prideMode,
   constellationFlags,
+  isDark,
 }: UseCanvasRendererOptions) {
   const lastDrawTime = useRef(0);
   const drawThrottle = 16; // ~60fps
@@ -61,6 +110,9 @@ export function useCanvasRenderer({
         // Pre-compute constellation bounds for pride color mapping
         const bounds = assignedFlag ? getConstellationBounds(constellation.stars) : null;
 
+        // Find longest path for pride mode gradient direction
+        const longestPath = assignedFlag ? findLongestPath(constellation.stars) : null;
+
         // Calculate parallax offset for this layer
         const maxMove = 40;
         const offsetX = deltaX * depth * maxMove;
@@ -87,32 +139,35 @@ export function useCanvasRenderer({
           const x2 = rawX2 - dx * shrink;
           const y2 = rawY2 - dy * shrink;
 
-          // Pride mode: Create gradient using constellation-relative positions
-          if (prideMode && assignedFlag && bounds) {
+          // Pride mode: Create gradient using longest path direction
+          if (prideMode && assignedFlag && longestPath) {
             const gradient = ctx.createLinearGradient(x1, y1, x2, y2);
 
-            // Map start/end to constellation-relative percentages
-            const relStart = toRelativeX(start.x, bounds);
-            const relEnd = toRelativeX(end.x, bounds);
+            // Project start/end onto longest path for maximum flag visibility
+            const relStart = projectOntoLongestPath(start, longestPath.start, longestPath.end);
+            const relEnd = projectOntoLongestPath(end, longestPath.start, longestPath.end);
 
             const steps = Math.max(3, Math.ceil(Math.abs(relEnd - relStart) * 10));
 
             for (let i = 0; i <= steps; i++) {
               const t = i / steps;
-              const relX = relStart + (relEnd - relStart) * t;
-              const color = getPrideColor(relX, assignedFlag);
+              const relPos = relStart + (relEnd - relStart) * t;
+              const color = getPrideColor(relPos, assignedFlag);
 
               if (i > 0) {
-                const prevRelX = relStart + (relEnd - relStart) * ((i - 1) / steps);
-                const prevColor = getPrideColor(prevRelX, assignedFlag);
-                gradient.addColorStop(t - 0.001, prevColor || 'rgba(180, 200, 255, 0.4)');
+                const prevRelPos = relStart + (relEnd - relStart) * ((i - 1) / steps);
+                const prevColor = getPrideColor(prevRelPos, assignedFlag);
+                gradient.addColorStop(t - 0.001, prevColor || (isDark ? 'rgba(255, 255, 255, 0.4)' : 'rgba(0, 0, 0, 0.25)'));
               }
-              gradient.addColorStop(t, color || 'rgba(180, 200, 255, 0.4)');
+              gradient.addColorStop(t, color || (isDark ? 'rgba(255, 255, 255, 0.4)' : 'rgba(0, 0, 0, 0.25)'));
             }
 
             ctx.strokeStyle = gradient;
           } else {
-            ctx.strokeStyle = `rgba(180, 200, 255, ${depth * 0.4})`;
+            // Non-pride mode: black on light mode, white on dark mode
+            ctx.strokeStyle = isDark
+              ? `rgba(255, 255, 255, ${depth * 0.4})`
+              : `rgba(0, 0, 0, ${depth * 0.25})`;
           }
 
           ctx.lineWidth = depth * 1.5;
@@ -122,11 +177,18 @@ export function useCanvasRenderer({
           for (let i = 3; i > 0; i--) {
             ctx.shadowBlur = i * 8;
 
-            if (prideMode && assignedFlag && bounds) {
-              const midRelX = toRelativeX((start.x + end.x) / 2, bounds);
-              ctx.shadowColor = getPrideColor(midRelX, assignedFlag) || 'rgba(200, 220, 255, 0.3)';
+            if (prideMode && assignedFlag && longestPath) {
+              const midRelPos = projectOntoLongestPath(
+                { x: (start.x + end.x) / 2, y: (start.y + end.y) / 2, char: '' },
+                longestPath.start,
+                longestPath.end
+              );
+              ctx.shadowColor = getPrideColor(midRelPos, assignedFlag) || (isDark ? 'rgba(255, 255, 255, 0.3)' : 'rgba(0, 0, 0, 0.15)');
             } else {
-              ctx.shadowColor = `rgba(200, 220, 255, ${depth * 0.3})`;
+              // Non-pride mode: white shadow on dark, black shadow on light
+              ctx.shadowColor = isDark
+                ? `rgba(255, 255, 255, ${depth * 0.3})`
+                : `rgba(0, 0, 0, ${depth * 0.15})`;
             }
 
             ctx.beginPath();
@@ -139,7 +201,7 @@ export function useCanvasRenderer({
         });
       });
     },
-    [canvasRef, constellations, prideMode, constellationFlags, drawThrottle]
+    [canvasRef, constellations, prideMode, constellationFlags, isDark, drawThrottle]
   );
 
   return { drawConstellationLines };

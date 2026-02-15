@@ -13,6 +13,7 @@
 'use client';
 
 import React, { useRef, useState, useEffect, useCallback } from 'react';
+import { useTheme } from 'next-themes';
 import { StarLayer } from './StarLayer';
 import { PrideModeIndicator } from './PrideModeIndicator';
 import { usePerformanceTier } from './hooks/usePerformanceTier';
@@ -34,6 +35,10 @@ export function ConstellationBackground({ children }: ConstellationBackgroundPro
   const [constellations, setConstellations] = useState<Constellation[]>([]);
   const [prideMode, setPrideMode] = useState(false);
   const [constellationFlags, setConstellationFlags] = useState<Record<number, PrideFlagType>>({});
+
+  // Theme detection
+  const { resolvedTheme } = useTheme();
+  const isDark = resolvedTheme === 'dark';
 
   // Performance tier detection
   const performanceTier = usePerformanceTier();
@@ -88,6 +93,7 @@ export function ConstellationBackground({ children }: ConstellationBackgroundPro
     constellations,
     prideMode,
     constellationFlags,
+    isDark,
   });
 
   // Mouse parallax
@@ -195,6 +201,7 @@ export function ConstellationBackground({ children }: ConstellationBackgroundPro
               depth={depth}
               prideMode={prideMode}
               assignedFlag={constellationFlags[index] || null}
+              isDark={isDark}
             />
           );
         })}

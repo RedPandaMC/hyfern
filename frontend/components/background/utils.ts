@@ -3,16 +3,16 @@
  */
 
 import type { Constellation, Star, PrideFlagType } from './types';
-import { STAR_CHARS, FLAG_PALETTES } from './constants';
+import { STAR_CHARS, FLAG_PALETTES, STAR_DISTANCE_CONSTRAINTS } from './constants';
 
 /**
  * Generate realistic open constellations with branching patterns
+ * Respects min/max distance constraints between stars
  */
 export function generateConstellations(width: number, height: number): Constellation[] {
   const constellations: Constellation[] = [];
   const centers: { x: number; y: number }[] = [];
-  // Keep constellations well apart — at least 250px between centers
-  const minDistance = 250;
+  const { MIN_CONSTELLATION_DISTANCE, MIN_DISTANCE, MAX_CONNECTION_DISTANCE } = STAR_DISTANCE_CONSTRAINTS;
 
   // Generate across a 3x3 area centered on the viewport so rotations
   // (especially 180° around bottom-center) never show an empty sky.
@@ -21,16 +21,16 @@ export function generateConstellations(width: number, height: number): Constella
   const offsetX = -width;   // shift left by 1 viewport
   const offsetY = -height;  // shift up by 1 viewport
 
-  // Generate 12-16 constellations to fill the larger area
-  const constellationCount = 12 + Math.floor(Math.random() * 5);
+  // Generate 20-28 constellations to fill the larger area
+  const constellationCount = 20 + Math.floor(Math.random() * 9);
 
   for (let i = 0; i < constellationCount; i++) {
     // Determine layer (30% layer 1, 40% layer 2, 30% layer 3)
     const rand = Math.random();
     const layer = (rand < 0.3 ? 1 : rand < 0.7 ? 2 : 3) as 1 | 2 | 3;
 
-    // Each constellation has 3-6 stars (smaller groups look more natural)
-    const starCount = 3 + Math.floor(Math.random() * 4);
+    // Each constellation has 4-7 stars
+    const starCount = 4 + Math.floor(Math.random() * 4);
 
     // Pick a center point within the extended 3x area
     let centerX: number, centerY: number;
@@ -41,11 +41,11 @@ export function generateConstellations(width: number, height: number): Constella
       attempts++;
     } while (
       attempts < 50 &&
-      centers.some((c) => Math.hypot(c.x - centerX, c.y - centerY) < minDistance)
+      centers.some((c) => Math.hypot(c.x - centerX, c.y - centerY) < MIN_CONSTELLATION_DISTANCE)
     );
     centers.push({ x: centerX, y: centerY });
 
-    // Generate stars clustered around center
+    // Generate stars clustered around center with min distance constraint
     const stars: Star[] = [];
     const starChars =
       layer === 1
@@ -55,14 +55,26 @@ export function generateConstellations(width: number, height: number): Constella
           : STAR_CHARS.LAYER_3;
 
     for (let j = 0; j < starCount; j++) {
-      // Compact spread: 15-45px, layer only adds a small multiplier
-      const radius = (15 + Math.random() * 30) * (1 + layer * 0.15);
-      const angle = Math.random() * Math.PI * 2;
+      let starX: number, starY: number;
+      let starAttempts = 0;
+      const maxRadius = MAX_CONNECTION_DISTANCE * 0.8; // Keep stars within connection range
+
+      do {
+        // Generate position with minimum distance from other stars
+        const angle = Math.random() * Math.PI * 2;
+        const radius = MIN_DISTANCE + Math.random() * (maxRadius - MIN_DISTANCE);
+        starX = centerX + Math.cos(angle) * radius;
+        starY = centerY + Math.sin(angle) * radius;
+        starAttempts++;
+      } while (
+        starAttempts < 30 &&
+        stars.some((s) => Math.hypot(s.x - starX, s.y - starY) < MIN_DISTANCE)
+      );
 
       stars.push({
         char: starChars[Math.floor(Math.random() * starChars.length)],
-        x: centerX + Math.cos(angle) * radius,
-        y: centerY + Math.sin(angle) * radius,
+        x: starX,
+        y: starY,
       });
     }
 
@@ -106,10 +118,13 @@ export function generateConstellations(width: number, height: number): Constella
  * Generate constellation connections using nearest-neighbor spanning tree.
  * Connects each unconnected star to its closest connected neighbor,
  * producing short edges that never cross each other.
+ * Respects MAX_CONNECTION_DISTANCE constraint.
  */
 function generateNearestNeighborConnections(stars: Star[]): [number, number][] {
   if (stars.length < 2) return [];
 
+  const { MAX_CONNECTION_DISTANCE } = STAR_DISTANCE_CONSTRAINTS;
+  const maxDistSq = MAX_CONNECTION_DISTANCE * MAX_CONNECTION_DISTANCE;
   const connections: [number, number][] = [];
   const connected = new Set([0]);
   const unconnected = new Set(
@@ -121,19 +136,25 @@ function generateNearestNeighborConnections(stars: Star[]): [number, number][] {
     let bestDist = Infinity;
     let bestFrom = 0;
     let bestTo = 1;
+    let found = false;
 
     for (const from of connected) {
       for (const to of unconnected) {
         const dx = stars[from].x - stars[to].x;
         const dy = stars[from].y - stars[to].y;
         const dist = dx * dx + dy * dy;
-        if (dist < bestDist) {
+        // Only consider connections within max distance
+        if (dist < maxDistSq && dist < bestDist) {
           bestDist = dist;
           bestFrom = from;
           bestTo = to;
+          found = true;
         }
       }
     }
+
+    // If no valid connection found within max distance, break
+    if (!found) break;
 
     connections.push([bestFrom, bestTo]);
     connected.add(bestTo);

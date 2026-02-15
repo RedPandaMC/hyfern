@@ -30,6 +30,16 @@ export const DEPTH_MULTIPLIERS = {
   LAYER_3: 0.5,
 } as const;
 
+// Star distance constraints for procedural generation
+export const STAR_DISTANCE_CONSTRAINTS = {
+  // Minimum distance between any two stars (prevents overcrowding)
+  MIN_DISTANCE: 25,
+  // Maximum distance between connected stars (keeps constellations compact)
+  MAX_CONNECTION_DISTANCE: 80,
+  // Minimum distance between constellation centers (prevents overlap)
+  MIN_CONSTELLATION_DISTANCE: 180,
+} as const;
+
 export const FLAG_PALETTES: FlagPalette = {
   rainbow: [
     { stop: 0.0, color: 'rgba(228, 3, 3, 0.9)' }, // Red
