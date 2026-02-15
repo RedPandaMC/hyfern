@@ -78,6 +78,20 @@ api.hyfern.us {
 
 # Grafana dashboards (auth via frontend JWT)
 grafana.hyfern.us {
+    # WebSocket connections bypass forward_auth (Grafana session cookie handles auth)
+    @websocket {
+        path /api/live/ws
+        header Connection *Upgrade*
+        header Upgrade    websocket
+    }
+    reverse_proxy @websocket grafana:3001
+
+    # Static assets don't need auth
+    @grafanaStatic {
+        path /public/* /avatar/* /api/health /metrics
+    }
+    reverse_proxy @grafanaStatic grafana:3001
+
     # Verify JWT session via frontend auth endpoint
     forward_auth hyfern-frontend:3000 {
         uri /api/auth/verify
@@ -86,7 +100,7 @@ grafana.hyfern.us {
         @unauthorized status 401
         handle_response @unauthorized {
             # Redirect to login with return URL parameter
-            redir https://hyfern.us/login?callbackUrl=https://grafana.hyfern.us 302
+            redir https://hyfern.us/login?callbackUrl=https://grafana.hyfern.us{uri} 302
         }
     }
 

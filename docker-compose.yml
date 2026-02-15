@@ -37,11 +37,8 @@ services:
       APP_ENV: production
       APP_DEBUG: false
       APP_KEY: ${PELICAN_APP_KEY}
-      DB_HOST: postgresql
-      DB_PORT: 5432
-      DB_DATABASE: ${PELICAN_DB_NAME}
-      DB_USERNAME: ${PELICAN_DB_USER}
-      DB_PASSWORD: ${PELICAN_DB_PASSWORD}
+      DB_CONNECTION: sqlite
+      DB_DATABASE: /var/www/html/database/database.sqlite
       CACHE_STORE: redis
       REDIS_HOST: redis
       REDIS_PORT: 6379
@@ -54,12 +51,11 @@ services:
       MAIL_FROM_ADDRESS: ${MAIL_FROM_ADDRESS:-noreply@hyfern.us}
     volumes:
       - ./data/pelican-panel:/app/var
+      - ./data/pelican-database:/var/www/html/database
       - ./pelican-Caddyfile:/etc/caddy/Caddyfile:ro
     networks:
       - internal
     depends_on:
-      postgresql:
-        condition: service_healthy
       redis:
         condition: service_healthy
 
@@ -88,6 +84,8 @@ services:
     restart: unless-stopped
     extra_hosts:
       - "host.docker.internal:host-gateway"
+    volumes:
+      - ./data/frontend-uploads:/app/public/uploads
     environment:
       NODE_ENV: production
       DATABASE_URL: postgresql://${FRONTEND_DB_USER}:${FRONTEND_DB_PASSWORD}@postgresql:5432/${FRONTEND_DB_NAME}
@@ -171,9 +169,11 @@ services:
     command:
       - -c
       - |
-        mkdir -p /data/grafana /data/prometheus
+        mkdir -p /data/grafana /data/prometheus /data/frontend-uploads/avatars /data/pelican-database
         chown 472:472 /data/grafana
         chown 65534:65534 /data/prometheus
+        chown 1001:1001 /data/frontend-uploads /data/frontend-uploads/avatars
+        chown 33:33 /data/pelican-database
     volumes:
       - ./data:/data
 

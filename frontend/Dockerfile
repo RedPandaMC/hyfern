@@ -67,9 +67,14 @@ COPY --from=builder --chown=nextjs:nodejs /app/prisma/schema.prisma ./prisma/sch
 # Copy admin initialization script (.mjs — runs with plain node, no tsx needed)
 COPY --from=builder --chown=nextjs:nodejs /app/scripts/init-admin.mjs ./scripts/init-admin.mjs
 
-# Install ONLY production runtime dependencies for init script (minimize layer size)
-RUN npm install --omit=dev --no-save --no-audit --no-fund pg@8.13.1 bcryptjs@2.4.3 && \
+# Note: standalone build already copied node_modules to /app/node_modules
+# We just need to add the two extra dependencies for the init script
+RUN cd /app && npm install --omit=dev --no-save --no-audit --no-fund pg@8.13.1 bcryptjs@2.4.3 && \
     npm cache clean --force
+
+# Create uploads directory for profile pictures
+RUN mkdir -p /app/public/uploads/avatars && \
+    chown -R nextjs:nodejs /app/public/uploads
 
 # Copy entrypoint script
 COPY --chown=nextjs:nodejs docker-entrypoint.sh /app/docker-entrypoint.sh
