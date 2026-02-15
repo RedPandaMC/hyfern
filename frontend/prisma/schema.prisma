@@ -24,6 +24,7 @@ model User {
   username     String   @unique
   passwordHash String
   role         Role     @default(VIEWER)
+  avatarPath   String?
 
   // TOTP 2FA fields
   totpSecret   String?
