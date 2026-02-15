@@ -291,8 +291,8 @@ export class CurseForgeClient {
   /**
    * Get featured mods
    */
-  async getFeaturedMods(excludedModIds: number[] = []): Promise<{ data: CurseForgeMod[] }> {
-    return this.request<{ data: CurseForgeMod[] }>(`/v1/mods/featured`, {
+  async getFeaturedMods(excludedModIds: number[] = []): Promise<{ data: { featured: CurseForgeMod[]; popular: CurseForgeMod[]; recentlyUpdated: CurseForgeMod[] } }> {
+    return this.request<{ data: { featured: CurseForgeMod[]; popular: CurseForgeMod[]; recentlyUpdated: CurseForgeMod[] } }>(`/v1/mods/featured`, {
       method: 'POST',
       body: JSON.stringify({
         gameId: parseInt(HYTALE_GAME_ID),
