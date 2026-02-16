@@ -40,6 +40,26 @@ export const STAR_DISTANCE_CONSTRAINTS = {
   MIN_CONSTELLATION_DISTANCE: 180,
 } as const;
 
+// Branch and loop generation settings
+export const CONSTELLATION_GENERATION = {
+  // Constellation count range (35-50 for higher density)
+  MIN_CONSTELLATIONS: 35,
+  MAX_CONSTELLATIONS: 50,
+  // Stars per constellation (4-8 stars)
+  MIN_STARS_PER_CONSTELLATION: 4,
+  MAX_STARS_PER_CONSTELLATION: 8,
+  // Probability of adding a branch per star (10%)
+  BRANCH_PROBABILITY: 0.1,
+  // Maximum number of loops per constellation
+  MAX_LOOPS_PER_CONSTELLATION: 2,
+  // Scattered star counts per layer (increased for more stars)
+  SCATTER_STARS: {
+    LAYER_1: 150,
+    LAYER_2: 100,
+    LAYER_3: 50,
+  },
+} as const;
+
 export const FLAG_PALETTES: FlagPalette = {
   rainbow: [
     { stop: 0.0, color: 'rgba(228, 3, 3, 0.9)' }, // Red

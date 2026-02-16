@@ -17,9 +17,9 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    if (!hasPermission(session.user.role, 'OWNER')) {
+    if (!hasPermission(session.user.role, 'ADMIN')) {
       return NextResponse.json(
-        { error: 'Forbidden: Owner role required' },
+        { error: 'Forbidden: Admin role required' },
         { status: 403 }
       );
     }
@@ -66,9 +66,9 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    if (!hasPermission(session.user.role, 'OWNER')) {
+    if (!hasPermission(session.user.role, 'ADMIN')) {
       return NextResponse.json(
-        { error: 'Forbidden: Owner role required' },
+        { error: 'Forbidden: Admin role required' },
         { status: 403 }
       );
     }
@@ -150,9 +150,9 @@ export async function PUT(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    if (!hasPermission(session.user.role, 'OWNER')) {
+    if (!hasPermission(session.user.role, 'ADMIN')) {
       return NextResponse.json(
-        { error: 'Forbidden: Owner role required' },
+        { error: 'Forbidden: Admin role required' },
         { status: 403 }
       );
     }
@@ -224,9 +224,9 @@ export async function DELETE(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    if (!hasPermission(session.user.role, 'OWNER')) {
+    if (!hasPermission(session.user.role, 'ADMIN')) {
       return NextResponse.json(
-        { error: 'Forbidden: Owner role required' },
+        { error: 'Forbidden: Admin role required' },
         { status: 403 }
       );
     }

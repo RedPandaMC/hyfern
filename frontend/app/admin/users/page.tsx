@@ -18,8 +18,8 @@ export default async function UsersPage() {
     redirect('/login');
   }
 
-  // Check if user has OWNER role (only owners can manage users)
-  if (!hasPermission(session.user.role, 'OWNER')) {
+  // Check if user has ADMIN or OWNER role (both can manage users)
+  if (!hasPermission(session.user.role, 'ADMIN')) {
     redirect('/dashboard');
   }
 

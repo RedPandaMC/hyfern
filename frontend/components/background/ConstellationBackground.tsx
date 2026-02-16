@@ -8,6 +8,7 @@
  * - Pride mode easter egg with random flag assignment per constellation
  * - Adaptive performance based on device capabilities
  * - Battery-optimized with Page Visibility API
+ * - Mobile easter egg: Touch and hold for 3 seconds
  */
 
 'use client';
@@ -35,6 +36,13 @@ export function ConstellationBackground({ children }: ConstellationBackgroundPro
   const [constellations, setConstellations] = useState<Constellation[]>([]);
   const [prideMode, setPrideMode] = useState(false);
   const [constellationFlags, setConstellationFlags] = useState<Record<number, PrideFlagType>>({});
+  
+  // Mobile touch hold state
+  const [holdProgress, setHoldProgress] = useState(0);
+  const [isHolding, setIsHolding] = useState(false);
+  const holdTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const holdStartTimeRef = useRef<number>(0);
+  const HOLD_DURATION = 3000; // 3 seconds
 
   // Theme detection
   const { resolvedTheme } = useTheme();
@@ -158,6 +166,43 @@ export function ConstellationBackground({ children }: ConstellationBackgroundPro
     };
   }, [togglePrideMode]);
 
+  // Mobile touch hold easter egg
+  const startHold = useCallback(() => {
+    setIsHolding(true);
+    holdStartTimeRef.current = Date.now();
+    
+    // Update progress every 50ms
+    holdTimerRef.current = setInterval(() => {
+      const elapsed = Date.now() - holdStartTimeRef.current;
+      const progress = Math.min(elapsed / HOLD_DURATION, 1);
+      setHoldProgress(progress);
+      
+      if (elapsed >= HOLD_DURATION) {
+        // Hold completed - toggle pride mode
+        togglePrideMode();
+        endHold();
+      }
+    }, 50);
+  }, [togglePrideMode]);
+
+  const endHold = useCallback(() => {
+    setIsHolding(false);
+    setHoldProgress(0);
+    if (holdTimerRef.current) {
+      clearInterval(holdTimerRef.current);
+      holdTimerRef.current = null;
+    }
+  }, []);
+
+  // Cleanup hold timer on unmount
+  useEffect(() => {
+    return () => {
+      if (holdTimerRef.current) {
+        clearInterval(holdTimerRef.current);
+      }
+    };
+  }, []);
+
   return (
     <div
       ref={containerRef}
@@ -167,6 +212,9 @@ export function ConstellationBackground({ children }: ConstellationBackgroundPro
         zIndex: 0,
       }}
       onDoubleClick={handleDoubleClick}
+      onTouchStart={startHold}
+      onTouchEnd={endHold}
+      onTouchCancel={endHold}
     >
       {/* Sky rotation container - all star layers AND canvas go inside this */}
       <div
@@ -214,6 +262,48 @@ export function ConstellationBackground({ children }: ConstellationBackgroundPro
 
       {/* Pride mode indicator */}
       <PrideModeIndicator prideMode={prideMode} />
+      
+      {/* Mobile hold progress indicator */}
+      {isHolding && (
+        <div 
+          className="fixed bottom-8 left-1/2 transform -translate-x-1/2 z-50 pointer-events-none"
+          style={{ zIndex: 100 }}
+        >
+          <div className="relative">
+            {/* Outer ring */}
+            <div 
+              className="w-16 h-16 rounded-full border-4 border-white/30"
+              style={{
+                boxShadow: '0 0 20px rgba(255,255,255,0.3)'
+              }}
+            />
+            {/* Progress arc */}
+            <svg 
+              className="absolute inset-0 w-16 h-16 -rotate-90"
+              viewBox="0 0 64 64"
+            >
+              <circle
+                cx="32"
+                cy="32"
+                r="28"
+                fill="none"
+                stroke={isDark ? '#ffffff' : '#000000'}
+                strokeWidth="4"
+                strokeDasharray={`${holdProgress * 176} 176`}
+                strokeLinecap="round"
+                style={{
+                  transition: 'stroke-dasharray 0.05s linear',
+                  filter: isDark ? 'drop-shadow(0 0 4px rgba(255,255,255,0.8))' : 'drop-shadow(0 0 4px rgba(0,0,0,0.5))'
+                }}
+              />
+            </svg>
+            {/* Center icon */}
+            <div className="absolute inset-0 flex items-center justify-center">
+              <span className="text-xl">✨</span>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

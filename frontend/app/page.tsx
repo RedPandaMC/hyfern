@@ -98,9 +98,12 @@ export default function HomePage() {
           {/* Logo and Welcome Section */}
           <div className="flex flex-col items-center gap-8">
             <div className="text-center space-y-6">
-              <div className="flex flex-col sm:flex-row items-center justify-center gap-2">
-                <span className="text-2xl sm:text-4xl font-bitter font-bold drop-shadow-lg">Welcome to</span>
-                <Logo size={40} showText={true} />
+              <div className="flex flex-col items-center justify-center gap-4">
+                <div className="flex items-center gap-3">
+                  <span className="text-2xl sm:text-4xl font-bitter font-bold drop-shadow-lg">Welcome to</span>
+                  <span className="text-2xl sm:text-4xl font-bitter font-bold drop-shadow-lg">HyFern</span>
+                </div>
+                <Logo size={48} showText={false} />
               </div>
             </div>
             <p className="text-lg text-muted-foreground drop-shadow text-center">

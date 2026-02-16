@@ -2,7 +2,7 @@
 
 /* HyFern Theme System */
 @layer base {
-  /* Light theme (default) */
+  /* Light theme (default) - Same accent colors as dark mode */
   :root {
     /* Background colors - Pure white for cleaner look */
     --background: 0 0% 100%;             /* #FFFFFF - Pure white */
@@ -16,9 +16,9 @@
     --popover: 0 0% 100%;
     --popover-foreground: 0 0% 5%;
 
-    /* Primary/Accent - Fern Green */
-    --primary: 120 22% 42%;             /* #588157 - Fern green */
-    --primary-foreground: 0 0% 100%;     /* White text on fern */
+    /* Primary - French Blue (same as dark mode) */
+    --primary: 224 56% 37%;              /* #2a4494 - French Blue */
+    --primary-foreground: 0 0% 100%;     /* White text */
 
     /* Secondary colors */
     --secondary: 0 0% 96%;               /* Subtle gray */
@@ -28,9 +28,9 @@
     --muted: 0 0% 96%;
     --muted-foreground: 0 0% 45%;        /* Slightly darker muted text for better contrast */
 
-    /* Accent colors */
-    --accent: 0 0% 96%;
-    --accent-foreground: 0 0% 5%;
+    /* Accent - Same as primary for consistency */
+    --accent: 224 56% 37%;               /* French Blue */
+    --accent-foreground: 0 0% 100%;
 
     /* Destructive/Error colors */
     --destructive: 0 84% 60%;
@@ -39,14 +39,14 @@
     /* Border colors - Lighter for cleaner look */
     --border: 0 0% 88%;                  /* Light gray border */
     --input: 0 0% 88%;
-    --ring: 120 22% 42%;                 /* Fern focus ring */
+    --ring: 224 56% 37%;                 /* French Blue focus ring */
 
-    /* Chart colors - Fern palette */
-    --chart-1: 120 22% 42%;             /* #588157 - Fern green */
-    --chart-2: 343 84% 68%;             /* #EF476F - Bubble gum pink */
-    --chart-3: 207 52% 32%;             /* #26547C - Dusk blue */
-    --chart-4: 42 100% 63%;             /* #FFD166 - Golden pollen */
-    --chart-5: 120 22% 52%;             /* Lighter fern */
+    /* Chart colors - French palette (same as dark mode) */
+    --chart-1: 224 56% 37%;             /* #2a4494 - French Blue */
+    --chart-2: 161 44% 46%;             /* #43aa8b - Seagrass */
+    --chart-3: 8 79% 56%;               /* #e94f37 - Fiery Terracotta */
+    --chart-4: 40 100% 46%;             /* #eca400 - Amber Honey */
+    --chart-5: 224 40% 50%;             /* Lighter French Blue */
 
     /* Border radius */
     --radius: 0.5rem;

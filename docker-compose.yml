@@ -88,9 +88,10 @@ services:
       - "host.docker.internal:host-gateway"
     volumes:
       - ./data/frontend-uploads:/app/public/uploads
+      - ./data/hyfern.db:/app/prisma/hyfern.db
     environment:
       NODE_ENV: production
-      DATABASE_URL: postgresql://${FRONTEND_DB_USER}:${FRONTEND_DB_PASSWORD}@postgresql:5432/${FRONTEND_DB_NAME}
+      DATABASE_URL: file:/app/prisma/hyfern.db
       NEXTAUTH_URL: ${NEXTAUTH_URL}
       NEXTAUTH_SECRET: ${NEXTAUTH_SECRET}
       REDIS_URL: redis://:${REDIS_PASSWORD}@redis:6379
@@ -121,31 +122,8 @@ services:
       start_period: 40s
       retries: 3
     depends_on:
-      postgresql:
-        condition: service_healthy
       redis:
         condition: service_healthy
-
-  postgresql:
-    image: postgres:16-alpine
-    container_name: hyfern-postgresql
-    restart: unless-stopped
-    environment:
-      POSTGRES_USER: ${POSTGRES_USER}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-      POSTGRES_DB: postgres
-      PELICAN_DB_PASSWORD: ${PELICAN_DB_PASSWORD}
-      FRONTEND_DB_PASSWORD: ${FRONTEND_DB_PASSWORD}
-    volumes:
-      - ./data/postgresql:/var/lib/postgresql/data
-      - ./init-db.sh:/docker-entrypoint-initdb.d/init-db.sh:ro
-    networks:
-      - internal
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d postgres"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
 
   redis:
     image: redis:7-alpine
@@ -172,9 +150,11 @@ services:
       - -c
       - |
         mkdir -p /data/grafana /data/prometheus /data/frontend-uploads/avatars /data/pelican-database
+        touch /data/hyfern.db
         chown 472:472 /data/grafana
         chown 65534:65534 /data/prometheus
-        chown 1001:1001 /data/frontend-uploads /data/frontend-uploads/avatars
+        chown 1001:1001 /data/frontend-uploads /data/frontend-uploads/avatars /data/hyfern.db
+        chmod 664 /data/hyfern.db
         chown 33:33 /data/pelican-database
     volumes:
       - ./data:/data
