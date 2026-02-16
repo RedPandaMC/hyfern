@@ -41,10 +41,13 @@ RUN npm run build
 FROM node:22-alpine AS runner
 WORKDIR /app
 
-# Install only runtime dependencies (Prisma needs openssl)
+# Install runtime dependencies (Prisma needs openssl, better-sqlite3 needs build tools)
 RUN apk add --no-cache \
     libc6-compat \
     openssl \
+    python3 \
+    make \
+    g++ \
     && rm -rf /var/cache/apk/*
 
 # Set environment variables
@@ -69,7 +72,7 @@ COPY --from=builder --chown=nextjs:nodejs /app/scripts/init-admin.mjs ./scripts/
 
 # Note: standalone build already copied node_modules to /app/node_modules
 # We just need to add the two extra dependencies for the init script
-RUN cd /app && npm install --omit=dev --no-save --no-audit --no-fund pg@8.13.1 bcryptjs@2.4.3 && \
+RUN cd /app && npm install --omit=dev --no-save --no-audit --no-fund better-sqlite3@11.7.0 bcryptjs@2.4.3 && \
     npm cache clean --force
 
 # Create uploads directory for profile pictures

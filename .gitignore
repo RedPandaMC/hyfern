@@ -44,9 +44,6 @@ prisma/migrations/
 *.log
 .cache/
 
-# Docker persistent data (bind-mounted volumes)
-data/
-
 # Docker
 docker-compose.override.yml
 

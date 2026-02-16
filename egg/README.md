@@ -1,64 +1,56 @@
-# Hytale Server Docker Image & Pelican Egg
+# Hytale Server Pelican Egg
 
-This directory contains the Docker image definition and Pelican Panel egg for running a Hytale server.
+This directory contains the Pelican Panel egg definition for running a Hytale server.
 
 ## Contents
 
-- `Dockerfile` - Custom Hytale server image based on `eclipse-temurin:25-jre`
-- `entrypoint.sh` - Startup script that constructs JVM arguments
-- `egg-hytale.json` - Pelican Panel egg definition with startup variables
-- `default-configs/` - Default configuration files for official plugins
+- `egg-hytale.yaml` - Pelican Panel egg definition
 
-## Building the Image
+## Egg Features
 
-```bash
-docker build -t hyfern/hytale-server:latest .
+- **JVM Settings**: Optimized for 6GB RAM with G1GC garbage collector
+- **AOT Cache**: Supports loading HytaleServer.aot for faster startup
+- **Auto Installation**: Downloads and installs server files automatically
+- **Plugin Configs**: Automatically provisions default configs for:
+  - WebServer plugin (port 5523)
+  - PerformanceSaver plugin (auto view distance adjustment)
+
+## Default JVM Arguments
+
 ```
-
-## Plugin Configuration
-
-### Nitrado:WebServer
-
-The WebServer plugin exposes an HTTP API on port 5523 (TCP) for:
-- Query API (live server status)
-- Console access
-- Configuration management
-
-**Service Accounts:**
-- `prometheus` - For Prometheus metrics scraping (read-only)
-- `hyfern` - For dashboard API access (read/write)
-
-**Note:** Before first run, you must replace `$2a$10$REPLACE_WITH_BCRYPT_HASH` in the service account JSON files with actual bcrypt hashes of the passwords from your `.env` file.
-
-Generate bcrypt hashes with:
-```bash
-# Install bcrypt tool
-npm install -g bcrypt-cli
-
-# Generate hash
-bcrypt-cli "your-password-here"
+-Xms2G -Xmx6G 
+-XX:+UseG1GC 
+-XX:+ParallelRefProcEnabled 
+-XX:MaxGCPauseMillis=200 
+-XX:+UnlockExperimentalVMOptions 
+-XX:+DisableExplicitGC 
+-XX:+AlwaysPreTouch 
+-XX:+UseLargePages 
+-XX:+UseStringDeduplication
 ```
-
-### Nitrado:PerformanceSaver
-
-Automatically adjusts view distance based on server TPS:
-- Minimum view distance: 6 chunks
-- Maximum view distance: reads from `config.json` (default 32)
-- TPS threshold: 25 (adjusts down when TPS drops below this)
-- Check interval: 5 seconds
-
-## JVM Presets
-
-The egg supports four JVM tuning presets via the HyFern dashboard:
-
-1. **Casual** (4GB RAM, G1GC, 200ms pause)
-2. **Community** (8GB RAM, G1GC, 150ms pause)
-3. **Performance** (16GB RAM, ZGC)
-4. **Ultra** (32GB RAM, ZGC, max optimizations)
-
-These presets configure the startup variables in the Pelican egg.
 
 ## Ports
 
 - `5520/udp` - Game server (QUIC protocol)
-- `5523/tcp` - WebServer HTTP API (internal only, accessed via frontend)
+- `5523/tcp` - WebServer HTTP API
+
+## Usage in Pelican Panel
+
+1. Import `egg-hytale.yaml` into Pelican Panel
+2. Create a new server using this egg
+3. Server will automatically:
+   - Download Hytale server files
+   - Copy AOT cache from `/mnt/server/hytale-aot/HytaleServer.aot`
+   - Install default plugin configs
+
+## AOT Cache Setup
+
+The AOT cache file should be placed at:
+```
+data/hytale/HytaleServer.aot
+```
+
+This is automatically mounted to the Wings container at:
+```
+/mnt/server/hytale-aot/HytaleServer.aot
+```

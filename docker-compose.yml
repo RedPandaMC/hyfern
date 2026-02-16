@@ -27,6 +27,12 @@ services:
       interval: 30s
       timeout: 10s
       retries: 3
+    mem_limit: 256m
+    cpu_shares: 512
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
 
   pelican-panel:
     image: ghcr.io/pelican-dev/panel:latest
@@ -60,6 +66,12 @@ services:
         condition: service_completed_successfully
       redis:
         condition: service_healthy
+    mem_limit: 512m
+    cpu_shares: 1024
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
 
   wings:
     image: ghcr.io/pelican-dev/wings:latest
@@ -73,12 +85,17 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock
       - ${DOCKER_CONTAINERS_PATH:-/var/lib/docker/containers}:/var/lib/docker/containers:ro
       - ./data/wings:/var/lib/pelican
+      - ./data/hytale:/mnt/server/hytale-aot:ro
       - /tmp/pelican:/tmp/pelican
-      - ./wings-config:/etc/pelican
     networks:
       - internal
     depends_on:
       - pelican-panel
+    mem_limit: 256m
+    cpu_shares: 512
+    # Note: Cannot drop all caps - Docker socket requires privileges
+    security_opt:
+      - no-new-privileges:true
 
   hyfern-frontend:
     image: redpandamc/hyfern-frontend:latest
@@ -124,12 +141,20 @@ services:
     depends_on:
       redis:
         condition: service_healthy
+    mem_limit: 512m
+    cpu_shares: 1024
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    tmpfs:
+      - /app/.next/cache:size=100m,noexec,nosuid
 
   redis:
     image: redis:7-alpine
     container_name: hyfern-redis
     restart: unless-stopped
-    command: redis-server --requirepass ${REDIS_PASSWORD}
+    command: redis-server --requirepass ${REDIS_PASSWORD} --maxmemory 256mb --maxmemory-policy allkeys-lru
     volumes:
       - ./data/redis:/data
     networks:
@@ -139,6 +164,12 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+    mem_limit: 512m
+    cpu_shares: 256
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
 
   # One-shot init container to fix data directory ownership
   init-permissions:
@@ -149,13 +180,15 @@ services:
     command:
       - -c
       - |
-        mkdir -p /data/grafana /data/prometheus /data/frontend-uploads/avatars /data/pelican-database
+        mkdir -p /data/grafana /data/prometheus /data/frontend-uploads/avatars /data/pelican-database /data/hytale /data/wings /data/redis /data/caddy/data /data/caddy/config
         touch /data/hyfern.db
         chown 472:472 /data/grafana
         chown 65534:65534 /data/prometheus
-        chown 1001:1001 /data/frontend-uploads /data/frontend-uploads/avatars /data/hyfern.db
+        chown 1001:1001 /data/frontend-uploads /data/frontend-uploads/avatars /data/hyfern.db /data/hytale
         chmod 664 /data/hyfern.db
         chown 33:33 /data/pelican-database
+        # Wings server files
+        chown 988:988 /data/wings || true
     volumes:
       - ./data:/data
 
@@ -165,11 +198,14 @@ services:
     restart: unless-stopped
     extra_hosts:
       - "host.docker.internal:host-gateway"
+    environment:
+      - PROMETHEUS_PASSWORD=${PROMETHEUS_PASSWORD}
     command:
       - '--config.file=/etc/prometheus/prometheus.yml'
       - '--storage.tsdb.path=/prometheus'
       - '--web.console.libraries=/usr/share/prometheus/console_libraries'
       - '--web.console.templates=/usr/share/prometheus/consoles'
+      - '--config.file=/etc/prometheus/prometheus.yml'
     volumes:
       - ./observability/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
       - ./data/prometheus:/prometheus
@@ -183,6 +219,12 @@ services:
       interval: 30s
       timeout: 10s
       retries: 3
+    mem_limit: 512m
+    cpu_shares: 512
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
 
   grafana:
     image: grafana/grafana-oss:latest
@@ -206,6 +248,12 @@ services:
       interval: 30s
       timeout: 10s
       retries: 3
+    mem_limit: 256m
+    cpu_shares: 512
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
 
 networks:
   public:

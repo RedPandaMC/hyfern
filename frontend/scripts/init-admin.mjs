@@ -2,13 +2,18 @@
 /**
  * Admin User Initialization Script (self-contained ESM)
  * Creates or resets the admin user account using ENV vars.
- * Runs with plain `node` — no tsx/TypeScript needed.
+ * Uses better-sqlite3 for SQLite database.
  * ENV vars: INIT_ADMIN_USERNAME, INIT_ADMIN_PASSWORD, DATABASE_URL
  */
 
-import pg from 'pg';
+import Database from 'better-sqlite3';
 import bcrypt from 'bcryptjs';
 import { randomBytes } from 'crypto';
+import { fileURLToPath } from 'url';
+import path from 'path';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const SALT_ROUNDS = 12;
 
@@ -22,30 +27,90 @@ async function initAdmin() {
     process.exit(1);
   }
 
-  console.log('\nInitializing admin user...\n');
+  // Extract file path from DATABASE_URL (format: file:/path/to/file.db)
+  let dbPath = databaseUrl;
+  if (databaseUrl.startsWith('file:')) {
+    dbPath = databaseUrl.substring(5);
+  }
 
-  const client = new pg.Client({ connectionString: databaseUrl });
+  console.log('\nInitializing admin user...\n');
+  console.log(`Database path: ${dbPath}`);
+
+  const db = new Database(dbPath);
 
   try {
-    await client.connect();
+    // Ensure tables exist
+    db.exec(`
+      CREATE TABLE IF NOT EXISTS users (
+        id TEXT PRIMARY KEY,
+        username TEXT UNIQUE NOT NULL,
+        "passwordHash" TEXT NOT NULL,
+        role TEXT NOT NULL DEFAULT 'VIEWER',
+        "totpSecret" TEXT,
+        "totpEnabled" INTEGER NOT NULL DEFAULT 0,
+        "recoveryCodes" TEXT DEFAULT '[]',
+        "createdAt" TEXT NOT NULL DEFAULT (datetime('now')),
+        "updatedAt" TEXT NOT NULL DEFAULT (datetime('now'))
+      );
+
+      CREATE TABLE IF NOT EXISTS sessions (
+        id TEXT PRIMARY KEY,
+        "userId" TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        "expiresAt" TEXT NOT NULL,
+        "lastActiveAt" TEXT NOT NULL DEFAULT (datetime('now')),
+        "ipAddress" TEXT,
+        "userAgent" TEXT,
+        "createdAt" TEXT NOT NULL DEFAULT (datetime('now'))
+      );
+
+      CREATE TABLE IF NOT EXISTS installed_mods (
+        id TEXT PRIMARY KEY,
+        "curseforgeId" INTEGER UNIQUE,
+        name TEXT NOT NULL,
+        slug TEXT NOT NULL,
+        version TEXT NOT NULL,
+        "fileName" TEXT UNIQUE NOT NULL,
+        "installedAt" TEXT NOT NULL DEFAULT (datetime('now')),
+        "installedBy" TEXT NOT NULL REFERENCES users(id),
+        "isCore" INTEGER NOT NULL DEFAULT 0
+      );
+
+      CREATE TABLE IF NOT EXISTS login_attempts (
+        id TEXT PRIMARY KEY,
+        "ipAddress" TEXT NOT NULL,
+        success INTEGER NOT NULL,
+        "createdAt" TEXT NOT NULL DEFAULT (datetime('now'))
+      );
+    `);
+
     const hashedPassword = await bcrypt.hash(password, SALT_ROUNDS);
     const id = randomBytes(12).toString('hex');
+    const now = new Date().toISOString();
 
-    // Upsert: insert or update if username already exists
-    const result = await client.query(
-      `INSERT INTO users (id, username, "passwordHash", role, "totpEnabled", "createdAt", "updatedAt")
-       VALUES ($1, $2, $3, 'ADMIN', false, NOW(), NOW())
-       ON CONFLICT (username) DO UPDATE SET
-         "passwordHash" = $3,
-         role = 'ADMIN',
-         "totpEnabled" = false,
-         "totpSecret" = NULL,
-         "updatedAt" = NOW()
-       RETURNING username`,
-      [id, username, hashedPassword]
-    );
+    // Check if user exists
+    const existingUser = db.prepare('SELECT id FROM users WHERE username = ?').get(username);
 
-    console.log(`Admin user created/updated: ${result.rows[0].username}`);
+    if (existingUser) {
+      // Update existing user
+      db.prepare(`
+        UPDATE users SET
+          "passwordHash" = ?,
+          role = 'ADMIN',
+          "totpEnabled" = 0,
+          "totpSecret" = NULL,
+          "updatedAt" = ?
+        WHERE username = ?
+      `).run(hashedPassword, now, username);
+      console.log(`Admin user updated: ${username}`);
+    } else {
+      // Insert new user
+      db.prepare(`
+        INSERT INTO users (id, username, "passwordHash", role, "totpEnabled", "createdAt", "updatedAt")
+        VALUES (?, ?, ?, 'ADMIN', 0, ?, ?)
+      `).run(id, username, hashedPassword, now, now);
+      console.log(`Admin user created: ${username}`);
+    }
+
     console.log(`Password: ${password}`);
     console.log('\nIMPORTANT: Change this password after first login!\n');
     console.log(`Login at: ${process.env.NEXTAUTH_URL || 'https://hyfern.us'}/login\n`);
@@ -53,7 +118,7 @@ async function initAdmin() {
     console.error('Error creating admin user:', error);
     process.exit(1);
   } finally {
-    await client.end();
+    db.close();
   }
 }
 
