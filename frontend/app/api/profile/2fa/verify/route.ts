@@ -47,7 +47,7 @@ export async function POST(request: NextRequest) {
       where: { id: session.user.id },
       data: {
         totpEnabled: true,
-        recoveryCodes: hashedCodes,
+        recoveryCodes: JSON.stringify(hashedCodes),
       },
     });
 

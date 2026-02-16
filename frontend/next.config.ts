@@ -3,9 +3,6 @@ import type { NextConfig } from "next";
 const nextConfig: NextConfig = {
   output: 'standalone',
   
-  // Enable SWC minification for JavaScript and TypeScript
-  swcMinify: true,
-  
   // Compress HTML output
   compress: true,
   
@@ -14,6 +11,9 @@ const nextConfig: NextConfig = {
     unoptimized: false,
     formats: ['image/webp', 'image/avif'],
   },
+  
+  // Turbopack configuration (Next.js 16 uses Turbopack by default)
+  turbopack: {},
   
   // Experimental features
   experimental: {
@@ -31,28 +31,6 @@ const nextConfig: NextConfig = {
   compiler: {
     // Remove console logs in production
     removeConsole: process.env.NODE_ENV === 'production',
-  },
-  
-  // Webpack configuration for additional optimizations
-  webpack: (config, { dev, isServer }) => {
-    // Minify CSS in production
-    if (!dev && !isServer) {
-      config.optimization = {
-        ...config.optimization,
-        minimize: true,
-        splitChunks: {
-          chunks: 'all',
-          cacheGroups: {
-            vendor: {
-              test: /[\\/]node_modules[\\/]/,
-              name: 'vendors',
-              chunks: 'all',
-            },
-          },
-        },
-      };
-    }
-    return config;
   },
   
   // Headers for performance

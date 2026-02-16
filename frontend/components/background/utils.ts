@@ -197,7 +197,8 @@ export function generateConstellations(width: number, height: number): Constella
 function generateConnectionsWithBranchesAndLoops(stars: Star[]): [number, number][] {
   if (stars.length < 2) return [];
 
-  const { MAX_CONNECTION_DISTANCE, BRANCH_PROBABILITY, MAX_LOOPS_PER_CONSTELLATION } = CONSTELLATION_GENERATION;
+  const { MAX_CONNECTION_DISTANCE } = STAR_DISTANCE_CONSTRAINTS;
+  const { BRANCH_PROBABILITY, MAX_LOOPS_PER_CONSTELLATION } = CONSTELLATION_GENERATION;
   const maxDistSq = MAX_CONNECTION_DISTANCE * MAX_CONNECTION_DISTANCE;
   const connections: [number, number][] = [];
 

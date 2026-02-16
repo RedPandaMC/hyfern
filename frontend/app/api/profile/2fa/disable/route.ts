@@ -43,7 +43,7 @@ export async function POST(request: NextRequest) {
       data: {
         totpEnabled: false,
         totpSecret: null,
-        recoveryCodes: [],
+        recoveryCodes: "[]",
       },
     });
 
