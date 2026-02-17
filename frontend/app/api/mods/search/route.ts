@@ -2,18 +2,25 @@ import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
 import { hasPermission } from '@/lib/permissions';
 import { getCurseForgeClient, isCurseForgeConfigured } from '@/lib/curseforge';
-import Redis from 'ioredis';
+import { logger } from '@/lib/logger';
 
-// Initialize Redis client for caching
-const redis = process.env.REDIS_URL
-  ? new Redis(process.env.REDIS_URL)
-  : null;
+// Lazy load Redis only when needed
+let redis: import('ioredis').Redis | null = null;
+
+async function getRedis(): Promise<import('ioredis').Redis | null> {
+  if (!process.env.REDIS_URL) return null;
+  if (!redis) {
+    const { default: Redis } = await import('ioredis');
+    redis = new Redis(process.env.REDIS_URL);
+  }
+  return redis;
+}
 
 const CACHE_TTL = 60 * 15; // 15 minutes
 
 /**
  * GET /api/mods/search
- * Search for mods on CurseForge with Redis caching
+ * Search for mods on CurseForge with optional Redis caching
  * Requires: ADMIN role or higher
  */
 export async function GET(request: NextRequest) {
@@ -58,8 +65,9 @@ export async function GET(request: NextRequest) {
     const cacheKey = `curseforge:search:${query}:${categoryId}:${sortBy}:${page}:${pageSize}`;
 
     // Try to get from cache
-    if (redis) {
-      const cached = await redis.get(cacheKey);
+    const redisClient = await getRedis();
+    if (redisClient) {
+      const cached = await redisClient.get(cacheKey);
       if (cached) {
         return NextResponse.json(JSON.parse(cached));
       }
@@ -77,13 +85,13 @@ export async function GET(request: NextRequest) {
     });
 
     // Cache the result
-    if (redis) {
-      await redis.setex(cacheKey, CACHE_TTL, JSON.stringify(result));
+    if (redisClient) {
+      await redisClient.setex(cacheKey, CACHE_TTL, JSON.stringify(result));
     }
 
     return NextResponse.json(result);
   } catch (error) {
-    console.error('CurseForge search error:', error);
+    logger.error('CurseForge search error:', { context: 'mods/search', error: error as Error });
     return NextResponse.json(
       { error: 'Failed to search mods' },
       { status: 500 }

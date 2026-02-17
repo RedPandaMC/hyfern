@@ -2,12 +2,19 @@ import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
 import { hasPermission } from '@/lib/permissions';
 import { getCurseForgeClient, isCurseForgeConfigured } from '@/lib/curseforge';
-import Redis from 'ioredis';
+import { logger } from '@/lib/logger';
 
-// Initialize Redis client for caching
-const redis = process.env.REDIS_URL
-  ? new Redis(process.env.REDIS_URL)
-  : null;
+// Lazy load Redis only when needed
+let redis: import('ioredis').Redis | null = null;
+
+async function getRedis(): Promise<import('ioredis').Redis | null> {
+  if (!process.env.REDIS_URL) return null;
+  if (!redis) {
+    const { default: Redis } = await import('ioredis');
+    redis = new Redis(process.env.REDIS_URL);
+  }
+  return redis;
+}
 
 const CACHE_TTL = 60 * 60; // 1 hour
 
@@ -55,8 +62,9 @@ export async function GET(
     const cacheKey = `curseforge:mod:${modId}`;
 
     // Try to get from cache
-    if (redis) {
-      const cached = await redis.get(cacheKey);
+    const redisClient = await getRedis();
+    if (redisClient) {
+      const cached = await redisClient.get(cacheKey);
       if (cached) {
         return NextResponse.json(JSON.parse(cached));
       }
@@ -75,13 +83,13 @@ export async function GET(
     };
 
     // Cache the result
-    if (redis) {
-      await redis.setex(cacheKey, CACHE_TTL, JSON.stringify(result));
+    if (redisClient) {
+      await redisClient.setex(cacheKey, CACHE_TTL, JSON.stringify(result));
     }
 
     return NextResponse.json(result);
   } catch (error) {
-    console.error('Failed to fetch mod details:', error);
+    logger.error('Failed to fetch mod details', { context: 'mods/[modId]', error: error as Error });
     return NextResponse.json(
       { error: 'Failed to fetch mod details' },
       { status: 500 }
