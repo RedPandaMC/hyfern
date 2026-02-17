@@ -1,4 +1,5 @@
 import { StartupVariable, StartupVariablesResponse } from '@/types/jvm';
+import { logger } from '@/lib/logger';
 
 interface PelicanClientConfig {
   apiUrl: string;
@@ -46,7 +47,7 @@ export class PelicanClient {
       const data: StartupVariablesResponse = await response.json();
       return data.attributes.data;
     } catch (error) {
-      console.error('Failed to get startup variables:', error);
+      logger.error('Failed to get startup variables:', { context: 'pelican', error: error as Error });
       throw error;
     }
   }
@@ -59,7 +60,7 @@ export class PelicanClient {
       const variables = await this.getStartupVariables();
       return variables.find(v => v.env_variable === envVariable) || null;
     } catch (error) {
-      console.error(`Failed to get startup variable ${envVariable}:`, error);
+      logger.error(`Failed to get startup variable ${envVariable}:`, { context: 'pelican', error: error as Error });
       throw error;
     }
   }
@@ -88,7 +89,7 @@ export class PelicanClient {
         throw new Error(`Pelican API returned ${response.status}: ${errorText}`);
       }
     } catch (error) {
-      console.error(`Failed to update startup variable ${envVariable}:`, error);
+      logger.error(`Failed to update startup variable ${envVariable}:`, { context: 'pelican', error: error as Error });
       throw error;
     }
   }
@@ -104,7 +105,7 @@ export class PelicanClient {
       }
       return variable.server_value || variable.default_value;
     } catch (error) {
-      console.error('Failed to get JVM flags:', error);
+      logger.error('Failed to get JVM flags:', { context: 'pelican', error: error as Error });
       throw error;
     }
   }
@@ -116,7 +117,7 @@ export class PelicanClient {
     try {
       await this.updateStartupVariable('STARTUP', flags);
     } catch (error) {
-      console.error('Failed to update JVM flags:', error);
+      logger.error('Failed to update JVM flags:', { context: 'pelican', error: error as Error });
       throw error;
     }
   }
@@ -141,7 +142,7 @@ export class PelicanClient {
 
       return await response.json();
     } catch (error) {
-      console.error('Failed to get server details:', error);
+      logger.error('Failed to get server details:', { context: 'pelican', error: error as Error });
       throw error;
     }
   }
@@ -163,7 +164,7 @@ export class PelicanClient {
         throw new Error(`Pelican API returned ${response.status}: ${errorText}`);
       }
     } catch (error) {
-      console.error('Failed to reinstall server:', error);
+      logger.error('Failed to reinstall server:', { context: 'pelican', error: error as Error });
       throw error;
     }
   }

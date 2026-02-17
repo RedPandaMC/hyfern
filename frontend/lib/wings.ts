@@ -1,4 +1,5 @@
 import { PowerAction, PowerActionResponse } from '@/types/server';
+import { logger } from '@/lib/logger';
 
 interface WingsClientConfig {
   apiUrl: string;
@@ -47,7 +48,7 @@ export class WingsClient {
         timestamp: Date.now(),
       };
     } catch (error) {
-      console.error(`Failed to send power action ${action}:`, error);
+      logger.error(`Failed to send power action ${action}:`, { context: 'wings', error: error as Error });
       return {
         success: false,
         action,
@@ -89,7 +90,7 @@ export class WingsClient {
 
       return await response.json();
     } catch (error) {
-      console.error('Failed to get server state:', error);
+      logger.error('Failed to get server state:', { context: 'wings', error: error as Error });
       throw error;
     }
   }
@@ -113,7 +114,7 @@ export class WingsClient {
       const data = await response.json();
       return data.data;
     } catch (error) {
-      console.error('Failed to get WebSocket credentials:', error);
+      logger.error('Failed to get WebSocket credentials:', { context: 'wings', error: error as Error });
       throw error;
     }
   }
@@ -133,7 +134,7 @@ export class WingsClient {
 
       return await response.text();
     } catch (error) {
-      console.error(`Failed to get file contents for ${filePath}:`, error);
+      logger.error(`Failed to get file contents for ${filePath}:`, { context: 'wings', error: error as Error });
       throw error;
     }
   }
@@ -152,7 +153,7 @@ export class WingsClient {
         throw new Error(`Wings API returned ${response.status}`);
       }
     } catch (error) {
-      console.error(`Failed to write file contents for ${filePath}:`, error);
+      logger.error(`Failed to write file contents for ${filePath}:`, { context: 'wings', error: error as Error });
       throw error;
     }
   }
@@ -173,7 +174,7 @@ export class WingsClient {
       const data = await response.json();
       return data.data || [];
     } catch (error) {
-      console.error(`Failed to list files in ${directory}:`, error);
+      logger.error(`Failed to list files in ${directory}:`, { context: 'wings', error: error as Error });
       throw error;
     }
   }

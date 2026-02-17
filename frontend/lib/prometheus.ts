@@ -1,3 +1,5 @@
+import { logger } from '@/lib/logger';
+
 interface PrometheusClientConfig {
   url: string;
   job?: string;
@@ -60,7 +62,7 @@ export class PrometheusClient {
 
       return data.data.result;
     } catch (error) {
-      console.error('Failed to query Prometheus:', error);
+      logger.error('Failed to query Prometheus:', { context: 'prometheus', error: error as Error });
       return [];
     }
   }
@@ -174,7 +176,7 @@ export class PrometheusClient {
       const data = await response.json();
       return data.data.result;
     } catch (error) {
-      console.error('Failed to query Prometheus range:', error);
+      logger.error('Failed to query Prometheus range:', { context: 'prometheus', error: error as Error });
       return [];
     }
   }
@@ -187,7 +189,7 @@ export function createPrometheusClient(): PrometheusClient | null {
   const url = process.env.PROMETHEUS_URL;
 
   if (!url) {
-    console.warn('PROMETHEUS_URL not configured, Prometheus metrics will not be available');
+    logger.warn('PROMETHEUS_URL not configured, Prometheus metrics will not be available', 'prometheus');
     return null;
   }
 

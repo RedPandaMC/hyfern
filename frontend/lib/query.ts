@@ -1,4 +1,5 @@
 import { QueryResponse, QueryError } from '@/types/query';
+import { logger } from '@/lib/logger';
 
 interface QueryClientConfig {
   webserverUrl: string;
@@ -42,7 +43,7 @@ export class QueryClient {
       const data = await response.json();
       return data as QueryResponse;
     } catch (error) {
-      console.error('Failed to fetch server status:', error);
+      logger.error('Failed to fetch server status:', { context: 'query', error: error as Error });
       throw error;
     }
   }

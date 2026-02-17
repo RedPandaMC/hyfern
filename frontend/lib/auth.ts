@@ -8,6 +8,7 @@ import {
   clearLoginAttempts,
 } from '@/lib/rate-limit';
 import { Role } from '@/app/generated/prisma';
+import { logger } from '@/lib/logger';
 
 // Session configuration
 const JWT_MAX_AGE = 24 * 60 * 60; // 24 hours in seconds
@@ -219,7 +220,7 @@ export const authConfig: NextAuthConfig = {
             });
           }
         } catch (error) {
-          console.error('Failed to update session activity:', error);
+          logger.error('Failed to update session activity:', { context: 'auth', error: error as Error });
         }
       }
 
