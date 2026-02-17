@@ -18,10 +18,31 @@ export interface CurseForgeMod {
   downloadCount: number;
   isFeatured: boolean;
   primaryCategoryId: number;
-  categories: CurseForgeCategory[];
-  authors: CurseForgeAuthor[];
-  logo: CurseForgeAsset;
-  screenshots: CurseForgeAsset[];
+  categories: Array<{
+    id: number;
+    name: string;
+    slug: string;
+    iconUrl: string;
+  }>;
+  authors: Array<{
+    id: number;
+    name: string;
+    url: string;
+  }>;
+  logo: {
+    id: number;
+    title: string;
+    description: string;
+    thumbnailUrl: string;
+    url: string;
+  };
+  screenshots: Array<{
+    id: number;
+    title: string;
+    description: string;
+    thumbnailUrl: string;
+    url: string;
+  }>;
   mainFileId: number;
   latestFiles: CurseForgeFile[];
   dateCreated: string;
@@ -69,6 +90,51 @@ export interface CurseForgeFile {
   }>;
 }
 
+export interface CurseForgeSearchParams {
+  searchFilter?: string;
+  gameVersion?: string;
+  categoryId?: number;
+  sortField?: 'Featured' | 'Popularity' | 'LastUpdated' | 'Name' | 'Author' | 'TotalDownloads';
+  sortOrder?: 'asc' | 'desc';
+  modLoaderType?: number;
+  gameVersionTypeId?: number;
+  authorId?: number;
+  pageSize?: number;
+  index?: number;
+}
+
+export interface CurseForgeSearchResponse {
+  data: CurseForgeMod[];
+  pagination: {
+    index: number;
+    pageSize: number;
+    resultCount: number;
+    totalCount: number;
+  };
+}
+
+export interface CurseForgeModResponse {
+  data: CurseForgeMod;
+}
+
+export interface CurseForgeFilesResponse {
+  data: CurseForgeFile[];
+  pagination: {
+    index: number;
+    pageSize: number;
+    resultCount: number;
+    totalCount: number;
+  };
+}
+
+export interface CurseForgeFileResponse {
+  data: CurseForgeFile;
+}
+
+export interface CurseForgeDownloadUrlResponse {
+  data: string;
+}
+
 export interface CurseForgeCategory {
   id: number;
   gameId: number;
@@ -83,42 +149,14 @@ export interface CurseForgeCategory {
   displayIndex?: number;
 }
 
-export interface CurseForgeAuthor {
-  id: number;
-  name: string;
-  url: string;
-}
-
-export interface CurseForgeAsset {
-  id: number;
-  title: string;
-  description: string;
-  thumbnailUrl: string;
-  url: string;
-}
-
-export interface CurseForgeSearchParams {
-  searchFilter?: string;
-  gameVersion?: string;
-  categoryId?: number;
-  sortField?: 'Featured' | 'Popularity' | 'LastUpdated' | 'Name' | 'Author' | 'TotalDownloads';
-  sortOrder?: 'asc' | 'desc';
-  modLoaderType?: number;
-  gameVersionTypeId?: number;
-  authorId?: number;
-  pageSize?: number;
-  index?: number;
-}
-
-export interface CurseForgePagination {
-  index: number;
-  pageSize: number;
-  resultCount: number;
-  totalCount: number;
+export interface CurseForgeCategoriesResponse {
+  data: CurseForgeCategory[];
 }
 
 export interface FeaturedModsResponse {
-  featured: CurseForgeMod[];
-  popular: CurseForgeMod[];
-  recentlyUpdated: CurseForgeMod[];
+  data: {
+    featured: CurseForgeMod[];
+    popular: CurseForgeMod[];
+    recentlyUpdated: CurseForgeMod[];
+  };
 }

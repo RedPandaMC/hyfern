@@ -28,6 +28,10 @@ export interface QueryResponse {
       cores: number;
     };
   };
+  metrics?: {
+    chunks?: number;
+    entities?: number;
+  };
   version?: string;
   motd?: string;
   timestamp: number;
