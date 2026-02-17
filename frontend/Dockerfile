@@ -2,11 +2,8 @@
 # Optimized multi-stage build for Next.js 16 application
 
 # Stage 1: Dependencies
-FROM node:22-alpine AS deps
+FROM node:22-slim AS deps
 WORKDIR /app
-
-# Install libc6-compat for compatibility (sometimes needed for Prisma)
-RUN apk add --no-cache libc6-compat
 
 # Install dependencies based on the preferred package manager
 COPY package.json package-lock.json* ./
@@ -16,11 +13,8 @@ RUN npm ci --omit=dev --ignore-scripts
 RUN npm ci --only=dev --ignore-scripts
 
 # Stage 2: Builder
-FROM node:22-alpine AS builder
+FROM node:22-slim AS builder
 WORKDIR /app
-
-# Install libc6-compat for Prisma
-RUN apk add --no-cache libc6-compat
 
 # Copy dependencies from deps stage
 COPY --from=deps /app/node_modules ./node_modules
@@ -31,6 +25,9 @@ ENV NEXT_TELEMETRY_DISABLED=1
 ENV NODE_ENV=production
 ENV SKIP_ENV_VALIDATION=1
 
+# Set DATABASE_URL for Prisma (required during build)
+ENV DATABASE_URL="file:./dev.db"
+
 # Generate Prisma Client
 RUN npx prisma generate
 
@@ -38,17 +35,17 @@ RUN npx prisma generate
 RUN npm run build
 
 # Stage 3: Runner (optimized minimal image)
-FROM node:22-alpine AS runner
+FROM node:22-slim AS runner
 WORKDIR /app
 
-# Install runtime dependencies (Prisma needs openssl, better-sqlite3 needs build tools)
-RUN apk add --no-cache \
-    libc6-compat \
+# Install runtime dependencies
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    ca-certificates \
     openssl \
     python3 \
     make \
     g++ \
-    && rm -rf /var/cache/apk/*
+    && rm -rf /var/lib/apt/lists/*
 
 # Set environment variables
 ENV NODE_ENV=production
