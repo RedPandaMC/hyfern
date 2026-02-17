@@ -20,6 +20,7 @@ export {
   // Status & Actions
   MdPowerSettingsNew as Power,
   MdRefresh as RotateCw,
+  MdRefresh as RefreshCcw,
   MdStop as Square,
   MdDangerous as Skull,
   MdCheck as Check,
@@ -41,6 +42,7 @@ export {
   MdDns as Server,
   MdErrorOutline as AlertCircle,
   MdAutorenew as Loader2,
+  MdMemory as MemoryStick,
 
   // Mods & Files
   MdSearch as Search,
@@ -73,8 +75,4 @@ export {
   MdCircle as Circle,
 } from 'react-icons/md';
 
-// MemoryStick doesn't have a direct Material equivalent, use a memory-related icon
-export { MdMemory as MemoryStick } from 'react-icons/md';
 
-// Aliases for lucide-react names that differ from our primary exports
-export { MdRefresh as RefreshCcw } from 'react-icons/md';
