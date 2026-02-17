@@ -2,16 +2,6 @@
 
 import { Card } from '@/components/ui/card';
 import { MemoryStick, Cpu } from '@/lib/icons';
-import {
-  ResponsiveContainer,
-  LineChart,
-  Line,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  Legend,
-} from 'recharts';
 
 interface ResourceChartsProps {
   memory: {

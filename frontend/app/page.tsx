@@ -1,16 +1,22 @@
 'use client';
 
 import { useState } from 'react';
+import dynamic from 'next/dynamic';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Logo } from '@/components/logo';
-import { ConstellationBackground } from '@/components/background';
 import { Lock, Copy, Check, Users, Activity, ExternalLink, Eye, EyeOff } from '@/lib/icons';
 import { ThemeToggle } from '@/components/theme-toggle';
 import { toast } from 'sonner';
+
+// Dynamically import heavy background component
+const ConstellationBackground = dynamic(
+  () => import('@/components/background').then(mod => mod.ConstellationBackground),
+  { ssr: false }
+);
 
 export default function HomePage() {
   const [password, setPassword] = useState('');
@@ -69,14 +75,14 @@ export default function HomePage() {
           </div>
 
           <nav className="flex items-center gap-2 sm:gap-4">
-            <Link href="https://grafana.hyfern.us" target="_blank" rel="noopener noreferrer" className="hidden sm:block">
+            <Link href={`${process.env.NEXT_PUBLIC_BASE_URL || 'https://grafana.hyfern.us'}`} target="_blank" rel="noopener noreferrer" className="hidden sm:block">
               <Button variant="ghost" size="sm" className="hover:bg-accent">
                 <Activity className="mr-2 h-4 w-4" />
                 Analytics
                 <ExternalLink className="ml-1 h-3 w-3" />
               </Button>
             </Link>
-            <Link href="https://panel.hyfern.us" target="_blank" rel="noopener noreferrer" className="hidden sm:block">
+            <Link href={`${process.env.NEXT_PUBLIC_PANEL_URL || 'https://panel.hyfern.us'}`} target="_blank" rel="noopener noreferrer" className="hidden sm:block">
               <Button variant="ghost" size="sm" className="hover:bg-accent">
                 Panel
                 <ExternalLink className="ml-1 h-3 w-3" />
