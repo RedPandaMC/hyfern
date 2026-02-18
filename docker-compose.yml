@@ -145,15 +145,6 @@ services:
         condition: service_healthy
     mem_limit: 512m
     cpu_shares: 1024
-    security_opt:
-      - no-new-privileges:true
-    cap_drop:
-      - ALL
-    cap_add:
-      - CHOWN
-      - SETGID
-      - SETUID
-      - KILL
     tmpfs:
       - /app/.next/cache:size=100m,noexec,nosuid
 
@@ -248,15 +239,6 @@ services:
       retries: 3
     mem_limit: 256m
     cpu_shares: 512
-    security_opt:
-      - no-new-privileges:true
-    cap_drop:
-      - ALL
-    cap_add:
-      - CHOWN
-      - SETGID
-      - SETUID
-      - KILL
 
 networks:
   public:
