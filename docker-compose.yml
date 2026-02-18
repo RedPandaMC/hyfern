@@ -33,6 +33,12 @@ services:
       - no-new-privileges:true
     cap_drop:
       - ALL
+    cap_add:
+      - CHOWN
+      - SETGID
+      - SETUID
+      - KILL
+      - NET_BIND_SERVICE
 
   pelican-panel:
     image: ghcr.io/pelican-dev/panel:latest
@@ -72,6 +78,11 @@ services:
       - no-new-privileges:true
     cap_drop:
       - ALL
+    cap_add:
+      - CHOWN
+      - SETGID
+      - SETUID
+      - KILL
 
   wings:
     image: ghcr.io/pelican-dev/wings:latest
@@ -147,6 +158,11 @@ services:
       - no-new-privileges:true
     cap_drop:
       - ALL
+    cap_add:
+      - CHOWN
+      - SETGID
+      - SETUID
+      - KILL
     tmpfs:
       - /app/.next/cache:size=100m,noexec,nosuid
 
@@ -245,6 +261,11 @@ services:
       - no-new-privileges:true
     cap_drop:
       - ALL
+    cap_add:
+      - CHOWN
+      - SETGID
+      - SETUID
+      - KILL
 
 networks:
   public:
