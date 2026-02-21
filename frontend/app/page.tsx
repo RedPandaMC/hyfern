@@ -108,8 +108,8 @@ export default function HomePage() {
                 <div className="flex items-center gap-3">
                   <span className="text-2xl sm:text-4xl font-bitter font-bold drop-shadow-lg">Welcome to</span>
                   <span className="text-2xl sm:text-4xl font-bitter font-bold drop-shadow-lg">HyFern</span>
+                  <Logo size={48} showText={false} />
                 </div>
-                <Logo size={48} showText={false} />
               </div>
             </div>
             <p className="text-lg text-muted-foreground drop-shadow text-center">
