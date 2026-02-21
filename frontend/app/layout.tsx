@@ -30,6 +30,10 @@ const notoSymbols2 = Noto_Sans_Symbols_2({
 export const metadata: Metadata = {
   title: "HyFern - Hytale Server Management",
   description: "Modern Hytale server management panel with real-time monitoring, console access, and advanced configuration tools.",
+  icons: {
+    icon: "/favicon.svg",
+    apple: "/logo.png",
+  },
 };
 
 export default function RootLayout({
