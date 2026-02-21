@@ -33,11 +33,11 @@ export const DEPTH_MULTIPLIERS = {
 // Star distance constraints for procedural generation
 export const STAR_DISTANCE_CONSTRAINTS = {
   // Minimum distance between any two stars (prevents overcrowding)
-  MIN_DISTANCE: 25,
+  MIN_DISTANCE: 30,
   // Maximum distance between connected stars (keeps constellations compact)
-  MAX_CONNECTION_DISTANCE: 80,
+  MAX_CONNECTION_DISTANCE: 120,
   // Minimum distance between constellation centers (prevents overlap)
-  MIN_CONSTELLATION_DISTANCE: 180,
+  MIN_CONSTELLATION_DISTANCE: 250,
 } as const;
 
 // Branch and loop generation settings
@@ -50,8 +50,8 @@ export const CONSTELLATION_GENERATION = {
   MAX_STARS_PER_CONSTELLATION: 8,
   // Probability of adding a branch per star (10%)
   BRANCH_PROBABILITY: 0.1,
-  // Maximum number of loops per constellation
-  MAX_LOOPS_PER_CONSTELLATION: 2,
+  // Maximum number of loops per constellation (increased from 2 to 6)
+  MAX_LOOPS_PER_CONSTELLATION: 6,
   // Scattered star counts per layer (increased for more stars)
   SCATTER_STARS: {
     LAYER_1: 150,

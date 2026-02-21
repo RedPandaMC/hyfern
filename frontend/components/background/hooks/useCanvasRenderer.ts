@@ -166,11 +166,11 @@ export function useCanvasRenderer({
           } else {
             // Non-pride mode: black on light mode, white on dark mode
             ctx.strokeStyle = isDark
-              ? `rgba(255, 255, 255, ${depth * 0.4})`
-              : `rgba(0, 0, 0, ${depth * 0.25})`;
+              ? `rgba(255, 255, 255, ${depth * 0.5})`
+              : `rgba(0, 0, 0, 0.85)`;
           }
 
-          ctx.lineWidth = depth * 1.5;
+          ctx.lineWidth = depth * 2.5;
           ctx.lineCap = 'round';
 
           // Glow effect - draw multiple times with decreasing opacity
@@ -187,8 +187,8 @@ export function useCanvasRenderer({
             } else {
               // Non-pride mode: white shadow on dark, black shadow on light
               ctx.shadowColor = isDark
-                ? `rgba(255, 255, 255, ${depth * 0.3})`
-                : `rgba(0, 0, 0, ${depth * 0.15})`;
+                ? `rgba(255, 255, 255, ${depth * 0.4})`
+                : `rgba(0, 0, 0, 0.4)`;
             }
 
             ctx.beginPath();

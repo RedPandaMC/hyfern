@@ -82,6 +82,7 @@ function wouldCrossExisting(
 export function generateConstellations(width: number, height: number): Constellation[] {
   const constellations: Constellation[] = [];
   const centers: { x: number; y: number }[] = [];
+  const constellationBounds: { minX: number; maxX: number; minY: number; maxY: number }[] = [];
   const { MIN_CONSTELLATION_DISTANCE, MIN_DISTANCE, MAX_CONNECTION_DISTANCE } = STAR_DISTANCE_CONSTRAINTS;
   const { MIN_CONSTELLATIONS, MAX_CONSTELLATIONS, MIN_STARS_PER_CONSTELLATION, MAX_STARS_PER_CONSTELLATION, SCATTER_STARS } = CONSTELLATION_GENERATION;
 
@@ -152,11 +153,29 @@ export function generateConstellations(width: number, height: number): Constella
     // Generate connections with branches and loops
     const connections = generateConnectionsWithBranchesAndLoops(stars);
 
+    // Calculate bounding box for this constellation
+    let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
+    for (const star of stars) {
+      if (star.x < minX) minX = star.x;
+      if (star.x > maxX) maxX = star.x;
+      if (star.y < minY) minY = star.y;
+      if (star.y > maxY) maxY = star.y;
+    }
+    // Add padding to avoid placing scattered stars too close to constellation stars
+    const padding = MAX_CONNECTION_DISTANCE * 0.5;
+    constellationBounds.push({
+      minX: minX - padding,
+      maxX: maxX + padding,
+      minY: minY - padding,
+      maxY: maxY + padding,
+    });
+
     constellations.push({ layer, stars, connections });
   }
 
   // Add scattered individual stars (no connections) across the extended area
   // Increased counts for more stars
+  // Now avoids placing scattered stars in the middle of existing constellations
   const scatterCounts: [1 | 2 | 3, number][] = [
     [1, SCATTER_STARS.LAYER_1],
     [2, SCATTER_STARS.LAYER_2],
@@ -172,13 +191,32 @@ export function generateConstellations(width: number, height: number): Constella
           : STAR_CHARS.LAYER_2.slice(0, 2);
 
     for (let i = 0; i < count; i++) {
+      let starX: number, starY: number;
+      let scatterAttempts = 0;
+      
+      // Try to find a position not inside any constellation
+      do {
+        starX = offsetX + Math.random() * genWidth;
+        starY = offsetY + Math.random() * genHeight;
+        scatterAttempts++;
+      } while (
+        scatterAttempts < 30 &&
+        constellationBounds.some(
+          bounds => starX >= bounds.minX && starX <= bounds.maxX &&
+                    starY >= bounds.minY && starY <= bounds.maxY
+        )
+      );
+
+      // If we couldn't find a good position after 30 tries, just skip this star
+      if (scatterAttempts >= 30) continue;
+
       constellations.push({
         layer,
         stars: [
           {
             char: starChars[Math.floor(Math.random() * starChars.length)],
-            x: offsetX + Math.random() * genWidth,
-            y: offsetY + Math.random() * genHeight,
+            x: starX,
+            y: starY,
           },
         ],
         connections: [],
@@ -193,14 +231,20 @@ export function generateConstellations(width: number, height: number): Constella
  * Generate constellation connections with branches and closed loops
  * Uses nearest-neighbor spanning tree as base, then adds branches (10% per star)
  * and loops while preventing line crossings
+ * Loops are specifically formed with 4-6 stars
  */
 function generateConnectionsWithBranchesAndLoops(stars: Star[]): [number, number][] {
   if (stars.length < 2) return [];
 
   const { MAX_CONNECTION_DISTANCE } = STAR_DISTANCE_CONSTRAINTS;
-  const { BRANCH_PROBABILITY, MAX_LOOPS_PER_CONSTELLATION } = CONSTELLATION_GENERATION;
   const maxDistSq = MAX_CONNECTION_DISTANCE * MAX_CONNECTION_DISTANCE;
   const connections: [number, number][] = [];
+
+  // Build adjacency list for BFS
+  const adjacency = new Map<number, number[]>();
+  for (let i = 0; i < stars.length; i++) {
+    adjacency.set(i, []);
+  }
 
   // Step 1: Generate spanning tree (base structure)
   const connected = new Set([0]);
@@ -231,11 +275,14 @@ function generateConnectionsWithBranchesAndLoops(stars: Star[]): [number, number
     if (!found) break;
 
     connections.push([bestFrom, bestTo]);
+    adjacency.get(bestFrom)!.push(bestTo);
+    adjacency.get(bestTo)!.push(bestFrom);
     connected.add(bestTo);
     unconnected.delete(bestTo);
   }
 
   // Step 2: Add branches (10% probability per star)
+  const { BRANCH_PROBABILITY } = CONSTELLATION_GENERATION;
   for (let i = 0; i < stars.length; i++) {
     if (Math.random() < BRANCH_PROBABILITY) {
       // Try to connect this star to another nearby star that's not already connected
@@ -265,31 +312,80 @@ function generateConnectionsWithBranchesAndLoops(stars: Star[]): [number, number
       for (const candidate of candidates) {
         if (!wouldCrossExisting(i, candidate.to, stars, connections)) {
           connections.push([i, candidate.to]);
+          adjacency.get(i)!.push(candidate.to);
+          adjacency.get(candidate.to)!.push(i);
           break; // Only add one branch per star
         }
       }
     }
   }
 
-  // Step 3: Add closed loops (limited number per constellation)
-  let loopsAdded = 0;
-  for (let i = 0; i < stars.length && loopsAdded < MAX_LOOPS_PER_CONSTELLATION; i++) {
-    for (let j = i + 1; j < stars.length && loopsAdded < MAX_LOOPS_PER_CONSTELLATION; j++) {
-      // Check if already connected
-      const alreadyConnected = connections.some(
-        ([from, to]) => (from === i && to === j) || (from === j && to === i)
-      );
-      if (alreadyConnected) continue;
+  // Step 3: Add closed loops with exactly 4-6 stars
+  // A loop of k stars has k edges. We want loops with 4-6 stars = 4-6 edges
+  // When adding edge (i,j), we create a cycle: (i,j) + path from j to i in the tree
+  // The cycle size = 1 (new edge) + path length
+  
+  const findPathLength = (start: number, end: number, adj: Map<number, number[]>): number => {
+    // BFS to find shortest path
+    const visited = new Set<number>();
+    const queue: { node: number; dist: number }[] = [{ node: start, dist: 0 }];
+    visited.add(start);
 
-      const dx = stars[i].x - stars[j].x;
-      const dy = stars[i].y - stars[j].y;
-      const dist = dx * dx + dy * dy;
-
-      // Only consider reasonably close stars for loops
-      if (dist < maxDistSq * 0.5 && !wouldCrossExisting(i, j, stars, connections)) {
-        connections.push([i, j]);
-        loopsAdded++;
+    while (queue.length > 0) {
+      const { node, dist } = queue.shift()!;
+      
+      if (node === end) return dist;
+      
+      for (const neighbor of adj.get(node) || []) {
+        if (!visited.has(neighbor)) {
+          visited.add(neighbor);
+          queue.push({ node: neighbor, dist: dist + 1 });
+        }
       }
+    }
+    return -1; // No path found
+  };
+
+  // Try to add edges that would create cycles with 4-6 stars
+  const minLoopStars = 4;
+  const maxLoopStars = 6;
+  
+  // Try multiple times to find good loop connections
+  for (let attempt = 0; attempt < stars.length * 2; attempt++) {
+    const i = Math.floor(Math.random() * stars.length);
+    const j = Math.floor(Math.random() * stars.length);
+    
+    if (i === j) continue;
+    
+    // Check if already connected
+    const alreadyConnected = connections.some(
+      ([from, to]) => (from === i && to === j) || (from === j && to === i)
+    );
+    if (alreadyConnected) continue;
+    
+    const dx = stars[i].x - stars[j].x;
+    const dy = stars[i].y - stars[j].y;
+    const dist = dx * dx + dy * dy;
+    
+    // Only consider reasonably close stars
+    if (dist >= maxDistSq * 0.5) continue;
+    
+    // Check if adding this edge would cross existing lines
+    if (wouldCrossExisting(i, j, stars, connections)) continue;
+    
+    // Find the path length between i and j in current graph
+    const pathLength = findPathLength(i, j, adjacency);
+    
+    if (pathLength <= 0) continue; // No path exists (shouldn't happen for connected graph)
+    
+    // Cycle size = 1 (new edge) + path length
+    const cycleSize = 1 + pathLength;
+    
+    // Only add if it creates a loop with 4-6 stars
+    if (cycleSize >= minLoopStars && cycleSize <= maxLoopStars) {
+      connections.push([i, j]);
+      adjacency.get(i)!.push(j);
+      adjacency.get(j)!.push(i);
     }
   }
 

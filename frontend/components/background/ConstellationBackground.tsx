@@ -110,10 +110,10 @@ export function ConstellationBackground({ children }: ConstellationBackgroundPro
     onUpdate: drawConstellationLines,
   });
 
-  // Initial canvas draw
+  // Initial canvas draw and redraw on theme change
   useEffect(() => {
     drawConstellationLines(0, 0);
-  }, [drawConstellationLines, prideMode, constellationFlags]);
+  }, [drawConstellationLines, prideMode, constellationFlags, isDark]);
 
   // Pride mode toggle handler
   const togglePrideMode = useCallback(() => {
@@ -166,8 +166,11 @@ export function ConstellationBackground({ children }: ConstellationBackgroundPro
     };
   }, [togglePrideMode]);
 
-  // Mobile touch hold easter egg
-  const startHold = useCallback(() => {
+  // Mobile touch hold easter egg - requires 2 fingers
+  const startHold = useCallback((e: React.TouchEvent) => {
+    // Only activate with 2 fingers
+    if (e.touches.length !== 2) return;
+    
     setIsHolding(true);
     holdStartTimeRef.current = Date.now();
     
