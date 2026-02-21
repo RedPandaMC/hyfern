@@ -29,16 +29,6 @@ services:
       retries: 3
     mem_limit: 256m
     cpu_shares: 512
-    security_opt:
-      - no-new-privileges:true
-    cap_drop:
-      - ALL
-    cap_add:
-      - CHOWN
-      - SETGID
-      - SETUID
-      - KILL
-      - NET_BIND_SERVICE
 
   pelican-panel:
     image: ghcr.io/pelican-dev/panel:latest
@@ -95,9 +85,6 @@ services:
       - pelican-panel
     mem_limit: 256m
     cpu_shares: 512
-    # Note: Cannot drop all caps - Docker socket requires privileges
-    security_opt:
-      - no-new-privileges:true
 
   hyfern-frontend:
     image: redpandamc/hyfern-frontend:latest
