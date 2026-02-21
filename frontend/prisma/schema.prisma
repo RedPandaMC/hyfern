@@ -60,7 +60,7 @@ model Session {
   @@map("sessions")
 }
 
-// Minecraft mods installed on the server
+// Hytale mods installed on the server
 model InstalledMod {
   id           String   @id @default(cuid())
   curseforgeId Int?     @unique

@@ -28,8 +28,8 @@ const notoSymbols2 = Noto_Sans_Symbols_2({
 });
 
 export const metadata: Metadata = {
-  title: "HyFern - Minecraft Server Management",
-  description: "Modern Minecraft server management panel with real-time monitoring, console access, and advanced configuration tools.",
+  title: "HyFern - Hytale Server Management",
+  description: "Modern Hytale server management panel with real-time monitoring, console access, and advanced configuration tools.",
 };
 
 export default function RootLayout({
