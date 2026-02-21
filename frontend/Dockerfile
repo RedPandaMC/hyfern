@@ -2,28 +2,31 @@
 # Optimized multi-stage build for Next.js 16 application
 
 # Stage 1: Dependencies
-FROM node:22-slim AS deps
+FROM node:22.22.0-slim AS deps
 WORKDIR /app
 
-# Install dependencies based on the preferred package manager
-COPY package.json package-lock.json* ./
-RUN npm ci --omit=dev --ignore-scripts
+# Set HOME and npm cache for permission fixes
+ENV HOME=/app
+ENV NPM_CONFIG_CACHE=/app/.npm
 
-# Install dev dependencies separately for Prisma generation
-RUN npm ci --only=dev --ignore-scripts
+# Install all dependencies (including dev for Prisma and Tailwind)
+COPY package.json package-lock.json* ./
+RUN npm ci --include=dev
 
 # Stage 2: Builder
-FROM node:22-slim AS builder
+FROM node:22.22.0-slim AS builder
 WORKDIR /app
+
+# Set environment variables
+ENV HOME=/app
+ENV NPM_CONFIG_CACHE=/app/.npm
+ENV NEXT_TELEMETRY_DISABLED=1
+ENV NODE_ENV=production
+ENV SKIP_ENV_VALIDATION=1
 
 # Copy dependencies from deps stage
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
-
-# Set environment variables for build
-ENV NEXT_TELEMETRY_DISABLED=1
-ENV NODE_ENV=production
-ENV SKIP_ENV_VALIDATION=1
 
 # Set DATABASE_URL for Prisma (required during build)
 ENV DATABASE_URL="file:./dev.db"
@@ -34,22 +37,25 @@ RUN npx prisma generate
 # Build Next.js application
 RUN npm run build
 
-# Stage 3: Runner (optimized minimal image)
-FROM node:22-slim AS runner
+# Stage 3: Runner (optimized minimal image with security)
+FROM node:22.22.0-slim AS runner
 WORKDIR /app
 
-# Install runtime dependencies
+# Set environment variables
+ENV HOME=/app
+ENV NPM_CONFIG_CACHE=/app/.npm
+ENV NODE_ENV=production
+ENV NEXT_TELEMETRY_DISABLED=1
+
+# Install runtime dependencies including build tools for native modules
 RUN apt-get update && apt-get install -y --no-install-recommends \
     ca-certificates \
     openssl \
     python3 \
     make \
     g++ \
+    libc6-dev \
     && rm -rf /var/lib/apt/lists/*
-
-# Set environment variables
-ENV NODE_ENV=production
-ENV NEXT_TELEMETRY_DISABLED=1
 
 # Create non-root user
 RUN addgroup --system --gid 1001 nodejs && \
@@ -67,18 +73,25 @@ COPY --from=builder --chown=nextjs:nodejs /app/prisma/schema.prisma ./prisma/sch
 # Copy admin initialization script (.mjs — runs with plain node, no tsx needed)
 COPY --from=builder --chown=nextjs:nodejs /app/scripts/init-admin.mjs ./scripts/init-admin.mjs
 
-# Note: standalone build already copied node_modules to /app/node_modules
-# We just need to add the two extra dependencies for the init script
-RUN cd /app && npm install --omit=dev --no-save --no-audit --no-fund better-sqlite3@11.7.0 bcryptjs@2.4.3 && \
-    npm cache clean --force
+# Install runtime dependencies with native module build
+# This rebuilds better-sqlite3 for the target platform
+RUN cd /app && npm install --omit=dev --no-save --no-audit --no-fund \
+    better-sqlite3@11.7.0 \
+    bcryptjs@2.4.3 \
+    @prisma/adapter-better-sqlite3@7.3.0 \
+    && npm cache clean --force
 
-# Create uploads directory for profile pictures
+# Create uploads directory for profile pictures (read-write required)
 RUN mkdir -p /app/public/uploads/avatars && \
     chown -R nextjs:nodejs /app/public/uploads
 
 # Copy entrypoint script
 COPY --chown=nextjs:nodejs docker-entrypoint.sh /app/docker-entrypoint.sh
 RUN chmod +x /app/docker-entrypoint.sh
+
+# Create tmp directory for Next.js cache (read-write required)
+RUN mkdir -p /app/.next/cache /tmp && \
+    chown -R nextjs:nodejs /app/.next /tmp
 
 # Switch to non-root user
 USER nextjs
