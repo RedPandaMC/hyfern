@@ -29,6 +29,7 @@ function LoginForm() {
     e.preventDefault();
     setIsLoading(true);
 
+    // Clear any previous error toasts
     try {
       const result = await signIn('credentials', {
         username,
@@ -45,7 +46,21 @@ function LoginForm() {
           setIsLoading(false);
           return;
         }
-        toast.error(result.error);
+        
+        // Map common errors to clearer messages
+        let errorMessage = result.error;
+        
+        if (result.error.includes('Too many login attempts')) {
+          errorMessage = 'Too many login attempts. Please wait a few minutes before trying again.';
+        } else if (result.error.includes('Invalid credentials') || result.error === 'CredentialsSignin') {
+          errorMessage = 'Invalid username or password. Please check your credentials and try again.';
+        } else if (result.error.includes('2FA')) {
+          errorMessage = result.error; // Show 2FA related errors as-is
+        } else {
+          errorMessage = `Login failed: ${result.error}`;
+        }
+        
+        toast.error(errorMessage);
         setIsLoading(false);
         return;
       }
@@ -66,7 +81,8 @@ function LoginForm() {
       }
       router.push('/dashboard');
     } catch (error) {
-      toast.error('An error occurred. Please try again.');
+      console.error('Login error:', error);
+      toast.error('An unexpected error occurred. Please try again later.');
       setIsLoading(false);
     }
   };
