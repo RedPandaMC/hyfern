@@ -1,0 +1,11 @@
+# Pelican Database Initialization Service
+# Creates an empty SQLite database file for Pelican Panel
+
+FROM alpine:3.18
+
+RUN apk add --no-cache sqlite
+
+COPY init-pelican-db.sh /usr/local/bin/
+RUN chmod +x /usr/local/bin/init-pelican-db.sh
+
+ENTRYPOINT ["/usr/local/bin/init-pelican-db.sh"]

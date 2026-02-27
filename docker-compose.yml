@@ -63,6 +63,8 @@ services:
     depends_on:
       init-permissions:
         condition: service_completed_successfully
+      pelican-db-init:
+        condition: service_completed_successfully
       redis:
         condition: service_healthy
     mem_limit: 512m
@@ -176,6 +178,19 @@ services:
         chown 988:988 /data/wings || true
     volumes:
       - ./data:/data
+
+  # Initialize Pelican Panel SQLite database
+  pelican-db-init:
+    build:
+      context: ./scripts
+      dockerfile: Dockerfile.pelican-init
+    container_name: hyfern-pelican-db-init
+    restart: "no"
+    volumes:
+      - ./data/pelican-database:/data/pelican-database
+    depends_on:
+      init-permissions:
+        condition: service_completed_successfully
 
   prometheus:
     image: prom/prometheus:latest

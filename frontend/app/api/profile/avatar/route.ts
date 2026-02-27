@@ -4,6 +4,7 @@ import { prisma } from '@/lib/prisma';
 import { writeFile, unlink, mkdir } from 'fs/promises';
 import { existsSync } from 'fs';
 import path from 'path';
+import { checkAvatarUploadRateLimit, recordAvatarUpload, formatTimeRemaining } from '@/lib/redis';
 
 const UPLOAD_DIR = path.join(process.cwd(), 'public', 'uploads', 'avatars');
 const MAX_FILE_SIZE = 2 * 1024 * 1024; // 2MB
@@ -18,6 +19,17 @@ export async function POST(request: Request) {
     const session = await auth();
     if (!session?.user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    // Check rate limit (1 upload per day)
+    const rateLimit = await checkAvatarUploadRateLimit(session.user.id);
+    if (!rateLimit.canUpload) {
+      return NextResponse.json(
+        { 
+          error: `Rate limit exceeded. You can upload a new avatar in ${formatTimeRemaining(rateLimit.timeUntilReset || 0)}.` 
+        },
+        { status: 429 }
+      );
     }
 
     const formData = await request.formData();
@@ -78,6 +90,9 @@ export async function POST(request: Request) {
       where: { id: session.user.id },
       data: { avatarPath: avatarUrl },
     });
+
+    // Record the upload for rate limiting
+    await recordAvatarUpload(session.user.id);
 
     return NextResponse.json({ avatarPath: avatarUrl });
   } catch (error) {

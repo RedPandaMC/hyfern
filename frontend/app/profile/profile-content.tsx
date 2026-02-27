@@ -8,7 +8,8 @@ import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Separator } from '@/components/ui/separator';
-import { User, Shield, Key, Eye, EyeOff, AlertCircle, Check, Copy, Lock, Upload } from '@/lib/icons';
+import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
+import { User, Shield, Key, Eye, EyeOff, AlertCircle, Check, Copy, Lock, Upload, X } from '@/lib/icons';
 import { toast } from 'sonner';
 
 interface UserProfile {
@@ -140,6 +141,7 @@ function AvatarUpload({
 }) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
+  const [isViewerOpen, setIsViewerOpen] = useState(false);
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -178,29 +180,61 @@ function AvatarUpload({
   };
 
   return (
-    <div className="relative group">
-      <Avatar className="h-16 w-16">
-        {avatarPath && <AvatarImage src={avatarPath} alt={username} />}
-        <AvatarFallback className="bg-primary text-primary-foreground text-xl">
-          {username.slice(0, 2).toUpperCase()}
-        </AvatarFallback>
-      </Avatar>
-      <button
-        type="button"
-        onClick={() => fileInputRef.current?.click()}
-        disabled={uploading}
-        className="absolute inset-0 flex items-center justify-center rounded-full bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
-      >
-        <Upload className="h-5 w-5 text-white" />
-      </button>
-      <input
-        ref={fileInputRef}
-        type="file"
-        accept="image/jpeg,image/png,image/gif,image/webp"
-        onChange={handleFileChange}
-        className="hidden"
-      />
-    </div>
+    <>
+      <div className="relative group">
+        <button
+          type="button"
+          onClick={() => avatarPath && setIsViewerOpen(true)}
+          disabled={!avatarPath}
+          className="relative cursor-pointer disabled:cursor-default"
+        >
+          <Avatar className="h-16 w-16">
+            {avatarPath && <AvatarImage src={avatarPath} alt={username} />}
+            <AvatarFallback className="bg-primary text-primary-foreground text-xl">
+              {username.slice(0, 2).toUpperCase()}
+            </AvatarFallback>
+          </Avatar>
+        </button>
+        <button
+          type="button"
+          onClick={() => fileInputRef.current?.click()}
+          disabled={uploading}
+          className="absolute inset-0 flex items-center justify-center rounded-full bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
+        >
+          <Upload className="h-5 w-5 text-white" />
+        </button>
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="image/jpeg,image/png,image/gif,image/webp"
+          onChange={handleFileChange}
+          className="hidden"
+        />
+      </div>
+
+      {/* Avatar Viewer Dialog */}
+      <Dialog open={isViewerOpen} onOpenChange={setIsViewerOpen}>
+        <DialogContent className="max-w-md p-0 overflow-hidden bg-transparent border-none">
+          <DialogTitle className="sr-only">Profile Picture</DialogTitle>
+          <div className="relative">
+            <button
+              type="button"
+              onClick={() => setIsViewerOpen(false)}
+              className="absolute top-2 right-2 z-10 p-2 rounded-full bg-black/50 text-white hover:bg-black/70 transition-colors"
+            >
+              <X className="h-4 w-4" />
+            </button>
+            {avatarPath && (
+              <img
+                src={avatarPath}
+                alt={username}
+                className="w-full h-auto rounded-lg"
+              />
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }
 
