@@ -61,9 +61,38 @@ This will authenticate with your Hytale account (first run only), download the l
 docker compose up -d
 ```
 
-### 4. Complete setup wizard
+### 4. Complete Pelican Panel Setup
 
-Visit `https://panel.hyfern.us/installer` and complete the setup wizard.
+Once all services are running, you need to complete the Pelican Panel installation:
+
+1. **Visit the installer**: Navigate to `https://panel.hyfern.us/installer`
+
+2. **Complete the setup wizard**:
+   - Database: Select "SQLite" (the database is automatically created at `/var/www/html/database/database.sqlite`)
+   - Cache: Redis is pre-configured
+   - Create your admin account
+   - Set your application URL to `https://panel.hyfern.us`
+
+3. **Import the custom Hytale egg**:
+   - Go to Admin → Nests
+   - Click "Import Egg"
+   - Upload the file `egg/egg-hytale.yaml` from this repository
+   - The egg will be imported with all default configurations
+
+4. **Configure Wings**:
+   - Visit the admin panel
+   - Go to Nodes and copy the Wings configuration
+   - The Wings daemon is automatically configured to connect
+
+### 5. Verify deployment
+
+```bash
+# Check all services are running
+docker compose ps
+
+# View logs
+docker compose logs -f
+```
 
 See the [full documentation](docs/setup.md) for detailed setup instructions.
 
@@ -103,6 +132,58 @@ See the [full documentation](docs/setup.md) for detailed setup instructions.
 | 5520 | UDP | Hytale game server |
 
 All other services communicate internally via Docker networks.
+
+## Troubleshooting
+
+### Pelican Panel Database Not Created
+
+If you see `service "pelican-db-init" didn't complete successfully`, the SQLite database wasn't initialized:
+
+```bash
+# Rebuild and run the init service
+docker compose build --no-cache pelican-db-init
+docker compose run --rm pelican-db-init
+
+# Verify database was created
+ls -la data/pelican-database/
+# Should show: database.sqlite (owned by www-data)
+```
+
+### Wings Container Restarting
+
+If the Wings container keeps restarting, check the logs:
+
+```bash
+docker compose logs -f wings
+```
+
+Usually this means:
+- Pelican Panel isn't fully initialized yet (wait for setup wizard completion)
+- Wings configuration needs to be updated from the admin panel
+
+### Services Not Starting
+
+Check individual service logs:
+
+```bash
+# Frontend
+docker compose logs -f hyfern-frontend
+
+# Pelican Panel
+docker compose logs -f pelican-panel
+
+# Check all services
+docker compose ps
+```
+
+### Permission Issues
+
+If you see permission errors in the logs:
+
+```bash
+# Fix data directory permissions
+docker compose run --rm init-permissions
+```
 
 ## License
 
