@@ -4,11 +4,13 @@ import { prisma } from '@/lib/prisma';
 import { writeFile, unlink, mkdir } from 'fs/promises';
 import { existsSync } from 'fs';
 import path from 'path';
+import sharp from 'sharp';
 import { checkAvatarUploadRateLimit, recordAvatarUpload, formatTimeRemaining } from '@/lib/redis';
 
 const UPLOAD_DIR = path.join(process.cwd(), 'public', 'uploads', 'avatars');
-const MAX_FILE_SIZE = 2 * 1024 * 1024; // 2MB
+const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB (increased for editor)
 const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+const OUTPUT_SIZE = 512; // Final avatar size
 
 /**
  * POST /api/profile/avatar
@@ -60,11 +62,24 @@ export async function POST(request: Request) {
       await mkdir(UPLOAD_DIR, { recursive: true });
     }
 
-    // Get file extension
-    const ext = file.type.split('/')[1] === 'jpeg' ? 'jpg' : file.type.split('/')[1];
+    // Process image with sharp - resize to OUTPUT_SIZE and convert to JPEG
+    const bytes = await file.arrayBuffer();
+    const buffer = Buffer.from(bytes);
+    
+    // Process image: resize to OUTPUT_SIZE, convert to JPEG, quality 90
+    const processedImage = await sharp(buffer)
+      .resize(OUTPUT_SIZE, OUTPUT_SIZE, {
+        fit: 'cover',
+        position: 'center',
+      })
+      .jpeg({
+        quality: 90,
+        progressive: true,
+      })
+      .toBuffer();
 
-    // Build filename: userId-timestamp.ext
-    const fileName = `${session.user.id}-${Date.now()}.${ext}`;
+    // Build filename: userId-timestamp.jpg
+    const fileName = `${session.user.id}-${Date.now()}.jpg`;
     const filePath = path.join(UPLOAD_DIR, fileName);
 
     // Delete old avatar if exists
@@ -80,9 +95,8 @@ export async function POST(request: Request) {
       }
     }
 
-    // Write new file
-    const bytes = await file.arrayBuffer();
-    await writeFile(filePath, Buffer.from(bytes));
+    // Write processed file
+    await writeFile(filePath, processedImage);
 
     // Update database
     const avatarUrl = `/uploads/avatars/${fileName}`;

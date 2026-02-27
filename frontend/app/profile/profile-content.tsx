@@ -9,6 +9,7 @@ import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Separator } from '@/components/ui/separator';
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
+import { AvatarEditor } from '@/components/avatar-editor';
 import { User, Shield, Key, Eye, EyeOff, AlertCircle, Check, Copy, Lock, Upload, X } from '@/lib/icons';
 import { toast } from 'sonner';
 
@@ -142,20 +143,34 @@ function AvatarUpload({
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
   const [isViewerOpen, setIsViewerOpen] = useState(false);
+  const [isEditorOpen, setIsEditorOpen] = useState(false);
+  const [imageToEdit, setImageToEdit] = useState<string | null>(null);
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    if (file.size > 2 * 1024 * 1024) {
-      toast.error('File too large. Maximum size is 2MB');
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error('File too large. Maximum size is 5MB');
       return;
     }
 
+    // Create object URL for the editor
+    const imageUrl = URL.createObjectURL(file);
+    setImageToEdit(imageUrl);
+    setIsEditorOpen(true);
+    
+    // Clear the input so the same file can be selected again
+    if (fileInputRef.current) fileInputRef.current.value = '';
+  };
+
+  const handleEditorSave = async (croppedImage: Blob) => {
+    setIsEditorOpen(false);
     setUploading(true);
+
     try {
       const formData = new FormData();
-      formData.append('file', file);
+      formData.append('file', croppedImage, 'avatar.jpg');
 
       const res = await fetch('/api/profile/avatar', {
         method: 'POST',
@@ -175,7 +190,19 @@ function AvatarUpload({
       toast.error('Failed to upload avatar');
     } finally {
       setUploading(false);
-      if (fileInputRef.current) fileInputRef.current.value = '';
+      // Clean up the object URL
+      if (imageToEdit) {
+        URL.revokeObjectURL(imageToEdit);
+        setImageToEdit(null);
+      }
+    }
+  };
+
+  const handleEditorClose = () => {
+    setIsEditorOpen(false);
+    if (imageToEdit) {
+      URL.revokeObjectURL(imageToEdit);
+      setImageToEdit(null);
     }
   };
 
@@ -234,6 +261,16 @@ function AvatarUpload({
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Avatar Editor */}
+      {imageToEdit && (
+        <AvatarEditor
+          imageSrc={imageToEdit}
+          open={isEditorOpen}
+          onClose={handleEditorClose}
+          onSave={handleEditorSave}
+        />
+      )}
     </>
   );
 }

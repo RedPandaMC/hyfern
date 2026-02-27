@@ -66,6 +66,11 @@ export {
   MdVisibility as Eye,
   MdVisibilityOff as EyeOff,
 
+  // Avatar Editor
+  MdRotateLeft as RotateCcw,
+  MdZoomIn as ZoomIn,
+  MdZoomOut as ZoomOut,
+
   // UI primitives (used by shadcn/ui components)
   MdChevronRight as ChevronRight,
   MdChevronLeft as ChevronLeft,

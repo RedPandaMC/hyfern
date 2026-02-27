@@ -11,7 +11,7 @@ ENV NPM_CONFIG_CACHE=/app/.npm
 
 # Install all dependencies (including dev for Prisma and Tailwind)
 COPY package.json package-lock.json* ./
-RUN npm ci --include=dev
+RUN npm install --include=dev
 
 # Stage 2: Builder
 FROM node:22.22.0-slim AS builder
