@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 set -e
 
 # Pelican Panel Database Initialization Script
