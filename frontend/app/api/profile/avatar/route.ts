@@ -8,6 +8,7 @@ import sharp from 'sharp';
 import { checkAvatarUploadRateLimit, recordAvatarUpload, formatTimeRemaining } from '@/lib/redis';
 
 const UPLOAD_DIR = path.join(process.cwd(), 'public', 'uploads', 'avatars');
+const PUBLIC_UPLOADS_DIR = path.join(process.cwd(), 'public', 'uploads');
 const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB (increased for editor)
 const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
 const OUTPUT_SIZE = 512; // Final avatar size
@@ -57,7 +58,10 @@ export async function POST(request: Request) {
       );
     }
 
-    // Ensure upload directory exists
+    // Ensure upload directory exists - create parent first, then avatars subdir
+    if (!existsSync(PUBLIC_UPLOADS_DIR)) {
+      await mkdir(PUBLIC_UPLOADS_DIR, { recursive: true });
+    }
     if (!existsSync(UPLOAD_DIR)) {
       await mkdir(UPLOAD_DIR, { recursive: true });
     }
