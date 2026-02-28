@@ -79,7 +79,7 @@ services:
         echo 'Starting Pelican Panel...'
         sh /entrypoint.sh supervisord -n -c /etc/supervisord.conf
     healthcheck:
-      test: ["CMD", "wget", "--quiet", "--spider", "http://localhost:80"]
+      test: ["CMD", "sh", "-c", "nc -z ::1 80 || nc -z 127.0.0.1 80"]
       interval: 10s
       timeout: 5s
       start_period: 60s
