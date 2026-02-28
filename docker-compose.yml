@@ -63,27 +63,21 @@ services:
         condition: service_completed_successfully
       redis:
         condition: service_healthy
-    # Custom entrypoint that runs auto-setup after starting services
+    # Override entrypoint to run setup before starting services
     entrypoint:
       - /bin/ash
       - -c
       - |
-        # Run the original entrypoint in background using sh
-        sh /entrypoint.sh &
-        
-        # Wait for services to start
-        sleep 20
-        
-        # Run auto-setup if needed
+        # Run setup script first if panel is not configured
         if [ ! -f /pelican-data/.env ] || ! grep -q 'APP_INSTALLED=true' /pelican-data/.env 2>/dev/null; then
-          echo 'Running Pelican auto-setup...'
-          if [ -f /usr/local/bin/setup-pelican.sh ]; then
-            sh /usr/local/bin/setup-pelican.sh
-          fi
+          echo 'Running Pelican setup...'
+          sh /usr/local/bin/setup-pelican.sh || echo 'Setup script failed, continuing...'
         fi
         
-        # Keep container running by waiting for background processes
-        wait
+        # Start the panel using sh and pass supervisord command
+        # The entrypoint.sh ends with 'exec "$@"' which needs the CMD
+        echo 'Starting Pelican Panel...'
+        sh /entrypoint.sh supervisord -n -c /etc/supervisord.conf
     healthcheck:
       test: ["CMD", "wget", "--quiet", "--spider", "http://localhost:80"]
       interval: 10s
