@@ -12,6 +12,7 @@ services:
       - ./Caddyfile:/etc/caddy/Caddyfile:ro
       - ./data/caddy/data:/data
       - ./data/caddy/config:/config
+      - ./data/caddy/locks:/locks
     networks:
       - public
       - internal
@@ -19,7 +20,7 @@ services:
       hyfern-frontend:
         condition: service_healthy
       pelican-panel:
-        condition: service_started
+        condition: service_healthy
       grafana:
         condition: service_started
     mem_limit: 256m
@@ -49,19 +50,46 @@ services:
       MAIL_USERNAME: ${MAIL_USERNAME:-}
       MAIL_PASSWORD: ${MAIL_PASSWORD:-}
       MAIL_FROM_ADDRESS: ${MAIL_FROM_ADDRESS:-noreply@hyfern.us}
+      PELICAN_ADMIN_EMAIL: hyfern-admin@hyfern.us
     volumes:
       - ./data/pelican-panel:/app/var
       - ./data/pelican-database:/var/www/html/database
       - ./pelican-Caddyfile:/etc/caddy/Caddyfile:ro
+      - ./scripts/setup-pelican.sh:/usr/local/bin/setup-pelican.sh:ro
     networks:
       - internal
     depends_on:
-      init-permissions:
-        condition: service_completed_successfully
-      pelican-db-init:
+      hyfern-init:
         condition: service_completed_successfully
       redis:
         condition: service_healthy
+    # Custom entrypoint that runs auto-setup after starting services
+    entrypoint:
+      - /bin/ash
+      - -c
+      - |
+        # Run the original entrypoint in background using sh
+        sh /entrypoint.sh &
+        
+        # Wait for services to start
+        sleep 20
+        
+        # Run auto-setup if needed
+        if [ ! -f /pelican-data/.env ] || ! grep -q 'APP_INSTALLED=true' /pelican-data/.env 2>/dev/null; then
+          echo 'Running Pelican auto-setup...'
+          if [ -f /usr/local/bin/setup-pelican.sh ]; then
+            sh /usr/local/bin/setup-pelican.sh
+          fi
+        fi
+        
+        # Keep container running by waiting for background processes
+        wait
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--spider", "http://localhost:80"]
+      interval: 10s
+      timeout: 5s
+      start_period: 60s
+      retries: 10
     mem_limit: 512m
     cpu_shares: 1024
 
@@ -83,7 +111,8 @@ services:
     networks:
       - internal
     depends_on:
-      - pelican-panel
+      pelican-panel:
+        condition: service_healthy
     mem_limit: 256m
     cpu_shares: 512
 
@@ -129,6 +158,8 @@ services:
       start_period: 40s
       retries: 3
     depends_on:
+      hyfern-init:
+        condition: service_completed_successfully
       redis:
         condition: service_healthy
     mem_limit: 512m
@@ -153,37 +184,72 @@ services:
     mem_limit: 512m
     cpu_shares: 256
 
-  # One-shot init container to fix data directory ownership
-  init-permissions:
+  # Unified initialization container
+  hyfern-init:
     image: alpine:3
-    container_name: hyfern-init-permissions
+    container_name: hyfern-init
     restart: "no"
     entrypoint: /bin/sh
     command:
       - -c
       - |
-        mkdir -p /data/grafana /data/prometheus /data/frontend-uploads/avatars /data/database /data/pelican-database /data/hytale /data/wings /data/redis /data/caddy/data /data/caddy/config /data/caddy/locks
+        echo "=========================================="
+        echo "HyFern Unified Initialization"
+        echo "=========================================="
+        
+        # Create all directories
+        echo "[1/4] Creating directories..."
+        mkdir -p /data/grafana /data/prometheus /data/frontend-uploads/avatars /data/database /data/pelican-database /data/pelican-panel /data/hytale /data/wings /data/wings-config /data/redis /data/caddy/data /data/caddy/config /data/caddy/locks
+        echo "✓ Directories created"
+        
+        # Set ownerships
+        echo "[2/4] Setting ownerships..."
         chown 472:472 /data/grafana
         chown 65534:65534 /data/prometheus
         chown 1001:1001 /data/frontend-uploads /data/frontend-uploads/avatars /data/database /data/hytale
-        chown 33:33 /data/pelican-database
-        # Wings server files
-        chown 988:988 /data/wings || true
+        chown 33:33 /data/pelican-database /data/pelican-panel
+        chown 988:988 /data/wings /data/wings-config 2>/dev/null || true
+        chmod 755 /data/grafana /data/prometheus /data/frontend-uploads /data/database /data/pelican-database /data/hytale /data/wings /data/wings-config /data/redis /data/caddy
+        echo "✓ Ownerships set"
+        
+        # Initialize HyFern database
+        echo "[3/4] Initializing HyFern database..."
+        if [ ! -f "/data/database/hyfern.db" ]; then
+          touch /data/database/hyfern.db
+          chown 1001:1001 /data/database/hyfern.db
+          chmod 664 /data/database/hyfern.db
+          echo "✓ Database created"
+        else
+          chown 1001:1001 /data/database/hyfern.db 2>/dev/null || true
+          chmod 664 /data/database/hyfern.db 2>/dev/null || true
+          echo "✓ Database exists"
+        fi
+        
+        # Initialize Pelican database
+        echo "[4/4] Initializing Pelican database..."
+        if [ ! -f "/data/pelican-database/database.sqlite" ]; then
+          apk add --no-cache sqlite 2>/dev/null
+          sqlite3 /data/pelican-database/database.sqlite "VACUUM;"
+          chown 33:33 /data/pelican-database/database.sqlite
+          chmod 664 /data/pelican-database/database.sqlite
+          echo "✓ Pelican database created"
+        else
+          chown 33:33 /data/pelican-database/database.sqlite 2>/dev/null || true
+          chmod 664 /data/pelican-database/database.sqlite 2>/dev/null || true
+          echo "✓ Pelican database exists"
+        fi
+        
+        echo ""
+        echo "=========================================="
+        echo "Initialization Complete!"
+        echo "=========================================="
+        echo ""
+        echo "Services will auto-configure on startup:"
+        echo "  - Pelican Panel: Will auto-run migrations"
+        echo "  - Grafana: Admin user will be created"
+        echo ""
     volumes:
       - ./data:/data
-
-  # Initialize Pelican Panel SQLite database
-  pelican-db-init:
-    build:
-      context: ./scripts
-      dockerfile: Dockerfile.pelican-init
-    container_name: hyfern-pelican-db-init
-    restart: "no"
-    volumes:
-      - ./data/pelican-database:/data/pelican-database
-    depends_on:
-      init-permissions:
-        condition: service_completed_successfully
 
   prometheus:
     image: prom/prometheus:latest
@@ -204,7 +270,7 @@ services:
     networks:
       - internal
     depends_on:
-      init-permissions:
+      hyfern-init:
         condition: service_completed_successfully
     healthcheck:
       test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:9090/-/healthy"]
@@ -220,6 +286,13 @@ services:
     restart: unless-stopped
     environment:
       GF_SERVER_ROOT_URL: ${GRAFANA_ROOT_URL}
+      GF_SECURITY_ADMIN_USER: hyfern-admin
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD:-hyfern123}
+      GF_SECURITY_ALLOW_EMBEDDING: "true"
+      GF_AUTH_ANONYMOUS_ENABLED: "true"
+      GF_AUTH_ANONYMOUS_ORG_ROLE: Viewer
+      GF_USERS_ALLOW_SIGN_UP: "false"
+      GF_USERS_ALLOW_ORG_CREATE: "false"
     volumes:
       - ./observability/grafana/grafana.ini:/etc/grafana/grafana.ini:ro
       - ./observability/grafana/provisioning:/etc/grafana/provisioning:ro
@@ -227,7 +300,7 @@ services:
     networks:
       - internal
     depends_on:
-      init-permissions:
+      hyfern-init:
         condition: service_completed_successfully
       prometheus:
         condition: service_healthy
