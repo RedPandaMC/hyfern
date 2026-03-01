@@ -1,6 +1,6 @@
 #!/bin/bash
 # HyFern Hytale Server Installer
-# Uses the embedded hytale-downloader to fetch server files
+# Uses the bundled hytale-downloader to fetch server files
 
 set -e
 
@@ -41,35 +41,42 @@ chmod +x "$DOWNLOADER"
 echo "Starting Hytale downloader..."
 echo ""
 
-# Check for existing credentials
-if [ -f "$CREDENTIALS_FILE" ]; then
-    echo "Using existing credentials from $CREDENTIALS_FILE"
-fi
-
-echo "The downloader will now:"
-echo "  1. Authenticate with your Hytale account (first time only)"
-echo "  2. Download server files to $HYTFERN_DATA_DIR"
-echo ""
-
-# Run the downloader
+# Run the downloader - it will handle auth flow
 cd "$HYTFERN_DATA_DIR"
 
-# Use embedded downloader with credentials if available
-if [ -f "$CREDENTIALS_FILE" ]; then
-    "$DOWNLOADER" -skip-update-check -download-path . -credentials-path "$CREDENTIALS_FILE"
-else
-    "$DOWNLOADER" -skip-update-check -download-path .
+# Copy existing credentials if available
+if [ -f "$CREDENTIALS_FILE" ] && [ ! -f "$HYTFERN_DATA_DIR/.hytale-downloader-credentials.json" ]; then
+    cp "$CREDENTIALS_FILE" "$HYTFERN_DATA_DIR/"
 fi
 
-# The downloader extracts files, let's check what we got
-echo ""
-echo "Verifying files..."
+# Use embedded downloader
+"$DOWNLOADER" -skip-update-check -download-path hytale-game.zip
 
-# Find and rename the downloaded zip if needed
+# Find and extract the zip
+echo ""
+echo "Extracting files..."
+
+# Rename any zip file to game.zip for extraction (downloader's naming can vary)
+for f in *.zip; do
+    if [ -f "$f" ] && [ "$f" != "Assets.zip" ]; then
+        mv "$f" game.zip
+    fi
+done
+
 if [ -f "game.zip" ]; then
-    echo "Extracting game.zip..."
     unzip -o game.zip
     rm -f game.zip
+fi
+
+# Move Server folder contents to root if it exists
+if [ -d "Server" ]; then
+    if [ -f "Server/HytaleServer.jar" ]; then
+        mv Server/HytaleServer.jar .
+    fi
+    if [ -f "Server/HytaleServer.aot" ]; then
+        mv Server/HytaleServer.aot .
+    fi
+    rm -rf Server
 fi
 
 # Check for required files
@@ -77,9 +84,9 @@ if [ -f "HytaleServer.jar" ] && [ -f "Assets.zip" ]; then
     echo "Download complete!"
     ls -lh HytaleServer.jar Assets.zip HytaleServer.aot 2>/dev/null || true
     
-    # Copy credentials to data folder for persistence
-    if [ -f "$CREDENTIALS_FILE" ] && [ ! -f "$HYTFERN_DATA_DIR/.hytale-downloader-credentials.json" ]; then
-        cp "$CREDENTIALS_FILE" "$HYTFERN_DATA_DIR/"
+    # Copy credentials back for future runs
+    if [ -f "$HYTFERN_DATA_DIR/.hytale-downloader-credentials.json" ] && [ ! -f "$CREDENTIALS_FILE" ]; then
+        cp "$HYTFERN_DATA_DIR/.hytale-downloader-credentials.json" "$CREDENTIALS_FILE"
     fi
 else
     echo "Warning: Expected files not found in $HYTFERN_DATA_DIR"
