@@ -50,6 +50,7 @@ export {
   MdDownload as Download,
   MdUpload as Upload,
   MdUploadFile as FileUp,
+  MdDescription as FileIcon,
   MdDelete as Trash2,
   MdEdit as Edit,
   MdWarning as AlertTriangle,
@@ -78,6 +79,7 @@ export {
   MdKeyboardArrowUp as ChevronUp,
   MdClose as X,
   MdCircle as Circle,
+  MdSchedule as Clock,
 } from 'react-icons/md';
 
 

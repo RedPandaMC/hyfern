@@ -58,10 +58,11 @@ export class DockerClient {
     this.containerName = containerName;
   }
 
-  async getContainerId(): Promise<string | null> {
+  async getContainerId(containerName?: string): Promise<string | null> {
+    const name = containerName || this.containerName;
     try {
       const containers = await dockerRequest('GET', '/containers/json?all=true');
-      const container = containers.find((c: any) => c.Names.some((n: string) => n === `/${this.containerName}`));
+      const container = containers.find((c: any) => c.Names.some((n: string) => n === `/${name}`));
       return container ? container.Id : null;
     } catch (error) {
       logger.error('Failed to get container ID', { context: 'docker', error: error as Error });
@@ -240,6 +241,11 @@ export class DockerClient {
       logger.error('Failed to exec command', { context: 'docker', error: error as Error });
       return { success: false, output: (error as Error).message };
     }
+  }
+
+  async execCommandInContainer(containerName: string, command: string): Promise<{ success: boolean; output: string }> {
+    const tempClient = new DockerClient(containerName);
+    return tempClient.execCommand(command);
   }
 }
 

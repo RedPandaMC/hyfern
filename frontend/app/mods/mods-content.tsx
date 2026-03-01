@@ -44,6 +44,7 @@ export function ModsContent() {
   const [uploading, setUploading] = useState(false);
   const [selectedMod, setSelectedMod] = useState<CurseForgeMod | null>(null);
   const [showDetailsDialog, setShowDetailsDialog] = useState(false);
+  const [installing, setInstalling] = useState(false);
   const [restartRequired, setRestartRequired] = useState(false);
   const [curseforgeEnabled, setCurseforgeEnabled] = useState(false);
   const [configLoaded, setConfigLoaded] = useState(false);
@@ -96,6 +97,8 @@ export function ModsContent() {
   const handleInstall = async (modId: number, fileId: number) => {
     if (!modId || !fileId) return;
 
+    setInstalling(true);
+
     // Get mod info from selectedMod or fetch it
     const modName = selectedMod?.name || `Mod ${modId}`;
     const fileName = selectedMod?.latestFiles.find(f => f.id === fileId)?.fileName || 'Unknown';
@@ -116,6 +119,7 @@ export function ModsContent() {
     setDownloads(prev => [...prev, newDownload]);
     setShowDetailsDialog(false);
     setSelectedMod(null);
+    setInstalling(false);
 
     // Process queue
     processDownloadQueue();
@@ -473,9 +477,10 @@ export function ModsContent() {
         onClose={() => {
           setShowDetailsDialog(false);
           setSelectedMod(null);
+          setInstalling(false);
         }}
         onInstall={handleInstall}
-        installing={false}
+        installing={installing}
         isInstalled={selectedMod ? installedMods.some((m) => m.curseforgeId === selectedMod.id) : false}
       />
     </div>

@@ -57,7 +57,7 @@ const navLinks: NavLink[] = [
   { href: "/settings/jvm", label: "JVM Config", icon: Cpu, minRole: "OWNER" },
   { href: "/files", label: "Files", icon: Folder, minRole: "ADMIN" },
   { href: "/backups", label: "Backups", icon: Database, minRole: "ADMIN" },
-  { href: "/admin/users", label: "Users", icon: Users, minRole: "OWNER" },
+  { href: "/admin/users", label: "Users", icon: Users, minRole: "ADMIN" },
 ];
 
 interface SidebarProps {
@@ -162,7 +162,16 @@ export function Sidebar({ userRole = "ADMIN", username = "Admin", userImage }: S
           <DropdownMenuTrigger className="w-full">
             <div className="flex items-center space-x-3 rounded-lg px-3 py-2 transition-colors hover:bg-accent">
               <Avatar className="h-8 w-8 flex-shrink-0">
-                {userImage && <AvatarImage src={userImage} alt={username} />}
+                {userImage ? (
+                  <AvatarImage 
+                    src={userImage} 
+                    alt={username}
+                    onError={(e) => {
+                      const target = e.target as HTMLImageElement;
+                      target.style.display = 'none';
+                    }}
+                  />
+                ) : null}
                 <AvatarFallback className="bg-primary text-primary-foreground text-xs">
                   {username.slice(0, 2).toUpperCase()}
                 </AvatarFallback>
