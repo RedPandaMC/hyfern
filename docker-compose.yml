@@ -69,16 +69,24 @@ services:
     privileged: true
 
   hytale-server:
-    image: eclipse-temurin:21-jre-alpine
+    image: eclipse-temurin:25-jre-alpine
     container_name: hyfern-hytale
     restart: unless-stopped
     ports:
       - "5520:5520/udp"
-      - "5523:5523"
     volumes:
       - ./data/hytale:/data
-      - ./data/hytale/config:/config
-      - ./data/hytale/backups:/backups
+    working_dir: /data
+    command: >
+      java
+      -Xms${HYTALE_MEMORY:-4G}
+      -Xmx${HYTALE_MAX_MEMORY:-6G}
+      -XX:+Use${HYTALE_GC:-G1GC}
+      -XX:MaxGCPauseMillis=${HYTALE_MAX_GC_PAUSE:-200}
+      -XX:AOTCache=HytaleServer.aot
+      ${HYTALE_CUSTOM_JVM_FLAGS:-}
+      -jar HytaleServer.jar
+      --assets Assets.zip
     environment:
       TZ: UTC
       HYTALE_MEMORY: ${HYTALE_MEMORY:-4G}
@@ -86,19 +94,10 @@ services:
       HYTALE_GC: ${HYTALE_GC:-G1GC}
       HYTALE_MAX_GC_PAUSE: ${HYTALE_MAX_GC_PAUSE:-200}
       HYTALE_CUSTOM_JVM_FLAGS: ${HYTALE_CUSTOM_JVM_FLAGS:-}
-      HYTALE_AOT_CACHE: ${HYTALE_AOT_CACHE:-HytaleServer.aot}
-      HYTALE_SERVER_PORT: ${HYTALE_SERVER_PORT:-5520}
-      HYTALE_WEBSERVER_PORT: ${HYTALE_WEBSERVER_PORT:-5523}
     env_file:
       - .env
     networks:
       - internal
-    healthcheck:
-      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:5523/api/status"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 60s
     mem_limit: 8g
     cpu_shares: 2048
 
@@ -134,7 +133,7 @@ services:
         
         # Create all directories
         echo "[1/4] Creating directories..."
-        mkdir -p /data/grafana /data/prometheus /data/frontend-uploads/avatars /data/database /data/hytale/config /data/hytale/backups /data/redis /data/caddy/data /data/caddy/config /data/caddy/locks
+        mkdir -p /data/grafana /data/prometheus /data/frontend-uploads/avatars /data/database /data/hytale /data/redis /data/caddy/data /data/caddy/config /data/caddy/locks
         echo "Directories created"
         
         # Set ownerships

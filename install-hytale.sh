@@ -1,63 +1,53 @@
 #!/bin/bash
 # HyFern Hytale Server Installer
-# This script downloads and sets up Hytale server files
+# This script sets up Hytale server files for the Docker container
 
 set -e
 
-HYTERN_DATA_DIR="${HYFERN_DATA_DIR:-./data/hytale}"
-SERVER_JAR_URL="${SERVER_JAR_URL:-}"
-AOT_CACHE_URL="${AOT_CACHE_URL:-}"
+HYTFERN_DATA_DIR="${HYFERN_DATA_DIR:-./data/hytale}"
 
 echo "=========================================="
 echo "HyFern Hytale Server Installer"
 echo "=========================================="
 
-mkdir -p "$HYTERN_DATA_DIR"
+mkdir -p "$HYTFERN_DATA_DIR"
 
 echo ""
-echo "Options:"
-echo "  Data directory: $HYTERN_DATA_DIR"
+echo "Required files for $HYTFERN_DATA_DIR/:"
+echo "  - HytaleServer.jar   (main server)"
+echo "  - HytaleServer.aot   (AOT cache for faster startup)"
+echo "  - Assets.zip         (game assets)"
 echo ""
 
-if [ -f "$HYTERN_DATA_DIR/HytaleServer.jar" ]; then
-    echo "HytaleServer.jar already exists at $HYTERN_DATA_DIR/HytaleServer.jar"
-    read -p "Overwrite? (y/N): " -n 1 -r
-    echo
-    if [[ ! $REPLY =~ ^[Yy]$ ]]; then
-        echo "Skipping JAR download."
-    else
-        echo "Please provide the new SERVER_JAR_URL or manually replace the file."
-    fi
-fi
-
-echo ""
-echo "To install Hytale server files:"
-echo "1. Download Hytale server files from your Hytale installation"
-echo "   - On Windows: C:\\Program Files\\Hytale Game\\hytale-server"
-echo "   - Or obtain from your server provider"
-echo ""
-echo "2. Copy these files to $HYTERN_DATA_DIR/:"
-echo "   - HytaleServer.jar"
-echo "   - HytaleServer.aot (optional but recommended)"
-echo ""
-echo "3. Optionally create $HYTERN_DATA_DIR/mods/ for your mods"
-echo ""
-
-if [ -f "$HYTERN_DATA_DIR/HytaleServer.jar" ]; then
-    echo "Server JAR: FOUND"
-    ls -lh "$HYTERN_DATA_DIR/HytaleServer.jar"
+if [ -f "$HYTFERN_DATA_DIR/HytaleServer.jar" ] && \
+   [ -f "$HYTFERN_DATA_DIR/HytaleServer.aot" ] && \
+   [ -f "$HYTFERN_DATA_DIR/Assets.zip" ]; then
+    echo "All required files present!"
+    ls -lh "$HYTFERN_DATA_DIR/"
 else
-    echo "Server JAR: NOT FOUND - Please install manually"
-fi
-
-if [ -f "$HYTERN_DATA_DIR/HytaleServer.aot" ]; then
-    echo "AOT Cache: FOUND"
-    ls -lh "$HYTERN_DATA_DIR/HytaleServer.aot"
-else
-    echo "AOT Cache: NOT FOUND - Server will generate on first run"
+    echo "MISSING FILES - Please download from Hytale:"
+    echo ""
+    echo "Option 1: From Hytale Launcher"
+    echo "  Windows: %appdata%\\Hytale\\install\\release\\package\\game\\latest"
+    echo "  Linux: \$XDG_DATA_HOME/Hytale/install/release/package/game/latest"
+    echo "  Copy: Server/ folder and Assets.zip"
+    echo ""
+    echo "Option 2: Hytale Downloader CLI"
+    echo "  Download from Hytale support, run ./hytale-downloader"
+    echo ""
+    echo "Place these files in $HYTFERN_DATA_DIR/:"
+    [ ! -f "$HYTFERN_DATA_DIR/HytaleServer.jar" ] && echo "  - HytaleServer.jar"
+    [ ! -f "$HYTFERN_DATA_DIR/HytaleServer.aot" ] && echo "  - HytaleServer.aot"
+    [ ! -f "$HYTFERN_DATA_DIR/Assets.zip" ] && echo "  - Assets.zip"
+    echo ""
+    echo "After placing files, run: docker compose up -d"
 fi
 
 echo ""
 echo "=========================================="
-echo "Installation check complete!"
+echo "Server will start with:"
+echo "  java -Xms${HYTALE_MEMORY:-4G} -Xmx${HYTALE_MAX_MEMORY:-6G} \\"
+echo "    -XX:+Use${HYTALE_GC:-G1GC} \\"
+echo "    -XX:AOTCache=HytaleServer.aot \\"
+echo "    -jar HytaleServer.jar --assets Assets.zip"
 echo "=========================================="
