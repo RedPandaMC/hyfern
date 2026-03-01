@@ -5,6 +5,7 @@ import { PlayerList } from '@/components/dashboard/player-list';
 import { TPSGauge } from '@/components/dashboard/tps-gauge';
 import { ResourceCharts } from '@/components/dashboard/resource-charts';
 import { ServerControls } from '@/components/dashboard/server-controls';
+import { TokenExpirationBanner } from '@/components/dashboard/token-expiration-banner';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -62,6 +63,9 @@ export default function DashboardPage() {
 
   return (
     <div className="space-y-6">
+      {/* Token Expiration Warning Banner */}
+      <TokenExpirationBanner />
+
       {/* Server Status Header */}
       <Card className="p-6">
         <div className="flex items-center justify-between">
