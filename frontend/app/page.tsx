@@ -82,12 +82,7 @@ export default function HomePage() {
                 <ExternalLink className="ml-1 h-3 w-3" />
               </Button>
             </Link>
-            <Link href={`${process.env.NEXT_PUBLIC_PANEL_URL || 'https://panel.hyfern.us'}`} target="_blank" rel="noopener noreferrer" className="hidden sm:block">
-              <Button variant="ghost" size="sm" className="hover:bg-accent">
-                Panel
-                <ExternalLink className="ml-1 h-3 w-3" />
-              </Button>
-            </Link>
+
             <ThemeToggle className="h-9 w-9" />
             <Link href="/login">
               <Button variant="outline" size="sm">
@@ -121,7 +116,7 @@ export default function HomePage() {
           {!isUnlocked ? (
             <Card className="border-border/50 dark:border-white/20 bg-white/95 dark:bg-black/40 backdrop-blur-md shadow-lg">
               <CardHeader>
-                <CardTitle className="flex items-center gap-2">
+                <CardTitle className="flex items-center gap-2 text-black dark:text-white">
                   <Lock className="h-5 w-5" />
                   Server Access
                 </CardTitle>

@@ -69,7 +69,7 @@ services:
     privileged: true
 
   hytale-server:
-    image: eclipse-temurin:25-jre-alpine
+    image: eclipse-temurin:25-jre
     container_name: hyfern-hytale
     restart: unless-stopped
     ports:
@@ -133,7 +133,7 @@ services:
         
         # Create all directories
         echo "[1/4] Creating directories..."
-        mkdir -p /data/grafana /data/prometheus /data/frontend-uploads/avatars /data/database /data/hytale /data/redis /data/caddy/data /data/caddy/config /data/caddy/locks
+        mkdir -p /data/grafana /data/prometheus /data/frontend-uploads/avatars /data/database /data/hytale/config /data/redis /data/caddy/data /data/caddy/config /data/caddy/locks
         echo "Directories created"
         
         # Set ownerships

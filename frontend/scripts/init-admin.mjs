@@ -46,6 +46,7 @@ async function initAdmin() {
         username TEXT UNIQUE NOT NULL,
         "passwordHash" TEXT NOT NULL,
         role TEXT NOT NULL DEFAULT 'VIEWER',
+        "avatarPath" TEXT,
         "totpSecret" TEXT,
         "totpEnabled" INTEGER NOT NULL DEFAULT 0,
         "recoveryCodes" TEXT DEFAULT '[]',
@@ -82,6 +83,13 @@ async function initAdmin() {
         "createdAt" TEXT NOT NULL DEFAULT (datetime('now'))
       );
     `);
+
+    // Add missing columns to existing tables
+    try {
+      db.exec(`ALTER TABLE users ADD COLUMN "avatarPath" TEXT;`);
+    } catch (e) {
+      // Column may already exist, ignore error
+    }
 
     const hashedPassword = await bcrypt.hash(password, SALT_ROUNDS);
     const id = randomBytes(12).toString('hex');
