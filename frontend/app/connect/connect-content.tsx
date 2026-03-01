@@ -105,10 +105,10 @@ export function ConnectContent({ initialSession }: ConnectContentProps) {
             <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-primary/10 mb-4">
               <Lock className="w-8 h-8 text-primary" />
             </div>
-            <h2 className="text-2xl font-bold text-foreground mb-2">
+            <h2 className="text-2xl font-bold text-black dark:text-foreground mb-2">
               Protected Content
             </h2>
-            <p className="text-muted-foreground">
+            <p className="text-black dark:text-muted-foreground">
               Enter the server access password to view connection information
             </p>
           </div>

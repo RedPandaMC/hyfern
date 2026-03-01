@@ -1,14 +1,15 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import dynamic from 'next/dynamic';
 import Link from 'next/link';
+import { signOut } from 'next-auth/react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Logo } from '@/components/logo';
-import { Lock, Copy, Check, Users, Activity, ExternalLink, Eye, EyeOff } from '@/lib/icons';
+import { Lock, Copy, Check, Users, Activity, ExternalLink, Eye, EyeOff, Home, LogOut } from '@/lib/icons';
 import { ThemeToggle } from '@/components/theme-toggle';
 import { toast } from 'sonner';
 
@@ -25,6 +26,18 @@ export default function HomePage() {
   const [serverInfo, setServerInfo] = useState<any>(null);
   const [copied, setCopied] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+
+  useEffect(() => {
+    fetch('/api/auth/session')
+      .then(res => res.json())
+      .then(data => {
+        if (data?.user) {
+          setIsLoggedIn(true);
+        }
+      })
+      .catch(() => {});
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -75,6 +88,32 @@ export default function HomePage() {
           </div>
 
           <nav className="flex items-center gap-2 sm:gap-4">
+            {isLoggedIn ? (
+              <>
+                <Link href="/dashboard">
+                  <Button variant="ghost" size="sm" className="hover:bg-accent">
+                    <Home className="mr-2 h-4 w-4" />
+                    Dashboard
+                  </Button>
+                </Link>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => signOut({ callbackUrl: '/' })}
+                  className="hover:bg-accent"
+                >
+                  <LogOut className="mr-2 h-4 w-4" />
+                  Logout
+                </Button>
+              </>
+            ) : (
+              <Link href="/login">
+                <Button variant="outline" size="sm">
+                  Admin Login
+                </Button>
+              </Link>
+            )}
+
             <Link href={`${process.env.NEXT_PUBLIC_BASE_URL || 'https://grafana.hyfern.us'}`} target="_blank" rel="noopener noreferrer" className="hidden sm:block">
               <Button variant="ghost" size="sm" className="hover:bg-accent">
                 <Activity className="mr-2 h-4 w-4" />
@@ -84,11 +123,6 @@ export default function HomePage() {
             </Link>
 
             <ThemeToggle className="h-9 w-9" />
-            <Link href="/login">
-              <Button variant="outline" size="sm">
-                Admin Login
-              </Button>
-            </Link>
           </nav>
         </div>
       </header>
@@ -107,7 +141,7 @@ export default function HomePage() {
                 </div>
               </div>
             </div>
-            <p className="text-lg text-muted-foreground drop-shadow text-center">
+            <p className="text-lg text-black dark:text-muted-foreground drop-shadow text-center">
               Welcome, adventurer!
             </p>
           </div>
@@ -120,7 +154,7 @@ export default function HomePage() {
                   <Lock className="h-5 w-5" />
                   Server Access
                 </CardTitle>
-                <CardDescription>
+                <CardDescription className="text-black dark:text-muted-foreground">
                   Enter the password to reveal server connection details
                 </CardDescription>
               </CardHeader>
