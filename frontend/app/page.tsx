@@ -77,11 +77,9 @@ export default function HomePage() {
   return (
     <ConstellationBackground>
     <div className="relative min-h-screen w-full overflow-hidden text-foreground">
-      {/* Overlay for text readability - lighter in light mode */}
-      <div className="absolute inset-0 bg-white/20 dark:bg-black/30" />
 
       {/* Header */}
-      <header className="relative z-10 border-b border-border/50 dark:border-white/10 bg-white/90 dark:bg-black/20 backdrop-blur-md">
+      <header className="relative z-10 border-b border-border/50 dark:border-white/10 bg-white dark:bg-black/20 backdrop-blur-md">
         <div className="container mx-auto flex h-16 items-center justify-between px-4">
           <div className="flex items-center gap-2">
             <Logo size={32} showText={true} />
