@@ -13,7 +13,7 @@ export class QueryClient {
 
   constructor(config: QueryClientConfig) {
     this.config = {
-      queryEndpoint: '/api/query',
+      queryEndpoint: '/Nitrado/Query',
       ...config,
     };
   }
@@ -31,6 +31,7 @@ export class QueryClient {
         method: 'GET',
         headers: {
           'Authorization': this.getAuthHeader(),
+          'Accept': 'application/x.hytale.nitrado.query+json;version=1',
           'Content-Type': 'application/json',
         },
         cache: 'no-store',
