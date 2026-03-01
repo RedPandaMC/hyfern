@@ -88,6 +88,8 @@ services:
       ${HYTALE_CUSTOM_JVM_FLAGS:-}
       -jar HytaleServer.jar
       --assets Assets.zip
+      --session-token "${HYTALE_SERVER_SESSION_TOKEN}"
+      --identity-token "${HYTALE_SERVER_IDENTITY_TOKEN}"
     environment:
       TZ: UTC
       HYTALE_MEMORY: ${HYTALE_MEMORY:-4G}
@@ -97,6 +99,7 @@ services:
       HYTALE_CUSTOM_JVM_FLAGS: ${HYTALE_CUSTOM_JVM_FLAGS:-}
     env_file:
       - .env
+      - ./data/hytale/tokens/server-tokens.env
     networks:
       - internal
     mem_limit: 8g

@@ -161,13 +161,13 @@ export default function HomePage() {
 
           {/* Password form or server info */}
           {!isUnlocked ? (
-            <Card className="border-border/50 dark:border-white/20 bg-white/95 dark:bg-black/40 backdrop-blur-md shadow-lg">
+            <Card className="border-border/50 dark:border-white/20 bg-black/80 backdrop-blur-md shadow-lg">
               <CardHeader>
-                <CardTitle className="flex items-center gap-2 text-black dark:text-white">
+                <CardTitle className="flex items-center gap-2 text-white">
                   <Lock className="h-5 w-5" />
                   Server Access
                 </CardTitle>
-                <CardDescription className="text-black dark:text-muted-foreground">
+                <CardDescription className="text-white/80">
                   Enter the password to reveal server connection details
                 </CardDescription>
               </CardHeader>
@@ -179,7 +179,7 @@ export default function HomePage() {
                       placeholder="Enter password..."
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
-                      className="pr-10"
+                      className="pr-10 bg-white text-black placeholder:text-gray-500"
                       disabled={isLoading}
                     />
                     <button
@@ -197,7 +197,7 @@ export default function HomePage() {
                   </div>
                   <Button
                     type="submit"
-                    className="w-full"
+                    className="w-full bg-white text-black hover:bg-gray-200"
                     disabled={isLoading || !password}
                   >
                     {isLoading ? 'Verifying...' : 'Unlock Server Info'}
@@ -206,10 +206,10 @@ export default function HomePage() {
               </CardContent>
             </Card>
           ) : (
-            <Card className="border-border/50 dark:border-white/20 bg-white/95 dark:bg-black/40 backdrop-blur-md shadow-lg">
+            <Card className="border-border/50 dark:border-white/20 bg-black/80 backdrop-blur-md shadow-lg">
               <CardHeader>
                 <div className="flex items-center justify-between">
-                  <CardTitle>Server Information</CardTitle>
+                  <CardTitle className="text-white">Server Information</CardTitle>
                   {serverInfo?.status && (
                     <Badge
                       variant={serverInfo.status === 'online' ? 'default' : 'destructive'}
@@ -219,19 +219,19 @@ export default function HomePage() {
                     </Badge>
                   )}
                 </div>
-                <CardDescription>
+                <CardDescription className="text-white/80">
                   Connect to the server using the details below
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
                 {/* Direct Connect address */}
                 <div className="space-y-2">
-                  <label className="text-sm font-medium">Direct Connect</label>
+                  <label className="text-sm font-medium text-white">Direct Connect</label>
                   <div className="flex gap-2">
                     <Input
                       value={serverInfo ? `${serverInfo.address}:${serverInfo.port}` : 'Loading...'}
                       readOnly
-                      className="font-mono"
+                      className="font-mono bg-white text-black"
                     />
                     <Button
                       size="icon"
