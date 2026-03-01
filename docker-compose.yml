@@ -19,78 +19,79 @@ services:
     depends_on:
       hyfern-frontend:
         condition: service_healthy
-      pelican-panel:
+      pterodactyl-panel:
         condition: service_healthy
       grafana:
         condition: service_started
     mem_limit: 256m
     cpu_shares: 512
 
-  pelican-panel:
-    image: ghcr.io/pelican-dev/panel:latest
-    container_name: hyfern-pelican-panel
+  # Pterodactyl Panel - replaces Pelican
+  pterodactyl-panel:
+    build:
+      context: ./pterodactyl
+      dockerfile: Dockerfile
+    container_name: hyfern-pterodactyl-panel
     restart: unless-stopped
     environment:
-      APP_URL: ${PELICAN_APP_URL}
+      APP_URL: ${PTERODACTYL_APP_URL:-https://panel.hyfern.us}
+      APP_KEY: ${PTERODACTYL_APP_KEY}
       APP_ENV: production
-      APP_DEBUG: false
-      APP_KEY: ${PELICAN_APP_KEY}
-      LE_EMAIL: ${LETSENCRYPT_EMAIL}
-      TRUSTED_PROXIES: "*"
-      BEHIND_PROXY: "true"
-      DB_CONNECTION: sqlite
-      DB_DATABASE: /var/www/html/database/database.sqlite
-      CACHE_STORE: redis
+      APP_DEBUG: "false"
+      
+      # Database - MariaDB
+      DB_HOST: pterodactyl-db
+      DB_PORT: 3306
+      DB_DATABASE: pterodactyl
+      DB_USERNAME: pterodactyl
+      DB_PASSWORD: ${PTERODACTYL_DB_PASSWORD}
+      DB_SSL_MODE: "prefer"
+      LARAVEL_LOAD_SKIP_SSL: "true"
+      
+      # Redis (reuse existing)
       REDIS_HOST: redis
       REDIS_PORT: 6379
       REDIS_PASSWORD: ${REDIS_PASSWORD}
-      MAIL_DRIVER: ${MAIL_DRIVER:-log}
-      MAIL_HOST: ${MAIL_HOST:-}
-      MAIL_PORT: ${MAIL_PORT:-}
-      MAIL_USERNAME: ${MAIL_USERNAME:-}
-      MAIL_PASSWORD: ${MAIL_PASSWORD:-}
-      MAIL_FROM_ADDRESS: ${MAIL_FROM_ADDRESS:-noreply@hyfern.us}
-      PELICAN_ADMIN_EMAIL: hyfern-admin@hyfern.us
+      CACHE_DRIVER: redis
+      SESSION_DRIVER: redis
+      QUEUE_DRIVER: redis
+      
+      # Mail settings
+      MAIL_DRIVER: log
+      MAIL_FROM_ADDRESS: noreply@hyfern.us
+      MAIL_FROM_NAME: "${MAIL_FROM_NAME:-HyFern}"
+      
+      # Additional settings
+      APP_TIMEZONE: UTC
     volumes:
-      - ./data/pelican-panel:/app/var
-      - ./data/pelican-database:/var/www/html/database
-      - ./pelican-Caddyfile:/etc/caddy/Caddyfile:ro
-      - ./scripts/setup-pelican.sh:/usr/local/bin/setup-pelican.sh:ro
+      - ./data/pterodactyl:/var/www/pterodactyl/storage
+      - ./config/pterodactyl:/var/www/pterodactyl/config
     networks:
       - internal
     depends_on:
       hyfern-init:
         condition: service_completed_successfully
+      pterodactyl-db:
+        condition: service_healthy
       redis:
         condition: service_healthy
-    # Override entrypoint to run setup before starting services
-    entrypoint:
-      - /bin/ash
-      - -c
-      - |
-        # Run setup script first if panel is not configured
-        if [ ! -f /pelican-data/.env ] || ! grep -q 'APP_INSTALLED=true' /pelican-data/.env 2>/dev/null; then
-          echo 'Running Pelican setup...'
-          sh /usr/local/bin/setup-pelican.sh || echo 'Setup script failed, continuing...'
-        fi
-        
-        # Start the panel using sh and pass supervisord command
-        # The entrypoint.sh ends with 'exec "$@"' which needs the CMD
-        echo 'Starting Pelican Panel...'
-        sh /entrypoint.sh supervisord -n -c /etc/supervisord.conf
     healthcheck:
-      test: ["CMD", "sh", "-c", "nc -z ::1 80 || nc -z 127.0.0.1 80"]
+      test: ["CMD", "php-fpm", "-t"]
       interval: 10s
       timeout: 5s
-      start_period: 60s
+      start_period: 120s
       retries: 10
     mem_limit: 512m
     cpu_shares: 1024
 
-  wings:
-    image: ghcr.io/pelican-dev/wings:latest
-    container_name: hyfern-wings
+  # Pterodactyl Wings - runs game servers
+  pterodactyl-wings:
+    image: ghcr.io/pterodactyl/wings:latest
+    container_name: hyfern-pterodactyl-wings
     restart: unless-stopped
+    ports:
+      - "8443:8443"
+      - "8080:8080"
     environment:
       TZ: ${TZ:-UTC}
       WINGS_UID: 988
@@ -98,16 +99,40 @@ services:
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
       - ${DOCKER_CONTAINERS_PATH:-/var/lib/docker/containers}:/var/lib/docker/containers:ro
-      - ./data/wings:/var/lib/pelican
-      - ./data/wings-config:/etc/pelican
+      - ./data/pterodactyl-wings/var/lib/pterodactyl:/var/lib/pterodactyl
+      - ./data/pterodactyl-wings/etc/pterodactyl:/etc/pterodactyl
       - ./data/hytale:/mnt/server/hytale-aot:ro
-      - /tmp/pelican:/tmp/pelican
     networks:
       - internal
     depends_on:
-      pelican-panel:
+      pterodactyl-panel:
+        condition: service_healthy
+      pterodactyl-db:
         condition: service_healthy
     mem_limit: 256m
+    cpu_shares: 512
+    privileged: true
+
+  # MariaDB Database for Pterodactyl
+  pterodactyl-db:
+    image: mariadb:10.6
+    container_name: hyfern-pterodactyl-db
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: pterodactyl
+      MYSQL_USER: pterodactyl
+      MYSQL_PASSWORD: ${PTERODACTYL_DB_PASSWORD}
+    volumes:
+      - ./data/pterodactyl-db:/var/lib/mysql
+    networks:
+      - internal
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${MYSQL_ROOT_PASSWORD}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    mem_limit: 512m
     cpu_shares: 512
 
   hyfern-frontend:
@@ -125,22 +150,28 @@ services:
       NEXTAUTH_URL: ${NEXTAUTH_URL}
       NEXTAUTH_SECRET: ${NEXTAUTH_SECRET}
       REDIS_URL: redis://:${REDIS_PASSWORD}@redis:6379
-      WINGS_API_URL: http://wings:8443
-      WINGS_API_KEY: ${WINGS_API_KEY}
-      WINGS_SERVER_UUID: ${WINGS_SERVER_UUID:-default}
-      PELICAN_API_URL: http://pelican-panel:80
-      PELICAN_API_KEY: ${PELICAN_API_KEY}
-      PELICAN_SERVER_UUID: ${PELICAN_SERVER_UUID:-default}
+      
+      # Pterodactyl API (replaces Pelican)
+      PTERODACTYL_API_URL: http://pterodactyl-panel:80
+      PTERODACTYL_API_KEY: ${PTERODACTYL_API_KEY}
+      
+      # Hytale Webserver
       HYTALE_WEBSERVER_URL: ${HYTALE_WEBSERVER_URL:-http://host.docker.internal:5523}
       HYTALE_WEBSERVER_USERNAME: ${HYTALE_WEBSERVER_USERNAME:-hyfern}
       HYTALE_WEBSERVER_PASSWORD: ${HYTALE_WEBSERVER_PASSWORD}
       CURSEFORGE_API_KEY: ${CURSEFORGE_API_KEY}
+      
+      # Admin setup
       INIT_ADMIN_USERNAME: ${INIT_ADMIN_USERNAME:-admin}
       INIT_ADMIN_PASSWORD: ${INIT_ADMIN_PASSWORD:-admin123}
       SERVER_ACCESS_PASSWORD: ${SERVER_ACCESS_PASSWORD}
+      
+      # Public URLs
       NEXT_PUBLIC_SERVER_ADDRESS: ${NEXT_PUBLIC_SERVER_ADDRESS:-hyfern.us}
       NEXT_PUBLIC_GRAFANA_URL: ${GRAFANA_ROOT_URL}
-      NEXT_PUBLIC_PANEL_URL: ${PELICAN_APP_URL}
+      NEXT_PUBLIC_PANEL_URL: ${PTERODACTYL_APP_URL:-https://panel.hyfern.us}
+      
+      # Prometheus
       PROMETHEUS_URL: http://prometheus:9090
       PROMETHEUS_JOB: hytale
     networks:
@@ -192,22 +223,22 @@ services:
         echo "=========================================="
         
         # Create all directories
-        echo "[1/4] Creating directories..."
-        mkdir -p /data/grafana /data/prometheus /data/frontend-uploads/avatars /data/database /data/pelican-database /data/pelican-panel /data/hytale /data/wings /data/wings-config /data/redis /data/caddy/data /data/caddy/config /data/caddy/locks
+        echo "[1/5] Creating directories..."
+        mkdir -p /data/grafana /data/prometheus /data/frontend-uploads/avatars /data/database /data/pterodactyl /data/pterodactyl-db /data/pterodactyl-wings /data/pterodactyl-wings-config /data/hytale /data/redis /data/caddy/data /data/caddy/config /data/caddy/locks
         echo "✓ Directories created"
         
         # Set ownerships
-        echo "[2/4] Setting ownerships..."
+        echo "[2/5] Setting ownerships..."
         chown 472:472 /data/grafana
         chown 65534:65534 /data/prometheus
         chown 1001:1001 /data/frontend-uploads /data/frontend-uploads/avatars /data/database /data/hytale
-        chown 33:33 /data/pelican-database /data/pelican-panel
-        chown 988:988 /data/wings /data/wings-config 2>/dev/null || true
-        chmod 755 /data/grafana /data/prometheus /data/frontend-uploads /data/database /data/pelican-database /data/hytale /data/wings /data/wings-config /data/redis /data/caddy
+        chown 999:999 /data/pterodactyl-db 2>/dev/null || true
+        chown 988:988 /data/pterodactyl-wings /data/pterodactyl-wings-config 2>/dev/null || true
+        chmod 755 /data/grafana /data/prometheus /data/frontend-uploads /data/database /data/pterodactyl /data/pterodactyl-db /data/hytale /data/pterodactyl-wings /data/pterodactyl-wings-config /data/redis /data/caddy
         echo "✓ Ownerships set"
         
-        # Initialize HyFern database
-        echo "[3/4] Initializing HyFern database..."
+        # Initialize HyFern database (frontend)
+        echo "[3/5] Initializing HyFern database..."
         if [ ! -f "/data/database/hyfern.db" ]; then
           touch /data/database/hyfern.db
           chown 1001:1001 /data/database/hyfern.db
@@ -219,18 +250,24 @@ services:
           echo "✓ Database exists"
         fi
         
-        # Initialize Pelican database
-        echo "[4/4] Initializing Pelican database..."
-        if [ ! -f "/data/pelican-database/database.sqlite" ]; then
-          apk add --no-cache sqlite 2>/dev/null
-          sqlite3 /data/pelican-database/database.sqlite "VACUUM;"
-          chown 33:33 /data/pelican-database/database.sqlite
-          chmod 664 /data/pelican-database/database.sqlite
-          echo "✓ Pelican database created"
+        # Create Pterodactyl storage directory
+        echo "[4/5] Initializing Pterodactyl storage..."
+        if [ ! -d "/data/pterodactyl/storage" ]; then
+          mkdir -p /data/pterodactyl/storage
+          chown 1000:1000 /data/pterodactyl/storage 2>/dev/null || true
+          echo "✓ Storage created"
         else
-          chown 33:33 /data/pelican-database/database.sqlite 2>/dev/null || true
-          chmod 664 /data/pelican-database/database.sqlite 2>/dev/null || true
-          echo "✓ Pelican database exists"
+          echo "✓ Storage exists"
+        fi
+        
+        # Create Wings directories
+        echo "[5/5] Initializing Wings directories..."
+        if [ ! -d "/data/pterodactyl-wings/var/lib/pterodactyl" ]; then
+          mkdir -p /data/pterodactyl-wings/var/lib/pterodactyl /data/pterodactyl-wings/etc/pterodactyl
+          chown 988:988 /data/pterodactyl-wings/var/lib/pterodactyl /data/pterodactyl-wings/etc/pterodactyl 2>/dev/null || true
+          echo "✓ Wings directories created"
+        else
+          echo "✓ Wings directories exist"
         fi
         
         echo ""
@@ -239,7 +276,7 @@ services:
         echo "=========================================="
         echo ""
         echo "Services will auto-configure on startup:"
-        echo "  - Pelican Panel: Will auto-run migrations"
+        echo "  - Pterodactyl Panel: Will initialize on first run"
         echo "  - Grafana: Admin user will be created"
         echo ""
     volumes:

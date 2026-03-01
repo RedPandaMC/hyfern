@@ -18,14 +18,15 @@ A self-hosted Hytale server management dashboard. Manage your server, mods, back
 ## Architecture
 
 | Service | Description | Domain |
-|---|---|---|
+|---------|-------------|--------|
 | **Frontend** | Next.js dashboard (server control, mods, analytics) | `hyfern.us` |
-| **Pelican Panel** | Container orchestration for game servers | `panel.hyfern.us` |
-| **Wings** | Pelican daemon (manages server containers) | `api.hyfern.us` |
-| **Hytale Server** | Game server with WebServer + PerformanceSaver plugins | — |
+| **Pterodactyl Panel** | Server management panel | `panel.hyfern.us` |
+| **Wings** | Daemon that runs game server containers | `api.hyfern.us` |
+| **Hytale Server** | Game server with WebServer plugin | — |
 | **Caddy** | Reverse proxy with automatic HTTPS | ports 80/443 |
-| **SQLite** | File-based database for frontend and Pelican | — |
-| **Redis** | Caching and rate limiting (optional) | — |
+| **MariaDB** | Database for Pterodactyl Panel | — |
+| **SQLite** | File-based database for frontend | — |
+| **Redis** | Caching and rate limiting | — |
 | **Prometheus** | Metrics collection from game server | — |
 | **Grafana** | Metrics dashboards (embedded in frontend) | `grafana.hyfern.us` |
 
@@ -47,44 +48,92 @@ cp .env.example .env
 nano .env  # Fill in all values
 ```
 
-### 2. Download the Hytale server
-
-```bash
-./update-server.sh
-```
-
-This will authenticate with your Hytale account (first run only), download the latest server build, and extract it to `server-data/`.
-
-### 3. Start everything
+### 2. Start everything
 
 ```bash
 docker compose up -d
 ```
 
-### 4. Complete Pelican Panel Setup
+Wait for all services to become healthy:
+```bash
+docker compose ps
+# All should show "healthy" status
+```
 
-Once all services are running, you need to complete the Pelican Panel installation:
+### 3. Complete Pterodactyl Panel Setup
 
-1. **Visit the installer**: Navigate to `https://panel.hyfern.us/installer`
+Once all services are running, complete the Pterodactyl Panel installation:
 
-2. **Complete the setup wizard**:
-   - Database: Select "SQLite" (the database is automatically created at `/var/www/html/database/database.sqlite`)
-   - Cache: Redis is pre-configured
-   - Create your admin account
-   - Set your application URL to `https://panel.hyfern.us`
+1. **Visit the installer**: Navigate to `https://panel.hyfern.us`
+2. **Create admin account**: Enter your desired username and password
+3. **Complete setup**: The panel will automatically configure with MariaDB
 
-3. **Import the custom Hytale egg**:
-   - Go to Admin → Nests
-   - Click "Import Egg"
-   - Upload the file `egg/egg-hytale.yaml` from this repository
-   - The egg will be imported with all default configurations
+### 4. Configure Pterodactyl Node (Wings)
 
-4. **Configure Wings**:
-   - Visit the admin panel
-   - Go to Nodes and copy the Wings configuration
-   - The Wings daemon is automatically configured to connect
+After logging into the panel as admin:
 
-### 5. Verify deployment
+#### a. Create a Location
+1. Go to **Locations** (Admin → Locations)
+2. Click **Create New**
+3. Fill in:
+   - **Short Name**: `main`
+   - **Description**: `HyFern Main Location`
+4. Click **Create Location**
+
+#### b. Create a Node
+1. Go to **Nodes** (Admin → Nodes)
+2. Click **Create New**
+3. Fill in:
+   - **Name**: `HyFern Node`
+   - **Location**: Select the location you just created
+   - **FQDN**: `api.hyfern.us` (or your server's IP)
+   - **Communicate over SSL**: Unchecked (for internal Docker networking)
+   - **Behind Proxy**: Checked
+   - **Memory**: 8192 (or your available RAM in MB)
+   - **Allocated Memory**: 6144
+   - **Disk Space**: 50000 (or your available disk in MB)
+   - **Allocated Disk Space**: 30000
+4. Click **Create Node**
+
+#### c. Configure Wings
+After creating the node, you'll see a **Configuration** tab:
+
+1. Click the **Configuration** tab
+2. Copy the entire configuration shown
+3. Update the wings config file:
+   ```bash
+   nano data/pterodactyl-wings/etc/pterodactyl/config.yml
+   ```
+4. Paste the configuration and save
+5. Restart wings:
+   ```bash
+   docker compose restart pterodactyl-wings
+   ```
+
+#### d. Create a Server
+1. Go to **Servers** (Admin → Servers)
+2. Click **Create New**
+3. Fill in:
+   - **Name**: `Hytale Server`
+   - **Node**: Select your node
+   - **Nest**: Select "Hytale" (or import the egg first)
+   - **Egg**: Select the Hytale egg
+   - **Docker Image**: Leave default or set custom
+   - **Allocations**:
+     - Default Allocation: Select the generated allocation
+   - **Resource Limits**: Set memory, disk, CPU as desired
+4. Click **Create Server**
+
+### 5. Import Custom Hytale Egg (Recommended)
+
+Import the custom egg for better Hytale support:
+
+1. Go to **Nests** (Admin → Nests)
+2. Click **Import Egg**
+3. Upload `egg/egg-hytale.yaml`
+4. The egg will be imported with Hytale-specific configurations
+
+### 6. Verify Deployment
 
 ```bash
 # Check all services are running
@@ -94,83 +143,139 @@ docker compose ps
 docker compose logs -f
 ```
 
-See the [full documentation](docs/setup.md) for detailed setup instructions.
+## Environment Variables
+
+Create a `.env` file with the following variables:
+
+```bash
+# General
+TZ=UTC
+LETSENCRYPT_EMAIL=your-email@example.com
+
+# Database
+MYSQL_ROOT_PASSWORD=your_secure_root_password
+PTERODACTYL_DB_PASSWORD=your_secure_db_password
+
+# Redis
+REDIS_PASSWORD=your_secure_redis_password
+
+# Frontend
+NEXTAUTH_URL=https://hyfern.us
+NEXTAUTH_SECRET=generate_a_secure_secret
+SERVER_ACCESS_PASSWORD=your_server_access_password
+
+# Pterodactyl
+PTERODACTYL_APP_URL=https://panel.hyfern.us
+PTERODACTYL_APP_KEY=generate_with_pterodactyl_command
+PTERODACTYL_API_KEY=will_be_set_after_panel_setup
+PTERODACTYL_SERVER_UUID=will_be_set_after_creating_server
+
+# Hytale
+HYTALE_WEBSERVER_USERNAME=hyfern
+HYTALE_WEBSERVER_PASSWORD=your_webserver_password
+
+# Monitoring
+GRAFANA_ADMIN_PASSWORD=your_grafana_password
+PROMETHEUS_PASSWORD=your_prometheus_password
+```
+
+Generate secrets with:
+```bash
+# NEXTAUTH_SECRET
+openssl rand -base64 32
+
+# PTERODACTYL_APP_KEY (run in pterodactyl panel container)
+docker exec hyfern-pterodactyl-panel php artisan key:generate --show
+```
 
 ## Project Structure
 
 ```
 .
-├── Caddyfile                  # Reverse proxy config
-├── docker-compose.yml         # All services
-├── .env.example               # Environment variable template
-├── init-db.sh                 # PostgreSQL initialization
-├── update-server.sh           # Hytale server download/update script
-├── egg/                       # Hytale server Docker image
+├── Caddyfile                    # Reverse proxy config
+├── docker-compose.yml           # All services
+├── .env.example                 # Environment variable template
+├── pterodactyl/                 # Custom Pterodactyl Docker config
+│   └── Dockerfile               # Panel with mariadb-client
+├── config/
+│   └── pterodactyl/             # Pterodactyl config mount
+├── data/                        # Data directories
+│   ├── pterodactyl/             # Panel storage
+│   ├── pterodactyl-wings/       # Wings data and config
+│   ├── database/                # Frontend SQLite
+│   ├── hytale/                  # Hytale server files
+│   └── ...
+├── egg/                         # Server eggs
+│   └── egg-hytale.yaml          # Hytale egg definition
+├── frontend/                    # Next.js dashboard
 │   ├── Dockerfile
-│   ├── entrypoint.sh          # JVM startup script
-│   ├── egg-hytale.json        # Pelican egg definition
-│   └── default-configs/       # Default plugin configurations
-├── frontend/                  # Next.js dashboard application
-│   ├── Dockerfile
-│   ├── app/                   # Pages and API routes
-│   ├── components/            # UI components
-│   ├── lib/                   # Auth, database, utilities
-│   └── prisma/                # Database schema
-├── observability/             # Monitoring stack
-│   ├── grafana/               # Grafana config and provisioning
-│   └── prometheus/            # Prometheus scrape config
-├── server-data/               # Hytale server files (bind mounted)
-└── hytale-downloader/         # Server download utility
+│   ├── app/                     # Pages and API routes
+│   ├── components/              # UI components
+│   └── lib/                     # Auth, database, utilities
+└── observability/               # Monitoring
+    ├── grafana/                 # Grafana config
+    └── prometheus/              # Prometheus config
 ```
 
 ## Ports
 
 | Port | Protocol | Service |
-|---|---|---|
+|------|----------|---------|
 | 80 | TCP | Caddy (HTTP, redirects to HTTPS) |
 | 443 | TCP | Caddy (HTTPS) |
-| 5520 | UDP | Hytale game server |
+| 5520 | UDP | Hytale game server (configurable) |
+| 8443 | TCP | Pterodactyl Wings API |
+| 8080 | TCP | Pterodactyl Wings (internal) |
 
 All other services communicate internally via Docker networks.
 
 ## Troubleshooting
 
-### Pelican Panel Database Not Created
+### Pterodactyl Panel Not Healthy
 
-If you see `service "pelican-db-init" didn't complete successfully`, the SQLite database wasn't initialized:
-
+If the panel shows as unhealthy:
 ```bash
-# Rebuild and run the init service
-docker compose build --no-cache pelican-db-init
-docker compose run --rm pelican-db-init
-
-# Verify database was created
-ls -la data/pelican-database/
-# Should show: database.sqlite (owned by www-data)
+docker compose logs pterodactyl-panel
 ```
 
-### Wings Container Restarting
+Common issues:
+- Database migration failed: Check DB credentials in .env
+- SSL errors: Update DB_SSL_MODE in docker-compose.yml
 
-If the Wings container keeps restarting, check the logs:
+### Wings Container Not Starting
 
+If wings keeps restarting:
 ```bash
-docker compose logs -f wings
+docker compose logs pterodactyl-wings
 ```
 
-Usually this means:
-- Pelican Panel isn't fully initialized yet (wait for setup wizard completion)
-- Wings configuration needs to be updated from the admin panel
+Usually means:
+- Configuration file is missing or invalid
+- Node not configured in the panel
+- Token is incorrect
+
+Fix by updating the config:
+```bash
+nano data/pterodactyl-wings/etc/pterodactyl/config.yml
+docker compose restart pterodactyl-wings
+```
+
+### Frontend API Errors
+
+If the frontend shows errors when connecting to Pterodactyl:
+1. Check that `PTERODACTYL_API_KEY` is set in .env
+2. Check that `PTERODACTYL_SERVER_UUID` matches the server in the panel
+3. Restart the frontend: `docker compose restart hyfern-frontend`
 
 ### Services Not Starting
 
 Check individual service logs:
-
 ```bash
 # Frontend
-docker compose logs -f hyfern-frontend
+docker compose logs hyfern-frontend
 
-# Pelican Panel
-docker compose logs -f pelican-panel
+# Pterodactyl Panel
+docker compose logs pterodactyl-panel
 
 # Check all services
 docker compose ps
@@ -178,23 +283,28 @@ docker compose ps
 
 ### Permission Issues
 
-If you see permission errors in the logs:
-
+If you see permission errors:
 ```bash
-# Fix data directory permissions
-docker compose run --rm init-permissions
+# The init container handles this on startup
+# But you can manually fix:
+chown -R 1001:1001 data/database
+chown -R 988:988 data/pterodactyl-wings
+```
+
+## Building from Source
+
+### Build Frontend
+```bash
+cd frontend
+docker build -t your-dockerhub-user/hyfern-frontend:latest .
+docker push your-dockerhub-user/hyfern-frontend:latest
+```
+
+### Rebuild Pterodactyl Panel
+```bash
+docker compose build pterodactyl-panel
 ```
 
 ## License
 
 MIT
-
-## Recent Changes
-
-### Frontend Optimizations (2025-02-17)
-
-- **Code Quality**: Removed duplicate CurseForge type definitions, consolidated logging
-- **Performance**: Implemented dynamic imports for heavy components (ConstellationBackground, xterm.js, recharts)
-- **Error Handling**: Added per-page ErrorBoundaries for better UX and debugging
-- **Configuration**: Moved hardcoded URLs to environment variables (`NEXT_PUBLIC_GRAFANA_URL`, `NEXT_PUBLIC_PANEL_URL`)
-- **Dependencies**: Removed unused ioredis from package.json (still available as optional dependency)

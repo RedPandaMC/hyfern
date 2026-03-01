@@ -17,7 +17,7 @@ export function FilesContent() {
       <Card className="p-8 bg-card ">
         <div className="text-center space-y-4">
           <p className="text-muted-foreground">
-            File management is handled through the Pelican Panel.
+            File management is handled through the Pterodactyl Panel.
             A new tab should have opened automatically.
           </p>
           <Button
@@ -25,7 +25,7 @@ export function FilesContent() {
             className="bg-primary hover:bg-primary/90 text-primary-foreground"
           >
             <ExternalLink className="w-4 h-4 mr-2" />
-            Open Pelican Panel
+            Open Pterodactyl Panel
           </Button>
         </div>
       </Card>

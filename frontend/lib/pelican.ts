@@ -18,7 +18,7 @@ export class PelicanClient {
     return {
       'Authorization': `Bearer ${this.config.apiKey}`,
       'Content-Type': 'application/json',
-      'Accept': 'application/vnd.pelican.v1+json',
+      'Accept': 'application/json',
     };
   }
 
@@ -41,13 +41,13 @@ export class PelicanClient {
 
       if (!response.ok) {
         const errorText = await response.text();
-        throw new Error(`Pelican API returned ${response.status}: ${errorText}`);
+        throw new Error(`Pterodactyl API returned ${response.status}: ${errorText}`);
       }
 
       const data: StartupVariablesResponse = await response.json();
       return data.attributes.data;
     } catch (error) {
-      logger.error('Failed to get startup variables:', { context: 'pelican', error: error as Error });
+      logger.error('Failed to get startup variables:', { context: 'pterodactyl', error: error as Error });
       throw error;
     }
   }
@@ -60,7 +60,7 @@ export class PelicanClient {
       const variables = await this.getStartupVariables();
       return variables.find(v => v.env_variable === envVariable) || null;
     } catch (error) {
-      logger.error(`Failed to get startup variable ${envVariable}:`, { context: 'pelican', error: error as Error });
+      logger.error(`Failed to get startup variable ${envVariable}:`, { context: 'pterodactyl', error: error as Error });
       throw error;
     }
   }
@@ -86,10 +86,10 @@ export class PelicanClient {
 
       if (!response.ok) {
         const errorText = await response.text();
-        throw new Error(`Pelican API returned ${response.status}: ${errorText}`);
+        throw new Error(`Pterodactyl API returned ${response.status}: ${errorText}`);
       }
     } catch (error) {
-      logger.error(`Failed to update startup variable ${envVariable}:`, { context: 'pelican', error: error as Error });
+      logger.error(`Failed to update startup variable ${envVariable}:`, { context: 'pterodactyl', error: error as Error });
       throw error;
     }
   }
@@ -105,7 +105,7 @@ export class PelicanClient {
       }
       return variable.server_value || variable.default_value;
     } catch (error) {
-      logger.error('Failed to get JVM flags:', { context: 'pelican', error: error as Error });
+      logger.error('Failed to get JVM flags:', { context: 'pterodactyl', error: error as Error });
       throw error;
     }
   }
@@ -117,7 +117,7 @@ export class PelicanClient {
     try {
       await this.updateStartupVariable('STARTUP', flags);
     } catch (error) {
-      logger.error('Failed to update JVM flags:', { context: 'pelican', error: error as Error });
+      logger.error('Failed to update JVM flags:', { context: 'pterodactyl', error: error as Error });
       throw error;
     }
   }
@@ -137,12 +137,12 @@ export class PelicanClient {
 
       if (!response.ok) {
         const errorText = await response.text();
-        throw new Error(`Pelican API returned ${response.status}: ${errorText}`);
+        throw new Error(`Pterodactyl API returned ${response.status}: ${errorText}`);
       }
 
       return await response.json();
     } catch (error) {
-      logger.error('Failed to get server details:', { context: 'pelican', error: error as Error });
+      logger.error('Failed to get server details:', { context: 'pterodactyl', error: error as Error });
       throw error;
     }
   }
@@ -161,10 +161,10 @@ export class PelicanClient {
 
       if (!response.ok) {
         const errorText = await response.text();
-        throw new Error(`Pelican API returned ${response.status}: ${errorText}`);
+        throw new Error(`Pterodactyl API returned ${response.status}: ${errorText}`);
       }
     } catch (error) {
-      logger.error('Failed to reinstall server:', { context: 'pelican', error: error as Error });
+      logger.error('Failed to reinstall server:', { context: 'pterodactyl', error: error as Error });
       throw error;
     }
   }
@@ -174,12 +174,12 @@ export class PelicanClient {
 let _pelicanClient: PelicanClient | null = null;
 
 export function createPelicanClient(): PelicanClient {
-  const apiUrl = process.env.PELICAN_API_URL;
-  const apiKey = process.env.PELICAN_API_KEY;
-  const serverUuid = process.env.PELICAN_SERVER_UUID || process.env.SERVER_UUID;
+  const apiUrl = process.env.PTERODACTYL_API_URL;
+  const apiKey = process.env.PTERODACTYL_API_KEY;
+  const serverUuid = process.env.PTERODACTYL_SERVER_UUID;
 
   if (!apiUrl || !apiKey || !serverUuid) {
-    throw new Error('Missing required environment variables for Pelican API client');
+    throw new Error('Missing required environment variables for Pterodactyl API client. Required: PTERODACTYL_API_URL, PTERODACTYL_API_KEY, PTERODACTYL_SERVER_UUID');
   }
 
   return new PelicanClient({

@@ -45,9 +45,9 @@ hyfern.us {
     }
 }
 
-# Pelican Panel management interface
+# Pterodactyl Panel management interface
 panel.hyfern.us {
-    reverse_proxy pelican-panel:80
+    reverse_proxy pterodactyl-panel:80
 
     encode gzip
 
@@ -66,9 +66,9 @@ panel.hyfern.us {
     }
 }
 
-# Wings API (for frontend server control)
+# Pterodactyl Wings API (for server control via Panel)
 api.hyfern.us {
-    reverse_proxy wings:8443 {
+    reverse_proxy pterodactyl-wings:8443 {
         transport http {
             tls_insecure_skip_verify
         }
