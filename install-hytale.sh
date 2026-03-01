@@ -1,10 +1,11 @@
 #!/bin/bash
-# HyFern Hytale Server Installer
-# This script sets up Hytale server files for the Docker container
+# HyFern Hytale Server Automatic Installer
+# Downloads and sets up Hytale server files automatically
 
 set -e
 
-HYTFERN_DATA_DIR="${HYFERN_DATA_DIR:-./data/hytale}"
+HYTFERN_DATA_DIR="${HYTFERN_DATA_DIR:-./data/hytale}"
+DOWNLOADER_URL="${DOWNLOADER_URL:-https://downloader.hytale.com/hytale-downloader.zip}"
 
 echo "=========================================="
 echo "HyFern Hytale Server Installer"
@@ -13,34 +14,58 @@ echo "=========================================="
 mkdir -p "$HYTFERN_DATA_DIR"
 
 echo ""
-echo "Required files for $HYTFERN_DATA_DIR/:"
-echo "  - HytaleServer.jar   (main server)"
-echo "  - HytaleServer.aot   (AOT cache for faster startup)"
-echo "  - Assets.zip         (game assets)"
+echo "Installing to: $HYTFERN_DATA_DIR"
 echo ""
 
+# Check if files already exist
 if [ -f "$HYTFERN_DATA_DIR/HytaleServer.jar" ] && \
-   [ -f "$HYTFERN_DATA_DIR/HytaleServer.aot" ] && \
    [ -f "$HYTFERN_DATA_DIR/Assets.zip" ]; then
-    echo "All required files present!"
+    echo "Server files already present!"
     ls -lh "$HYTFERN_DATA_DIR/"
+    echo ""
+    echo "To re-download, delete existing files first:"
+    echo "  rm -rf $HYTFERN_DATA_DIR/*"
+    exit 0
+fi
+
+# Download and extract hytale-downloader
+echo "[1/3] Downloading Hytale Downloader..."
+cd /tmp
+
+if command -v curl &> /dev/null; then
+    curl -fsSL --output hytale-downloader.zip "$DOWNLOADER_URL"
 else
-    echo "MISSING FILES - Please download from Hytale:"
-    echo ""
-    echo "Option 1: From Hytale Launcher"
-    echo "  Windows: %appdata%\\Hytale\\install\\release\\package\\game\\latest"
-    echo "  Linux: \$XDG_DATA_HOME/Hytale/install/release/package/game/latest"
-    echo "  Copy: Server/ folder and Assets.zip"
-    echo ""
-    echo "Option 2: Hytale Downloader CLI"
-    echo "  Download from Hytale support, run ./hytale-downloader"
-    echo ""
-    echo "Place these files in $HYTFERN_DATA_DIR/:"
-    [ ! -f "$HYTFERN_DATA_DIR/HytaleServer.jar" ] && echo "  - HytaleServer.jar"
-    [ ! -f "$HYTFERN_DATA_DIR/HytaleServer.aot" ] && echo "  - HytaleServer.aot"
-    [ ! -f "$HYTFERN_DATA_DIR/Assets.zip" ] && echo "  - Assets.zip"
-    echo ""
-    echo "After placing files, run: docker compose up -d"
+    wget -q --output-document=hytale-downloader.zip "$DOWNLOADER_URL"
+fi
+
+echo "Extracting..."
+unzip -o hytale-downloader.zip
+
+# Find and make executable
+if [ -f "hytale-downloader-linux-amd64" ]; then
+    mv hytale-downloader-linux-amd64 "$HYTFERN_DATA_DIR/hytale-downloader"
+elif [ -f "hytale-downloader-windows-amd64.exe" ]; then
+    echo "Warning: Downloaded Windows version. Please run on Linux or download Linux version manually."
+    exit 1
+fi
+
+chmod +x "$HYTFERN_DATA_DIR/hytale-downloader"
+
+# Download server files
+echo ""
+echo "[2/3] Downloading Hytale server files..."
+cd "$HYTFERN_DATA_DIR"
+
+./hytale-downloader
+
+echo ""
+echo "[3/3] Verifying files..."
+if [ -f "HytaleServer.jar" ] && [ -f "Assets.zip" ]; then
+    echo "Download complete!"
+    ls -lh *.jar *.aot *.zip 2>/dev/null || true
+else
+    echo "Error: Expected files not found"
+    exit 1
 fi
 
 echo ""
@@ -51,3 +76,6 @@ echo "    -XX:+Use${HYTALE_GC:-G1GC} \\"
 echo "    -XX:AOTCache=HytaleServer.aot \\"
 echo "    -jar HytaleServer.jar --assets Assets.zip"
 echo "=========================================="
+
+echo ""
+echo "Next: docker compose up -d"
