@@ -7,7 +7,8 @@ import { ResourceCharts } from '@/components/dashboard/resource-charts';
 import { ServerControls } from '@/components/dashboard/server-controls';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Server, AlertCircle, Loader2 } from '@/lib/icons';
+import { Button } from '@/components/ui/button';
+import { Server, AlertCircle, Loader2, ExternalLink } from '@/lib/icons';
 
 export default function DashboardPage() {
   const { data, error, isLoading, mutate } = useServerStatus(5000);
@@ -184,6 +185,20 @@ export default function DashboardPage() {
       {/* Last Updated */}
       <div className="text-center text-sm text-muted-foreground">
         Last updated: {new Date(data.timestamp).toLocaleTimeString()}
+      </div>
+
+      {/* View Full Analytics Button */}
+      <div className="flex justify-center pt-4">
+        <a
+          href="https://grafana.hyfern.us"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          <Button variant="outline">
+            <ExternalLink className="w-4 h-4 mr-2" />
+            View Full Analytics in Grafana
+          </Button>
+        </a>
       </div>
     </div>
   );

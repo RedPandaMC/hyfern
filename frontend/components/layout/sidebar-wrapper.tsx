@@ -8,7 +8,6 @@ export async function SidebarWrapper() {
     <Sidebar
       userRole={session?.user?.role}
       username={session?.user?.username}
-      userImage={session?.user?.image}
     />
   );
 }

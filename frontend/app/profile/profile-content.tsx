@@ -208,12 +208,12 @@ function AvatarUpload({
 
   return (
     <>
-      <div className="relative group">
+      <div className="relative group w-16 h-16">
         <button
           type="button"
           onClick={() => avatarPath && setIsViewerOpen(true)}
           disabled={!avatarPath}
-          className="relative cursor-pointer disabled:cursor-default"
+          className="absolute inset-0 cursor-pointer disabled:cursor-default"
         >
           <Avatar className="h-16 w-16">
             {avatarPath && <AvatarImage src={avatarPath} alt={username} />}

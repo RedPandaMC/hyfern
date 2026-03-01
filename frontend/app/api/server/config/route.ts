@@ -3,8 +3,6 @@ import { auth } from '@/lib/auth';
 import { requireRole } from '@/lib/permissions';
 import { getDockerClient } from '@/lib/docker';
 import { Role } from '@/app/generated/prisma';
-import { promises as fs } from 'fs';
-import path from 'path';
 
 interface ServerConfig {
   ServerName: string;
@@ -21,7 +19,7 @@ interface ConfigResponse {
   restartRequired?: boolean;
 }
 
-const CONFIG_FILE_PATH = process.env.HYTALE_CONFIG_PATH || '/data/hytale/config/config.json';
+const CONFIG_FILE_PATH = '/data/config.json';
 
 const defaultConfig: ServerConfig = {
   ServerName: 'HyFern Server',
@@ -37,13 +35,19 @@ export async function GET(request: NextRequest) {
     const session = await auth();
     requireRole(session, Role.ADMIN);
 
+    const dockerClient = getDockerClient();
+    const containerName = process.env.HYTALE_SERVER_CONTAINER || 'hyfern-hytale';
+    
+    const result = await dockerClient.execCommandInContainer(
+      containerName,
+      `cat ${CONFIG_FILE_PATH} 2>/dev/null || echo '{}'`
+    );
+
     let config: ServerConfig;
     try {
-      const content = await fs.readFile(CONFIG_FILE_PATH, 'utf-8');
-      config = { ...defaultConfig, ...JSON.parse(content) };
+      config = { ...defaultConfig, ...JSON.parse(result.output.replace(/'/g, '"')) };
     } catch {
       config = defaultConfig;
-      await fs.writeFile(CONFIG_FILE_PATH, JSON.stringify(config, null, 2));
     }
 
     return NextResponse.json({ config } as ConfigResponse);
@@ -56,10 +60,6 @@ export async function GET(request: NextRequest) {
 
     if (error instanceof Error && error.message.includes('Unauthorized')) {
       return NextResponse.json({ error: 'UNAUTHORIZED', message: error.message }, { status: 401 });
-    }
-
-    if (error instanceof SyntaxError) {
-      return NextResponse.json({ error: 'INVALID_JSON', message: 'Config file contains invalid JSON' }, { status: 500 });
     }
 
     return NextResponse.json(
@@ -104,10 +104,17 @@ export async function PUT(request: NextRequest) {
       return NextResponse.json({ error: 'INVALID_FIELD', message: 'MaxViewRadius must be a number between 6 and 64' }, { status: 400 });
     }
 
+    const dockerClient = getDockerClient();
+    const containerName = process.env.HYTALE_SERVER_CONTAINER || 'hyfern-hytale';
+    
+    const currentResult = await dockerClient.execCommandInContainer(
+      containerName,
+      `cat ${CONFIG_FILE_PATH} 2>/dev/null || echo '{}'`
+    );
+
     let currentConfig: ServerConfig;
     try {
-      const currentContent = await fs.readFile(CONFIG_FILE_PATH, 'utf-8');
-      currentConfig = { ...defaultConfig, ...JSON.parse(currentContent) };
+      currentConfig = { ...defaultConfig, ...JSON.parse(currentResult.output.replace(/'/g, '"')) };
     } catch {
       currentConfig = defaultConfig;
     }
@@ -117,7 +124,11 @@ export async function PUT(request: NextRequest) {
       ...config,
     };
 
-    await fs.writeFile(CONFIG_FILE_PATH, JSON.stringify(updatedConfig, null, 2));
+    const configJson = JSON.stringify(updatedConfig, null, 2);
+    await dockerClient.execCommandInContainer(
+      containerName,
+      `mkdir -p /data && echo '${configJson.replace(/'/g, "'\\''")}' > ${CONFIG_FILE_PATH}`
+    );
 
     return NextResponse.json({
       config: updatedConfig,

@@ -22,6 +22,7 @@ export async function HeaderWrapper({ pageTitle }: HeaderWrapperProps) {
       maxPlayers={maxPlayers}
       tps={tps}
       username={session?.user?.username}
+      userImage={session?.user?.image}
     />
   );
 }

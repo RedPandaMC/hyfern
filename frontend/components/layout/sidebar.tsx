@@ -9,7 +9,6 @@ import {
   Package,
   Settings,
   Cpu,
-  BarChart,
   Globe,
   Folder,
   Database,
@@ -19,17 +18,8 @@ import {
   User,
 } from "@/lib/icons";
 import { cn } from "@/lib/utils";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Logo } from "@/components/logo";
 import { Button } from "@/components/ui/button";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 
 type Role = "OWNER" | "ADMIN" | "MODERATOR" | "VIEWER";
 
@@ -51,7 +41,6 @@ const navLinks: NavLink[] = [
   { href: "/dashboard", label: "Dashboard", icon: Home, minRole: "VIEWER" },
   { href: "/connect", label: "Connect", icon: Globe, minRole: "VIEWER" },
   { href: "/console", label: "Console", icon: Terminal, minRole: "MODERATOR" },
-  { href: "/analytics", label: "Analytics", icon: BarChart, minRole: "MODERATOR" },
   { href: "/mods", label: "Mods", icon: Package, minRole: "ADMIN" },
   { href: "/settings", label: "Settings", icon: Settings, minRole: "ADMIN" },
   { href: "/settings/jvm", label: "JVM Config", icon: Cpu, minRole: "OWNER" },
@@ -63,7 +52,6 @@ const navLinks: NavLink[] = [
 interface SidebarProps {
   userRole?: Role;
   username?: string;
-  userImage?: string | null;
 }
 
 // Menu icon as inline SVG to avoid dependency on icons lib for layout-critical component
@@ -90,7 +78,7 @@ function XIcon({ className }: { className?: string }) {
   );
 }
 
-export function Sidebar({ userRole = "ADMIN", username = "Admin", userImage }: SidebarProps) {
+export function Sidebar({ userRole = "ADMIN", username = "Admin" }: SidebarProps) {
   const pathname = usePathname();
   const [mobileOpen, setMobileOpen] = useState(false);
 
@@ -116,7 +104,7 @@ export function Sidebar({ userRole = "ADMIN", username = "Admin", userImage }: S
     <>
       {/* Logo */}
       <div className="flex h-16 items-center justify-between border-b border-border px-6">
-        <Link href="/dashboard" className="flex items-center space-x-2">
+        <Link href="/" className="flex items-center space-x-2">
           <Logo size={28} showText={true} />
         </Link>
         {/* Close button on mobile */}
@@ -156,57 +144,31 @@ export function Sidebar({ userRole = "ADMIN", username = "Admin", userImage }: S
         })}
       </nav>
 
-      {/* User profile at bottom */}
+      {/* User info at bottom - links to profile and settings */}
       <div className="border-t border-border p-4">
-        <DropdownMenu>
-          <DropdownMenuTrigger className="w-full">
-            <div className="flex items-center space-x-3 rounded-lg px-3 py-2 transition-colors hover:bg-accent">
-              <Avatar className="h-8 w-8 flex-shrink-0">
-                {userImage ? (
-                  <AvatarImage 
-                    src={userImage} 
-                    alt={username}
-                    onError={(e) => {
-                      const target = e.target as HTMLImageElement;
-                      target.style.display = 'none';
-                    }}
-                  />
-                ) : null}
-                <AvatarFallback className="bg-primary text-primary-foreground text-xs">
-                  {username.slice(0, 2).toUpperCase()}
-                </AvatarFallback>
-              </Avatar>
-              <div className="flex flex-1 flex-col items-start text-left min-w-0">
-                <span className="text-sm font-medium truncate w-full">{username}</span>
-                <span className="text-xs text-muted-foreground">{userRole}</span>
-              </div>
-            </div>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-56">
-            <DropdownMenuLabel>My Account</DropdownMenuLabel>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem asChild>
-              <Link href="/profile" className="cursor-pointer">
-                <User className="mr-2 h-4 w-4" />
-                <span>Profile</span>
-              </Link>
-            </DropdownMenuItem>
-            <DropdownMenuItem asChild>
-              <Link href="/settings" className="cursor-pointer">
-                <Settings className="mr-2 h-4 w-4" />
-                <span>Settings</span>
-              </Link>
-            </DropdownMenuItem>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem
-              onClick={() => signOut({ callbackUrl: "/login" })}
-              className="cursor-pointer text-destructive focus:text-destructive"
-            >
-              <LogOut className="mr-2 h-4 w-4" />
-              <span>Logout</span>
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+        <div className="space-y-1">
+          <Link
+            href="/profile"
+            className="flex items-center space-x-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors hover:bg-accent"
+          >
+            <User className="h-4 w-4" />
+            <span>Profile</span>
+          </Link>
+          <Link
+            href="/settings"
+            className="flex items-center space-x-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors hover:bg-accent"
+          >
+            <Settings className="h-4 w-4" />
+            <span>Settings</span>
+          </Link>
+          <button
+            onClick={() => signOut({ callbackUrl: "/login" })}
+            className="flex w-full items-center space-x-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors hover:bg-accent text-destructive"
+          >
+            <LogOut className="h-4 w-4" />
+            <span>Logout</span>
+          </button>
+        </div>
       </div>
     </>
   );

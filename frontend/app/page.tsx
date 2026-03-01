@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Logo } from '@/components/logo';
 import { Lock, Copy, Check, Users, Activity, ExternalLink, Eye, EyeOff, Home, LogOut } from '@/lib/icons';
 import { ThemeToggle } from '@/components/theme-toggle';
@@ -27,6 +28,8 @@ export default function HomePage() {
   const [copied, setCopied] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [userImage, setUserImage] = useState<string | null>(null);
+  const [username, setUsername] = useState<string>('');
 
   useEffect(() => {
     fetch('/api/auth/session')
@@ -34,6 +37,8 @@ export default function HomePage() {
       .then(data => {
         if (data?.user) {
           setIsLoggedIn(true);
+          setUserImage(data.user.image);
+          setUsername(data.user.username || '');
         }
       })
       .catch(() => {});
@@ -88,21 +93,31 @@ export default function HomePage() {
           <nav className="flex items-center gap-2 sm:gap-4">
             {isLoggedIn ? (
               <>
-                <Link href="/dashboard">
-                  <Button variant="ghost" size="sm" className="hover:bg-accent">
-                    <Home className="mr-2 h-4 w-4" />
-                    Dashboard
+                <div className="flex items-center gap-2">
+                  {userImage && (
+                    <Avatar className="h-8 w-8">
+                      <AvatarImage src={userImage} alt={username} />
+                      <AvatarFallback className="bg-primary text-primary-foreground text-xs">
+                        {username.slice(0, 2).toUpperCase()}
+                      </AvatarFallback>
+                    </Avatar>
+                  )}
+                  <Link href="/dashboard">
+                    <Button variant="ghost" size="sm" className="hover:bg-accent">
+                      <Home className="mr-2 h-4 w-4" />
+                      Dashboard
+                    </Button>
+                  </Link>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => signOut({ callbackUrl: '/' })}
+                    className="hover:bg-accent"
+                  >
+                    <LogOut className="mr-2 h-4 w-4" />
+                    Logout
                   </Button>
-                </Link>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => signOut({ callbackUrl: '/' })}
-                  className="hover:bg-accent"
-                >
-                  <LogOut className="mr-2 h-4 w-4" />
-                  Logout
-                </Button>
+                </div>
               </>
             ) : (
               <Link href="/login">

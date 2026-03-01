@@ -14,7 +14,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
 import {
   Tooltip,
@@ -32,6 +32,7 @@ interface HeaderProps {
   maxPlayers?: number;
   tps?: number;
   username?: string;
+  userImage?: string | null;
 }
 
 export function Header({
@@ -41,6 +42,7 @@ export function Header({
   maxPlayers = 20,
   tps = 20,
   username = "Admin",
+  userImage,
 }: HeaderProps) {
   const { theme, setTheme } = useTheme();
 
@@ -158,6 +160,7 @@ export function Header({
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" className="h-9 w-9 rounded-full p-0">
               <Avatar className="h-9 w-9">
+                {userImage && <AvatarImage src={userImage} alt={username} />}
                 <AvatarFallback className="bg-primary text-primary-foreground text-xs">
                   {username.slice(0, 2).toUpperCase()}
                 </AvatarFallback>
