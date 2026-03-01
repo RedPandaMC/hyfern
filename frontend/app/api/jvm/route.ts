@@ -8,7 +8,6 @@ import {
   JVMPreset,
   JVM_PRESETS,
   jvmConfigToFlags,
-  flagsToJvmConfig
 } from '@/types/jvm';
 
 interface JVMResponse {
@@ -32,14 +31,19 @@ export async function GET(request: NextRequest) {
     const serverConfig = await prisma.serverConfig.findUnique({ where: { id: 1 } });
 
     if (!serverConfig) {
-      const defaultConfig: Partial<JVMConfig> = {
-        minMemory: 4096,
-        maxMemory: 6144,
+      const defaultConfig: JVMConfig = {
+        minMemory: 4,
+        maxMemory: 6,
         gcType: 'G1GC',
-        maxGCPause: 200,
+        maxGCPauseMillis: 200,
+        parallelRefProc: false,
+        useAOTCache: false,
+        enableBackups: false,
+        enableSentry: false,
+        customFlags: '',
       };
       return NextResponse.json({
-        currentFlags: jvmConfigToFlags(defaultConfig as JVMConfig),
+        currentFlags: jvmConfigToFlags(defaultConfig),
         config: defaultConfig,
       } as JVMResponse);
     }
@@ -48,8 +52,12 @@ export async function GET(request: NextRequest) {
       minMemory: serverConfig.minMemory,
       maxMemory: serverConfig.maxMemory,
       gcType: serverConfig.gcType as 'G1GC' | 'ZGC',
-      maxGCPause: serverConfig.maxGCPause,
-      customFlags: serverConfig.customFlags || undefined,
+      maxGCPauseMillis: serverConfig.maxGCPause,
+      parallelRefProc: false,
+      useAOTCache: false,
+      enableBackups: false,
+      enableSentry: false,
+      customFlags: serverConfig.customFlags || '',
     };
 
     const currentFlags = jvmConfigToFlags(config);
@@ -111,8 +119,8 @@ export async function PUT(request: NextRequest) {
       return NextResponse.json({ error: 'INVALID_CONFIG', message: 'gcType must be either G1GC or ZGC' }, { status: 400 });
     }
 
-    if (typeof config.maxGCPause !== 'number' || config.maxGCPause < 50 || config.maxGCPause > 1000) {
-      return NextResponse.json({ error: 'INVALID_CONFIG', message: 'maxGCPause must be between 50 and 1000' }, { status: 400 });
+    if (typeof config.maxGCPauseMillis !== 'number' || config.maxGCPauseMillis < 50 || config.maxGCPauseMillis > 1000) {
+      return NextResponse.json({ error: 'INVALID_CONFIG', message: 'maxGCPauseMillis must be between 50 and 1000' }, { status: 400 });
     }
 
     const newFlags = jvmConfigToFlags(config);
@@ -125,7 +133,7 @@ export async function PUT(request: NextRequest) {
         minMemory: config.minMemory,
         maxMemory: config.maxMemory,
         gcType: config.gcType,
-        maxGCPause: config.maxGCPause,
+        maxGCPause: config.maxGCPauseMillis,
         customFlags: config.customFlags,
       },
       create: {
@@ -133,7 +141,7 @@ export async function PUT(request: NextRequest) {
         minMemory: config.minMemory,
         maxMemory: config.maxMemory,
         gcType: config.gcType,
-        maxGCPause: config.maxGCPause,
+        maxGCPause: config.maxGCPauseMillis,
         customFlags: config.customFlags,
       },
     });

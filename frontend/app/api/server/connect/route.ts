@@ -1,12 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getQueryClient } from '@/lib/query';
-import { getPelicanClient } from '@/lib/pelican';
 import { timingSafeEqual } from 'crypto';
 import { auth } from '@/lib/auth';
 
 function constantTimeCompare(a: string, b: string): boolean {
   if (a.length !== b.length) {
-    // Compare against self to avoid short-circuit timing leak
     const buf = Buffer.from(a);
     timingSafeEqual(buf, buf);
     return false;
@@ -16,15 +14,11 @@ function constantTimeCompare(a: string, b: string): boolean {
 
 export async function POST(request: NextRequest) {
   try {
-    // Check if user is authenticated
     const session = await auth();
     const { password } = await request.json();
 
     const accessPassword = process.env.SERVER_ACCESS_PASSWORD;
 
-    // Allow access if:
-    // 1. User is authenticated (session exists), OR
-    // 2. User provides correct SERVER_ACCESS_PASSWORD
     const isAuthenticated = !!session;
     const hasValidPassword = password && accessPassword && constantTimeCompare(String(password), accessPassword);
 
@@ -35,25 +29,9 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Try to get server address and port from Pelican Panel
-    let address = process.env.NEXT_PUBLIC_SERVER_ADDRESS || 'hyfern.us';
-    let port = 5520;
+    const address = process.env.NEXT_PUBLIC_SERVER_ADDRESS || 'hyfern.us';
+    const port = parseInt(process.env.HYTALE_SERVER_PORT || '5520', 10);
 
-    try {
-      const pelicanClient = getPelicanClient();
-      const serverDetails = await pelicanClient.getServerDetails();
-      const allocation = serverDetails?.attributes?.relationships?.allocations?.data?.[0]?.attributes;
-      if (allocation) {
-        // Use the allocation's alias (domain) if set, otherwise the IP
-        address = allocation.alias || allocation.ip_alias || allocation.ip || address;
-        port = allocation.port || port;
-      }
-    } catch (error) {
-      // Pelican API unavailable — fall back to env vars
-      console.error('Failed to fetch server allocation from Pelican:', error);
-    }
-
-    // Get server status from Query API
     let serverData;
     try {
       const queryClient = getQueryClient();

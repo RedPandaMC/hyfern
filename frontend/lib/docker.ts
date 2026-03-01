@@ -64,7 +64,7 @@ export class DockerClient {
       const container = containers.find((c: any) => c.Names.some((n: string) => n === `/${this.containerName}`));
       return container ? container.Id : null;
     } catch (error) {
-      logger.error('Failed to get container ID:', { context: 'docker', error: error as Error });
+      logger.error('Failed to get container ID', { context: 'docker', error: error as Error });
       return null;
     }
   }
@@ -111,7 +111,7 @@ export class DockerClient {
 
       return status;
     } catch (error) {
-      logger.error('Failed to get container status:', { context: 'docker', error: error as Error });
+      logger.error('Failed to get container status', { context: 'docker', error: error as Error });
       return { state: 'stopped', status: 'error' };
     }
   }
@@ -124,14 +124,14 @@ export class DockerClient {
       }
 
       await dockerRequest('POST', `/containers/${containerId}/start`);
-      logger.info('Container started', { context: 'docker', container: this.containerName });
+      logger.info(`Container ${this.containerName} started`, 'docker');
       
       return { success: true, message: 'Server started successfully' };
     } catch (error: any) {
       if (error.message.includes('304')) {
         return { success: true, message: 'Server already running' };
       }
-      logger.error('Failed to start container:', { context: 'docker', error: error as Error });
+      logger.error('Failed to start container', { context: 'docker', error: error as Error });
       return { success: false, message: error.message };
     }
   }
@@ -144,14 +144,14 @@ export class DockerClient {
       }
 
       await dockerRequest('POST', `/containers/${containerId}/stop?t=30`);
-      logger.info('Container stopped', { context: 'docker', container: this.containerName });
+      logger.info(`Container ${this.containerName} stopped`, 'docker');
       
       return { success: true, message: 'Server stopped successfully' };
     } catch (error: any) {
       if (error.message.includes('304')) {
         return { success: true, message: 'Server already stopped' };
       }
-      logger.error('Failed to stop container:', { context: 'docker', error: error as Error });
+      logger.error('Failed to stop container', { context: 'docker', error: error as Error });
       return { success: false, message: error.message };
     }
   }
@@ -164,11 +164,11 @@ export class DockerClient {
       }
 
       await dockerRequest('POST', `/containers/${containerId}/restart?t=30`);
-      logger.info('Container restarted', { context: 'docker', container: this.containerName });
+      logger.info(`Container ${this.containerName} restarted`, 'docker');
       
       return { success: true, message: 'Server restarted successfully' };
     } catch (error: any) {
-      logger.error('Failed to restart container:', { context: 'docker', error: error as Error });
+      logger.error('Failed to restart container', { context: 'docker', error: error as Error });
       return { success: false, message: error.message };
     }
   }
@@ -211,7 +211,7 @@ export class DockerClient {
         client.end();
       });
     } catch (error) {
-      logger.error('Failed to get container logs:', { context: 'docker', error: error as Error });
+      logger.error('Failed to get container logs', { context: 'docker', error: error as Error });
       return [];
     }
   }
@@ -237,7 +237,7 @@ export class DockerClient {
 
       return { success: true, output: 'Command executed' };
     } catch (error) {
-      logger.error('Failed to exec command:', { context: 'docker', error: error as Error });
+      logger.error('Failed to exec command', { context: 'docker', error: error as Error });
       return { success: false, output: (error as Error).message };
     }
   }
