@@ -57,9 +57,13 @@ SETTINGS_FILES_LIST.txt
 frontend/README.md
 hytale-downloader/QUICKSTART.md
 
-# Hytale downloader
-hytale-downloader/.hytale-downloader-credentials.json
-hytale-downloader/*.zip
+# Hytale downloader credentials
+.hytale-downloader-credentials.json
+
+# Downloaded server files
+data/hytale/*.zip
+data/hytale/*.jar
+data/hytale/*.aot
 
 # Hytale server data (bind mounted into container)
 server-data/*
