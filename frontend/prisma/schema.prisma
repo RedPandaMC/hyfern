@@ -91,3 +91,42 @@ model LoginAttempt {
   @@index([createdAt])
   @@map("login_attempts")
 }
+
+// JVM Configuration for Hytale server
+model ServerConfig {
+  id            Int     @id @default(1)
+  minMemory     Int     @default(4096)  // MB
+  maxMemory     Int     @default(6144)
+  gcType        String  @default("G1GC")  // G1GC or ZGC
+  maxGCPause    Int     @default(200)
+  customFlags   String?
+  aotCache      String  @default("HytaleServer.aot")
+  updatedAt     DateTime @updatedAt
+
+  @@map("server_config")
+}
+
+// Hytale server configuration (config.json)
+model HytaleConfig {
+  id            Int     @id @default(1)
+  serverName    String  @default("HyFern Server")
+  motd          String  @default("Welcome to HyFern!")
+  maxPlayers    Int     @default(100)
+  maxViewRadius Int     @default(32)
+  viewDistance  Int     @default(16)
+  password      String?
+  updatedAt     DateTime @updatedAt
+
+  @@map("hytale_config")
+}
+
+// Backup records
+model Backup {
+  id        Int      @id @default(autoincrement())
+  filename  String
+  size      Int      // bytes
+  createdAt DateTime @default(now())
+  path      String
+
+  @@map("backups")
+}

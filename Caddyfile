@@ -8,28 +8,19 @@ hyfern.us {
 
     encode gzip
 
-    # Security headers
     header {
-        # Enable HSTS
         Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
-        # Prevent clickjacking
         X-Frame-Options "SAMEORIGIN"
-        # Prevent MIME sniffing
         X-Content-Type-Options "nosniff"
-        # XSS Protection
         X-XSS-Protection "1; mode=block"
-        # Referrer Policy
         Referrer-Policy "strict-origin-when-cross-origin"
-        # CORS - restrict to same origin
         Access-Control-Allow-Origin "https://hyfern.us"
         Access-Control-Allow-Methods "GET, POST, PUT, DELETE, OPTIONS"
         Access-Control-Allow-Headers "Content-Type, Authorization, X-Auth-User, X-Auth-Role"
         Access-Control-Max-Age "3600"
-        # Remove server header
         -Server
     }
 
-    # Handle CORS preflight
     @cors_preflight method OPTIONS
     header @cors_preflight {
         Access-Control-Allow-Origin "https://hyfern.us"
@@ -45,69 +36,13 @@ hyfern.us {
     }
 }
 
-# Pterodactyl Panel management interface
-panel.hyfern.us {
-    reverse_proxy pterodactyl-panel:80
-
-    encode gzip
-
-    header {
-        Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
-        X-Frame-Options "SAMEORIGIN"
-        X-Content-Type-Options "nosniff"
-        X-XSS-Protection "1; mode=block"
-        Referrer-Policy "strict-origin-when-cross-origin"
-        -Server
-    }
-
-    log {
-        output file /data/logs/panel.log
-        format json
-    }
-}
-
-# Pterodactyl Wings API (for server control via Panel)
-api.hyfern.us {
-    reverse_proxy pterodactyl-wings:8443 {
-        transport http {
-            tls_insecure_skip_verify
-        }
-    }
-
-    encode gzip
-
-    header {
-        Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
-        X-Frame-Options "DENY"
-        X-Content-Type-Options "nosniff"
-        X-XSS-Protection "1; mode=block"
-        Referrer-Policy "no-referrer"
-        # CSP for API - restrict to frontend only
-        Content-Security-Policy "default-src 'none'; frame-ancestors 'none'"
-        # CORS - restrict to same origin
-        Access-Control-Allow-Origin "https://hyfern.us"
-        Access-Control-Allow-Methods "GET, POST, PUT, DELETE"
-        Access-Control-Allow-Headers "Content-Type, Authorization"
-        -Server
-    }
-
-    @cors_preflight method OPTIONS
-    header @cors_preflight {
-        Access-Control-Allow-Origin "https://hyfern.us"
-        Access-Control-Allow-Methods "GET, POST, PUT, DELETE"
-        Access-Control-Allow-Headers "Content-Type, Authorization"
-    }
-    respond @cors_preflight 204
-
-    log {
-        output file /data/logs/api.log
-        format json
-    }
+# Redirect www to non-www
+www.hyfern.us {
+    redir https://hyfern.us{uri}
 }
 
 # Grafana dashboards (auth via frontend JWT)
 grafana.hyfern.us {
-    # WebSocket connections bypass forward_auth (Grafana session cookie handles auth)
     @websocket {
         path /api/live/ws
         header Connection *Upgrade*
@@ -115,20 +50,17 @@ grafana.hyfern.us {
     }
     reverse_proxy @websocket grafana:3001
 
-    # Static assets don't need auth
     @grafanaStatic {
         path /public/* /avatar/* /api/health /metrics
     }
     reverse_proxy @grafanaStatic grafana:3001
 
-    # Verify JWT session via frontend auth endpoint
     forward_auth hyfern-frontend:3000 {
         uri /api/auth/verify
         copy_headers X-Auth-User X-Auth-Role
 
         @unauthorized status 401
         handle_response @unauthorized {
-            # Redirect to login with return URL parameter
             redir https://hyfern.us/login?callbackUrl=https://grafana.hyfern.us{uri} 302
         }
     }
@@ -139,7 +71,6 @@ grafana.hyfern.us {
 
     header {
         Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
-        # Allow Grafana to be embedded in iframes from hyfern.us
         Content-Security-Policy "frame-ancestors 'self' https://hyfern.us"
         X-Content-Type-Options "nosniff"
         X-XSS-Protection "1; mode=block"

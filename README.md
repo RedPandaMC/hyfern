@@ -4,146 +4,80 @@ A self-hosted Hytale server management dashboard. Manage your server, mods, back
 
 ## Features
 
-- **Server Management**: Start, stop, restart, and monitor your Hytale server
-- **Real-time Console**: Web-based terminal with live server output
-- **Mod Management**: Browse, install, and manage Hytale mods via CurseForge integration
-- **Performance Monitoring**: Real-time TPS, memory, CPU, and player analytics
-- **JVM Configuration**: Fine-tune garbage collection, memory allocation, and startup flags
-- **File Manager**: Browse, edit, and upload files to your server
+- **Server Management**: Start, stop, and restart your Hytale server
+- **Real-time Console**: View live server logs and output
+- **Mod Management**: Browse and install Hytale mods via CurseForge integration
+- **Performance Monitoring**: Real-time TPS, memory, CPU metrics via Grafana
+- **JVM Configuration**: Fine-tune garbage collection, memory allocation via dashboard
+- **Server Configuration**: Edit server name, MOTD, max players, view distance
 - **Backup System**: Automated backups with configurable retention
 - **Role-based Access**: OWNER, ADMIN, MODERATOR, and VIEWER permission levels
 - **Two-Factor Authentication**: TOTP-based 2FA with recovery codes
-- **Unified Login**: Single sign-on across frontend, Grafana, and all services
+- **Unified Login**: Single sign-on across frontend and Grafana
 
 ## Architecture
 
-| Service | Description | Domain |
-|---------|-------------|--------|
-| **Frontend** | Next.js dashboard (server control, mods, analytics) | `hyfern.us` |
-| **Pterodactyl Panel** | Server management panel | `panel.hyfern.us` |
-| **Wings** | Daemon that runs game server containers | `api.hyfern.us` |
-| **Hytale Server** | Game server with WebServer plugin | — |
-| **Caddy** | Reverse proxy with automatic HTTPS | ports 80/443 |
-| **MariaDB** | Database for Pterodactyl Panel | — |
-| **SQLite** | File-based database for frontend | — |
-| **Redis** | Caching and rate limiting | — |
-| **Prometheus** | Metrics collection from game server | — |
-| **Grafana** | Metrics dashboards (embedded in frontend) | `grafana.hyfern.us` |
+| Service | Description | Port |
+|---------|-------------|------|
+| **Frontend** | Next.js dashboard | 3000 (internal) |
+| **Hytale Server** | Java 21 container with Eclipse Temurin | 5520/UDP, 5523 |
+| **Caddy** | Reverse proxy with automatic HTTPS | 80, 443 |
+| **Redis** | Caching and rate limiting | 6379 (internal) |
+| **Prometheus** | Metrics collection | 9090 (internal) |
+| **Grafana** | Metrics dashboards | 3001 (internal) |
 
 ## Prerequisites
 
 - Linux server with Docker and Docker Compose
-- A domain pointing to your server (default: `hyfern.us` + subdomains)
-- A Hytale account with server access
-- (Optional) CurseForge API key for mod management
+- A domain pointing to your server
+- ~10GB+ disk space for server files and mods
+- 8GB+ RAM recommended
 
 ## Quick Start
 
-### 1. Clone and configure
+### 1. Clone and Configure
 
 ```bash
 git clone https://github.com/RedPandaMC/hyfern.git
 cd hyfern
 cp .env.example .env
-nano .env  # Fill in all values
+nano .env
 ```
 
-### 2. Start everything
+### 2. Download Hytale Server Files
+
+See [Download Guide](#download-guide) below for instructions on obtaining Hytale server files.
+
+Place your server files in `data/hytale/` so that:
+- `data/hytale/HytaleServer.jar` exists
+- `data/hytale/HytaleServer.aot` exists (if using AOT cache)
+
+### 3. Start Services
 
 ```bash
 docker compose up -d
 ```
 
-Wait for all services to become healthy:
+Wait for services to become healthy:
 ```bash
 docker compose ps
 # All should show "healthy" status
 ```
 
-### 3. Complete Pterodactyl Panel Setup
+### 4. Access the Dashboard
 
-Once all services are running, complete the Pterodactyl Panel installation:
+- **Frontend**: https://hyfern.us
+- **Grafana**: https://grafana.hyfern.us (uses frontend authentication)
 
-1. **Visit the installer**: Navigate to `https://panel.hyfern.us`
-2. **Create admin account**: Enter your desired username and password
-3. **Complete setup**: The panel will automatically configure with MariaDB
+Default login:
+- Username: `admin`
+- Password: `admin123` (change immediately!)
 
-### 4. Configure Pterodactyl Node (Wings)
+---
 
-After logging into the panel as admin:
+## Installation Guide
 
-#### a. Create a Location
-1. Go to **Locations** (Admin → Locations)
-2. Click **Create New**
-3. Fill in:
-   - **Short Name**: `main`
-   - **Description**: `HyFern Main Location`
-4. Click **Create Location**
-
-#### b. Create a Node
-1. Go to **Nodes** (Admin → Nodes)
-2. Click **Create New**
-3. Fill in:
-   - **Name**: `HyFern Node`
-   - **Location**: Select the location you just created
-   - **FQDN**: `api.hyfern.us` (or your server's IP)
-   - **Communicate over SSL**: Unchecked (for internal Docker networking)
-   - **Behind Proxy**: Checked
-   - **Memory**: 8192 (or your available RAM in MB)
-   - **Allocated Memory**: 6144
-   - **Disk Space**: 50000 (or your available disk in MB)
-   - **Allocated Disk Space**: 30000
-4. Click **Create Node**
-
-#### c. Configure Wings
-After creating the node, you'll see a **Configuration** tab:
-
-1. Click the **Configuration** tab
-2. Copy the entire configuration shown
-3. Update the wings config file:
-   ```bash
-   nano data/pterodactyl-wings/etc/pterodactyl/config.yml
-   ```
-4. Paste the configuration and save
-5. Restart wings:
-   ```bash
-   docker compose restart pterodactyl-wings
-   ```
-
-#### d. Create a Server
-1. Go to **Servers** (Admin → Servers)
-2. Click **Create New**
-3. Fill in:
-   - **Name**: `Hytale Server`
-   - **Node**: Select your node
-   - **Nest**: Select "Hytale" (or import the egg first)
-   - **Egg**: Select the Hytale egg
-   - **Docker Image**: Leave default or set custom
-   - **Allocations**:
-     - Default Allocation: Select the generated allocation
-   - **Resource Limits**: Set memory, disk, CPU as desired
-4. Click **Create Server**
-
-### 5. Import Custom Hytale Egg (Recommended)
-
-Import the custom egg for better Hytale support:
-
-1. Go to **Nests** (Admin → Nests)
-2. Click **Import Egg**
-3. Upload `egg/egg-hytale.yaml`
-4. The egg will be imported with Hytale-specific configurations
-
-### 6. Verify Deployment
-
-```bash
-# Check all services are running
-docker compose ps
-
-# View logs
-docker compose logs -f
-```
-
-## Environment Variables
+### Environment Variables
 
 Create a `.env` file with the following variables:
 
@@ -152,158 +86,213 @@ Create a `.env` file with the following variables:
 TZ=UTC
 LETSENCRYPT_EMAIL=your-email@example.com
 
-# Database
-MYSQL_ROOT_PASSWORD=your_secure_root_password
-PTERODACTYL_DB_PASSWORD=your_secure_db_password
+# Frontend
+NEXTAUTH_URL=https://hyfern.us
+NEXTAUTH_SECRET=generate_with_openssl_rand_base64_32
+SERVER_ACCESS_PASSWORD=your_secure_password
 
 # Redis
 REDIS_PASSWORD=your_secure_redis_password
 
-# Frontend
-NEXTAUTH_URL=https://hyfern.us
-NEXTAUTH_SECRET=generate_a_secure_secret
-SERVER_ACCESS_PASSWORD=your_server_access_password
+# Hytale Server (Java Container)
+HYTALE_MEMORY=4G
+HYTALE_MAX_MEMORY=6G
+HYTALE_GC=G1GC
+HYTALE_MAX_GC_PAUSE=200
 
-# Pterodactyl
-PTERODACTYL_APP_URL=https://panel.hyfern.us
-PTERODACTYL_APP_KEY=generate_with_pterodactyl_command
-PTERODACTYL_API_KEY=will_be_set_after_panel_setup
-PTERODACTYL_SERVER_UUID=will_be_set_after_creating_server
-
-# Hytale
+# Hytale WebServer Plugin
 HYTALE_WEBSERVER_USERNAME=hyfern
 HYTALE_WEBSERVER_PASSWORD=your_webserver_password
 
 # Monitoring
-GRAFANA_ADMIN_PASSWORD=your_grafana_password
 PROMETHEUS_PASSWORD=your_prometheus_password
+GRAFANA_ROOT_URL=https://grafana.hyfern.us
+GRAFANA_ADMIN_PASSWORD=your_grafana_password
 ```
 
-Generate secrets with:
+Generate secrets:
 ```bash
 # NEXTAUTH_SECRET
 openssl rand -base64 32
 
-# PTERODACTYL_APP_KEY (run in pterodactyl panel container)
-docker exec hyfern-pterodactyl-panel php artisan key:generate --show
+# Passwords
+openssl rand -hex 32
 ```
+
+### Network Requirements
+
+Ensure these ports are open:
+- **80, 443**: HTTP/HTTPS (Caddy)
+- **5520/UDP**: Hytale game traffic
+- **5523/TCP**: Hytale WebServer API
+
+---
+
+## Download Guide
+
+### Getting Hytale Server Files
+
+Hytale server files must be obtained through official channels:
+
+1. **Via Hytale Launcher**:
+   - Download and install the Hytale launcher
+   - The server files are included with the game files
+   - Location: `C:\Program Files\Hytale Game\hytale-server` (Windows)
+   - On Mac/Linux: Check your Hytale installation directory
+
+2. **Via Your Server Provider**:
+   - Many Hytale server hosts provide pre-downloaded server files
+   - Contact your provider for access
+
+### Required Files
+
+Place these files in `data/hytale/`:
+
+```
+data/hytale/
+├── HytaleServer.jar          # Main server JAR (required)
+├── HytaleServer.aot          # AOT cache file (recommended)
+├── mods/                     # Your mods folder
+│   └── (mod files here)
+├── config/
+│   └── config.json           # Server configuration
+└── backups/                  # Backup storage (auto-created)
+```
+
+### Mod Installation
+
+1. **Manual**: Place mod files in `data/hytale/mods/`
+2. **Via Dashboard**: Use the Mods page to browse and install from CurseForge
+
+### WebServer Plugin
+
+The Hytale WebServer plugin is required for:
+- Live console viewing
+- Server status monitoring
+- REST API access
+
+Ensure your Hytale server has the WebServer plugin installed and configured with matching credentials from your `.env` file.
+
+---
+
+## Configuration
+
+### JVM Settings
+
+Access via **Settings → JVM Configuration** in the dashboard.
+
+Available options:
+- **Memory**: Min/Max heap size (1-32GB)
+- **GC Type**: G1GC (default) or ZGC
+- **Max GC Pause**: Target pause time (50-1000ms)
+- **Custom Flags**: Additional JVM arguments
+
+### Server Configuration
+
+Access via **Settings → Server Config** in the dashboard.
+
+Options:
+- **Server Name**: Display name
+- **MOTD**: Message of the day
+- **Max Players**: Player limit (1-100)
+- **Max View Radius**: Chunk view distance (6-64)
+- **Password**: Server password (optional)
+
+### Environment Variables
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `HYTALE_MEMORY` | 4G | Initial JVM heap |
+| `HYTALE_MAX_MEMORY` | 6G | Maximum JVM heap |
+| `HYTALE_GC` | G1GC | Garbage collector |
+| `HYTALE_SERVER_PORT` | 5520 | Game traffic port |
+| `HYTALE_WEBSERVER_PORT` | 5523 | Web API port |
+
+---
 
 ## Project Structure
 
 ```
 .
-├── Caddyfile                    # Reverse proxy config
-├── docker-compose.yml           # All services
-├── .env.example                 # Environment variable template
-├── pterodactyl/                 # Custom Pterodactyl Docker config
-│   └── Dockerfile               # Panel with mariadb-client
-├── config/
-│   └── pterodactyl/             # Pterodactyl config mount
-├── data/                        # Data directories
-│   ├── pterodactyl/             # Panel storage
-│   ├── pterodactyl-wings/       # Wings data and config
-│   ├── database/                # Frontend SQLite
-│   ├── hytale/                  # Hytale server files
-│   └── ...
-├── egg/                         # Server eggs
-│   └── egg-hytale.yaml          # Hytale egg definition
-├── frontend/                    # Next.js dashboard
-│   ├── Dockerfile
-│   ├── app/                     # Pages and API routes
-│   ├── components/              # UI components
-│   └── lib/                     # Auth, database, utilities
-└── observability/               # Monitoring
-    ├── grafana/                 # Grafana config
-    └── prometheus/              # Prometheus config
+├── Caddyfile              # Reverse proxy config
+├── docker-compose.yml     # All services
+├── .env.example           # Environment template
+├── data/                  # Data directories
+│   ├── hytale/           # Hytale server files
+│   ├── database/         # SQLite database
+│   ├── grafana/          # Grafana data
+│   ├── prometheus/       # Metrics data
+│   └── redis/            # Redis data
+├── frontend/             # Next.js dashboard
+│   ├── app/              # Pages and API routes
+│   ├── components/       # UI components
+│   └── lib/              # Utilities
+└── observability/        # Monitoring config
+    ├── grafana/          # Grafana dashboards
+    └── prometheus/       # Prometheus config
 ```
+
+---
 
 ## Ports
 
 | Port | Protocol | Service |
 |------|----------|---------|
-| 80 | TCP | Caddy (HTTP, redirects to HTTPS) |
-| 443 | TCP | Caddy (HTTPS) |
-| 5520 | UDP | Hytale game server (configurable) |
-| 8443 | TCP | Pterodactyl Wings API |
-| 8080 | TCP | Pterodactyl Wings (internal) |
+| 80 | TCP | Caddy HTTP |
+| 443 | TCP | Caddy HTTPS |
+| 5520 | UDP | Hytale game |
+| 5523 | TCP | Hytale WebServer |
 
 All other services communicate internally via Docker networks.
 
+---
+
 ## Troubleshooting
 
-### Pterodactyl Panel Not Healthy
+### Server Won't Start
 
-If the panel shows as unhealthy:
+1. Check that Hytale server files are in `data/hytale/`
+2. Verify permissions: `ls -la data/hytale/`
+3. Check container logs: `docker compose logs hytale-server`
+
+### Can't Connect to Server
+
+1. Verify the server is running in dashboard
+2. Check port 5520/UDP is open in firewall
+3. Check container logs for errors
+
+### Dashboard Shows Errors
+
 ```bash
-docker compose logs pterodactyl-panel
-```
-
-Common issues:
-- Database migration failed: Check DB credentials in .env
-- SSL errors: Update DB_SSL_MODE in docker-compose.yml
-
-### Wings Container Not Starting
-
-If wings keeps restarting:
-```bash
-docker compose logs pterodactyl-wings
-```
-
-Usually means:
-- Configuration file is missing or invalid
-- Node not configured in the panel
-- Token is incorrect
-
-Fix by updating the config:
-```bash
-nano data/pterodactyl-wings/etc/pterodactyl/config.yml
-docker compose restart pterodactyl-wings
-```
-
-### Frontend API Errors
-
-If the frontend shows errors when connecting to Pterodactyl:
-1. Check that `PTERODACTYL_API_KEY` is set in .env
-2. Check that `PTERODACTYL_SERVER_UUID` matches the server in the panel
-3. Restart the frontend: `docker compose restart hyfern-frontend`
-
-### Services Not Starting
-
-Check individual service logs:
-```bash
-# Frontend
+# Check frontend logs
 docker compose logs hyfern-frontend
 
-# Pterodactyl Panel
-docker compose logs pterodactyl-panel
-
-# Check all services
-docker compose ps
+# Restart services
+docker compose restart
 ```
 
 ### Permission Issues
 
-If you see permission errors:
 ```bash
-# The init container handles this on startup
-# But you can manually fix:
-chown -R 1001:1001 data/database
-chown -R 988:988 data/pterodactyl-wings
+# Fix data directory permissions
+sudo chown -R 1001:1001 data/hytale data/database
 ```
+
+---
 
 ## Building from Source
 
 ### Build Frontend
+
 ```bash
 cd frontend
+npm install
+npm run build
 docker build -t your-dockerhub-user/hyfern-frontend:latest .
 docker push your-dockerhub-user/hyfern-frontend:latest
 ```
 
-### Rebuild Pterodactyl Panel
-```bash
-docker compose build pterodactyl-panel
-```
+---
 
 ## License
 
