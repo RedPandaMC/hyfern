@@ -93,7 +93,66 @@ else
     ls -la
     echo ""
     echo "If download failed, check authentication and re-run this script."
+    exit 1
 fi
+
+echo ""
+echo "=========================================="
+echo "Installing WebServer Plugins..."
+echo "=========================================="
+
+# Create mods directory
+mkdir -p mods
+
+# Download Nitrado WebServer plugin
+echo "Downloading Nitrado WebServer plugin..."
+curl -L -o mods/nitrado-webserver-1.1.1.jar \
+    https://github.com/nitrado/hytale-plugin-webserver/releases/download/v1.1.1/nitrado-webserver-1.1.1.jar
+
+# Download Nitrado Query plugin
+echo "Downloading Nitrado Query plugin..."
+curl -L -o mods/nitrado-query-1.1.0.jar \
+    https://github.com/nitrado/hytale-plugin-query/releases/download/v1.1.0/nitrado-query-1.1.0.jar
+
+# Download ApexHosting PrometheusExporter plugin
+echo "Downloading ApexHosting PrometheusExporter plugin..."
+curl -L -o mods/apexhosting-prometheusexporter-1.0.0.jar \
+    https://github.com/apexhosting/hytale-plugin-prometheus/releases/download/v1.0.0/apexhosting-prometheusexporter-1.0.0.jar
+
+# Create plugin config directories and config files
+mkdir -p mods/Nitrado_WebServer
+mkdir -p mods/Nitrado_Query
+mkdir -p mods/ApexHosting_PrometheusExporter
+
+# WebServer plugin config
+cat > mods/Nitrado_WebServer/config.json << 'EOF'
+{
+  "BindHost": "0.0.0.0",
+  "BindPort": 5523,
+  "EnableTls": false
+}
+EOF
+
+# Query plugin config
+cat > mods/Nitrado_Query/config.json << 'EOF'
+{
+  "BindHost": "0.0.0.0",
+  "BindPort": 5523,
+  "EnableTls": false
+}
+EOF
+
+# Prometheus exporter config
+cat > mods/ApexHosting_PrometheusExporter/config.json << 'EOF'
+{
+  "BindHost": "0.0.0.0",
+  "BindPort": 5523,
+  "EnableTls": false
+}
+EOF
+
+echo "Plugins installed successfully!"
+ls -lh mods/*.jar
 
 echo ""
 echo "=========================================="
