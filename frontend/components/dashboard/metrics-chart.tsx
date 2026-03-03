@@ -152,7 +152,7 @@ export function MetricsChart({
               />
               <Tooltip
                 labelFormatter={(label) => new Date(label).toLocaleString()}
-                formatter={(value: number) => [formatValue(value), unit || type.toUpperCase()]}
+                formatter={(value) => [formatValue(Number(value) || 0), unit || type.toUpperCase()]}
                 contentStyle={{
                   backgroundColor: 'hsl(var(--card))',
                   border: '1px solid hsl(var(--border))',

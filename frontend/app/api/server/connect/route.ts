@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getQueryClient } from '@/lib/query';
 import { timingSafeEqual } from 'crypto';
 import { auth } from '@/lib/auth';
+import { QueryResponse } from '@/types/query';
 
 function constantTimeCompare(a: string, b: string): boolean {
   if (a.length !== b.length) {
@@ -32,12 +33,13 @@ export async function POST(request: NextRequest) {
     const address = process.env.NEXT_PUBLIC_SERVER_ADDRESS || 'hyfern.us';
     const port = parseInt(process.env.HYTALE_SERVER_PORT || '5520', 10);
 
-    let serverData;
+    let serverData: QueryResponse | null = null;
     let serverStatus = 'offline';
     try {
       const queryClient = getQueryClient();
-      serverData = await queryClient.getServerStatusSafe();
-      if (!('error' in serverData)) {
+      const result = await queryClient.getServerStatusSafe();
+      if (!('error' in result)) {
+        serverData = result;
         serverStatus = serverData.status || 'offline';
       }
     } catch (error) {
