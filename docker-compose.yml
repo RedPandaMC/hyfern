@@ -78,18 +78,22 @@ services:
     volumes:
       - ./data/hytale:/data
     working_dir: /data
-    command: >
-      java
-      -Xms${HYTALE_MEMORY:-4G}
-      -Xmx${HYTALE_MAX_MEMORY:-6G}
-      -XX:+Use${HYTALE_GC:-G1GC}
-      -XX:MaxGCPauseMillis=${HYTALE_MAX_GC_PAUSE:-200}
-      -XX:AOTCache=HytaleServer.aot
-      ${HYTALE_CUSTOM_JVM_FLAGS:-}
-      -jar HytaleServer.jar
-      --assets Assets.zip
-      --session-token "${HYTALE_SERVER_SESSION_TOKEN}"
-      --identity-token "${HYTALE_SERVER_IDENTITY_TOKEN}"
+    command:
+      - bash
+      - -c
+      - |
+        source /data/tokens/server-tokens.env
+        java \
+        -Xms$${HYTALE_MEMORY:-4G} \
+        -Xmx$${HYTALE_MAX_MEMORY:-6G} \
+        -XX:+Use$${HYTALE_GC:-G1GC} \
+        -XX:MaxGCPauseMillis=$${HYTALE_MAX_GC_PAUSE:-200} \
+        -XX:AOTCache=HytaleServer.aot \
+        $${HYTALE_CUSTOM_JVM_FLAGS:-} \
+        -jar HytaleServer.jar \
+        --assets Assets.zip \
+        --session-token "$$HYTALE_SERVER_SESSION_TOKEN" \
+        --identity-token "$$HYTALE_SERVER_IDENTITY_TOKEN"
     environment:
       TZ: UTC
       HYTALE_MEMORY: ${HYTALE_MEMORY:-4G}

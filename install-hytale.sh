@@ -25,75 +25,79 @@ if [ -f "$HYTFERN_DATA_DIR/HytaleServer.jar" ] && \
     echo "Server files already present!"
     ls -lh "$HYTFERN_DATA_DIR/"*.jar "$HYTFERN_DATA_DIR/"*.zip "$HYTFERN_DATA_DIR/"*.aot 2>/dev/null || true
     echo ""
-    echo "To re-download, run: rm -rf $HYTFERN_DATA_DIR/*"
-    exit 0
-fi
+    echo "Continuing with plugin installation and authentication..."
 
-# Check if downloader exists
-if [ ! -f "$DOWNLOADER" ]; then
-    echo "Error: hytale-downloader-linux-amd64 not found!"
-    echo "Download from: https://downloader.hytale.com/hytale-downloader.zip"
-    exit 1
-fi
-
-chmod +x "$DOWNLOADER"
-
-echo "Starting Hytale downloader..."
-echo ""
-
-# Run the downloader - it will handle auth flow
-cd "$HYTFERN_DATA_DIR"
-
-# Copy existing credentials if available
-if [ -f "$CREDENTIALS_FILE" ] && [ ! -f "$HYTFERN_DATA_DIR/.hytale-downloader-credentials.json" ]; then
-    cp "$CREDENTIALS_FILE" "$HYTFERN_DATA_DIR/"
-fi
-
-# Use embedded downloader
-"$DOWNLOADER" -skip-update-check -download-path hytale-game.zip
-
-# Find and extract the zip
-echo ""
-echo "Extracting files..."
-
-# Rename any zip file to game.zip for extraction (downloader's naming can vary)
-for f in *.zip; do
-    if [ -f "$f" ] && [ "$f" != "Assets.zip" ]; then
-        mv "$f" game.zip
-    fi
-done
-
-if [ -f "game.zip" ]; then
-    unzip -o game.zip
-    rm -f game.zip
-fi
-
-# Move Server folder contents to root if it exists
-if [ -d "Server" ]; then
-    if [ -f "Server/HytaleServer.jar" ]; then
-        mv Server/HytaleServer.jar .
-    fi
-    if [ -f "Server/HytaleServer.aot" ]; then
-        mv Server/HytaleServer.aot .
-    fi
-    rm -rf Server
-fi
-
-# Check for required files
-if [ -f "HytaleServer.jar" ] && [ -f "Assets.zip" ]; then
-    echo "Download complete!"
-    ls -lh HytaleServer.jar Assets.zip HytaleServer.aot 2>/dev/null || true
-    
     # Copy credentials back for future runs
     if [ -f "$HYTFERN_DATA_DIR/.hytale-downloader-credentials.json" ] && [ ! -f "$CREDENTIALS_FILE" ]; then
         cp "$HYTFERN_DATA_DIR/.hytale-downloader-credentials.json" "$CREDENTIALS_FILE"
     fi
 else
-    echo "Warning: Expected files not found in $HYTFERN_DATA_DIR"
-    ls -la
+    # Check if downloader exists
+    if [ ! -f "$DOWNLOADER" ]; then
+        echo "Error: hytale-downloader-linux-amd64 not found!"
+        echo "Download from: https://downloader.hytale.com/hytale-downloader.zip"
+        exit 1
+    fi
+
+    chmod +x "$DOWNLOADER"
+
+    echo "Starting Hytale downloader..."
     echo ""
-    echo "If download failed, check authentication and re-run this script."
-    exit 1
+
+    # Run the downloader - it will handle auth flow
+    cd "$HYTFERN_DATA_DIR"
+
+    # Copy existing credentials if available
+    if [ -f "$CREDENTIALS_FILE" ] && [ ! -f "$HYTFERN_DATA_DIR/.hytale-downloader-credentials.json" ]; then
+        cp "$CREDENTIALS_FILE" "$HYTFERN_DATA_DIR/"
+    fi
+
+    # Use embedded downloader
+    "$DOWNLOADER" -skip-update-check -download-path hytale-game.zip
+
+    # Find and extract the zip
+    echo ""
+    echo "Extracting files..."
+
+    # Rename any zip file to game.zip for extraction (downloader's naming can vary)
+    for f in *.zip; do
+        if [ -f "$f" ] && [ "$f" != "Assets.zip" ]; then
+            mv "$f" game.zip
+        fi
+    done
+
+    if [ -f "game.zip" ]; then
+        unzip -o game.zip
+        rm -f game.zip
+    fi
+
+    # Move Server folder contents to root if it exists
+    if [ -d "Server" ]; then
+        if [ -f "Server/HytaleServer.jar" ]; then
+            mv Server/HytaleServer.jar .
+        fi
+        if [ -f "Server/HytaleServer.aot" ]; then
+            mv Server/HytaleServer.aot .
+        fi
+        rm -rf Server
+    fi
+
+    # Check for required files
+    if [ -f "HytaleServer.jar" ] && [ -f "Assets.zip" ]; then
+        echo "Download complete!"
+        ls -lh HytaleServer.jar Assets.zip HytaleServer.aot 2>/dev/null || true
+        
+        # Copy credentials back for future runs
+        if [ -f "$HYTFERN_DATA_DIR/.hytale-downloader-credentials.json" ] && [ ! -f "$CREDENTIALS_FILE" ]; then
+            cp "$HYTFERN_DATA_DIR/.hytale-downloader-credentials.json" "$CREDENTIALS_FILE"
+        fi
+    else
+        echo "Warning: Expected files not found in $HYTFERN_DATA_DIR"
+        ls -la
+        echo ""
+        echo "If download failed, check authentication and re-run this script."
+        exit 1
+    fi
 fi
 
 echo ""
