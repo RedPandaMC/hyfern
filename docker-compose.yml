@@ -145,15 +145,14 @@ services:
         
         # Create all directories
         echo "[1/4] Creating directories..."
-        mkdir -p /data/grafana /data/prometheus /data/frontend-uploads/avatars /data/database /data/hytale/config /data/redis /data/caddy/data /data/caddy/config /data/caddy/locks
+        mkdir -p /data/prometheus /data/frontend-uploads/avatars /data/database /data/hytale/config /data/redis /data/caddy/data /data/caddy/config /data/caddy/locks
         echo "Directories created"
         
         # Set ownerships
         echo "[2/4] Setting ownerships..."
-        chown 472:472 /data/grafana
         chown 65534:65534 /data/prometheus
         chown -R 1001:1001 /data/frontend-uploads /data/database /data/hytale
-        chmod 755 /data/grafana /data/prometheus /data/frontend-uploads /data/database /data/hytale /data/redis /data/caddy
+        chmod 755 /data/prometheus /data/frontend-uploads /data/database /data/hytale /data/redis /data/caddy
         echo "Ownerships set"
         
         # Initialize HyFern database
