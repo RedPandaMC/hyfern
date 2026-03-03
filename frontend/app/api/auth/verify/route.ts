@@ -2,9 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
 
 /**
- * JWT verification endpoint for cross-subdomain auth.
- * Used by Caddy's forward_auth to validate session cookies
- * before proxying requests to Grafana and other services.
+ * JWT verification endpoint for cross-service auth.
+ * Used by Caddy's forward_auth to validate session cookies.
  *
  * Returns 200 with X-Auth-User and X-Auth-Role headers if valid.
  * Returns 401 if no valid session.

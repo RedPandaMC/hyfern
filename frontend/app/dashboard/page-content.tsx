@@ -6,10 +6,10 @@ import { TPSGauge } from '@/components/dashboard/tps-gauge';
 import { ResourceCharts } from '@/components/dashboard/resource-charts';
 import { ServerControls } from '@/components/dashboard/server-controls';
 import { TokenExpirationBanner } from '@/components/dashboard/token-expiration-banner';
+import { MetricsChart } from '@/components/dashboard/metrics-chart';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Server, AlertCircle, Loader2, ExternalLink } from '@/lib/icons';
+import { Server, AlertCircle, Loader2 } from '@/lib/icons';
 
 export default function DashboardPage() {
   const { data, error, isLoading, mutate } = useServerStatus(5000);
@@ -191,18 +191,27 @@ export default function DashboardPage() {
         Last updated: {new Date(data.timestamp).toLocaleTimeString()}
       </div>
 
-      {/* View Full Analytics Button */}
-      <div className="flex justify-center pt-4">
-        <a
-          href="https://grafana.hyfern.us"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Button variant="outline">
-            <ExternalLink className="w-4 h-4 mr-2" />
-            View Full Analytics in Grafana
-          </Button>
-        </a>
+      {/* Performance Charts */}
+      {isOnline && (
+        <div className="grid gap-6 md:grid-cols-2">
+          <MetricsChart
+            type="tps"
+            title="TPS History"
+            color="#22c55e"
+            range="1h"
+          />
+          <MetricsChart
+            type="memory"
+            title="Memory Usage"
+            color="#3b82f6"
+            range="1h"
+          />
+        </div>
+      )}
+
+      {/* Last Updated */}
+      <div className="text-center text-sm text-muted-foreground">
+        Last updated: {new Date(data.timestamp).toLocaleTimeString()}
       </div>
     </div>
   );

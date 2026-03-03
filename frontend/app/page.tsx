@@ -10,7 +10,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Logo } from '@/components/logo';
-import { Lock, Copy, Check, Users, Activity, ExternalLink, Eye, EyeOff, Home, LogOut } from '@/lib/icons';
+import { Lock, Copy, Check, Users, Activity, Eye, EyeOff, Home, LogOut } from '@/lib/icons';
 import { ThemeToggle } from '@/components/theme-toggle';
 import { toast } from 'sonner';
 
@@ -20,11 +20,23 @@ const ConstellationBackground = dynamic(
   { ssr: false }
 );
 
+interface ServerStatus {
+  online: boolean;
+  status: 'online' | 'offline' | 'starting' | 'stopping';
+  players: { online: number; max: number; list: any[] };
+  performance: { tps: number; mspt: number };
+  version: string | null;
+  motd: string | null;
+  timestamp: number;
+}
+
 export default function HomePage() {
   const [password, setPassword] = useState('');
   const [isUnlocked, setIsUnlocked] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [serverInfo, setServerInfo] = useState<any>(null);
+  const [serverStatus, setServerStatus] = useState<ServerStatus | null>(null);
+  const [statusLoading, setStatusLoading] = useState(true);
   const [copied, setCopied] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -32,6 +44,8 @@ export default function HomePage() {
   const [username, setUsername] = useState<string>('');
 
   useEffect(() => {
+    fetchServerStatus();
+    
     fetch('/api/auth/session')
       .then(res => res.json())
       .then(data => {
@@ -39,37 +53,84 @@ export default function HomePage() {
           setIsLoggedIn(true);
           setUserImage(data.user.image);
           setUsername(data.user.username || '');
+          setIsUnlocked(true);
+          fetchServerInfo();
         }
       })
       .catch(() => {});
+
+    const savedPassword = document.cookie
+      .split('; ')
+      .find(row => row.startsWith('server_access='))
+      ?.split('=')[1];
+    
+    if (savedPassword) {
+      setPassword(savedPassword);
+      verifyPassword(savedPassword, true);
+    }
+
+    const statusInterval = setInterval(fetchServerStatus, 30000);
+    return () => clearInterval(statusInterval);
   }, []);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsLoading(true);
+  const fetchServerStatus = async () => {
+    try {
+      const res = await fetch('/api/server/public');
+      const data = await res.json();
+      setServerStatus(data);
+    } catch (error) {
+      console.error('Failed to fetch server status:', error);
+    } finally {
+      setStatusLoading(false);
+    }
+  };
 
+  const fetchServerInfo = async () => {
+    try {
+      const res = await fetch('/api/server/connect', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ password: '' }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setServerInfo(data);
+      }
+    } catch (error) {
+      console.error('Failed to fetch server info:', error);
+    }
+  };
+
+  const verifyPassword = async (pwd: string, fromCookie = false) => {
+    setIsLoading(true);
     try {
       const response = await fetch('/api/server/connect', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ password }),
+        body: JSON.stringify({ password: pwd }),
       });
 
       const data = await response.json();
 
-      if (!response.ok) {
-        toast.error(data.error || 'Invalid password');
-        return;
+      if (response.ok) {
+        setServerInfo(data);
+        setIsUnlocked(true);
+        if (!fromCookie) {
+          toast.success('Access granted!');
+        }
       }
-
-      setServerInfo(data);
-      setIsUnlocked(true);
-      toast.success('Access granted!');
     } catch (error) {
-      toast.error('Failed to connect. Please try again.');
+      if (fromCookie) {
+        console.log('Saved password no longer valid');
+      }
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    await verifyPassword(password, false);
   };
 
   const copyToClipboard = (text: string, label: string) => {
@@ -78,6 +139,8 @@ export default function HomePage() {
     toast.success(`${label} copied to clipboard!`);
     setTimeout(() => setCopied(false), 2000);
   };
+
+  const isOnline = serverStatus?.online && serverStatus?.status === 'online';
 
   return (
     <ConstellationBackground>
@@ -127,18 +190,44 @@ export default function HomePage() {
               </Link>
             )}
 
-            <Link href={`${process.env.NEXT_PUBLIC_BASE_URL || 'https://grafana.hyfern.us'}`} target="_blank" rel="noopener noreferrer" className="hidden sm:block">
-              <Button variant="ghost" size="sm" className="hover:bg-accent">
-                <Activity className="mr-2 h-4 w-4" />
-                Analytics
-                <ExternalLink className="ml-1 h-3 w-3" />
-              </Button>
-            </Link>
-
             <ThemeToggle className="h-9 w-9" />
           </nav>
         </div>
       </header>
+
+      {/* Server Status Banner */}
+      <div className="relative z-10 bg-black/40 backdrop-blur-md border-b border-border/30">
+        <div className="container mx-auto px-4 py-3">
+          <div className="flex items-center justify-center gap-3">
+            {statusLoading ? (
+              <Activity className="h-4 w-4 animate-spin text-muted-foreground" />
+            ) : (
+              <>
+                <div className={`w-2.5 h-2.5 rounded-full ${isOnline ? 'bg-green-500 animate-pulse' : 'bg-red-500'}`} />
+                <span className="text-sm font-medium">
+                  Server is {isOnline ? 'Online' : 'Offline'}
+                </span>
+                {isOnline && serverStatus && (
+                  <>
+                    <span className="text-muted-foreground">•</span>
+                    <span className="text-sm text-muted-foreground">
+                      {serverStatus.players.online}/{serverStatus.players.max} players
+                    </span>
+                    {serverStatus.version && (
+                      <>
+                        <span className="text-muted-foreground">•</span>
+                        <span className="text-sm text-muted-foreground">
+                          v{serverStatus.version}
+                        </span>
+                      </>
+                    )}
+                  </>
+                )}
+              </>
+            )}
+          </div>
+        </div>
+      </div>
 
       {/* Main content */}
       <main className="relative z-10 flex min-h-[calc(100vh-4rem)] items-center justify-center p-4">

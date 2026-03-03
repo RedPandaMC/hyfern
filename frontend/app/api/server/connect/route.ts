@@ -33,19 +33,38 @@ export async function POST(request: NextRequest) {
     const port = parseInt(process.env.HYTALE_SERVER_PORT || '5520', 10);
 
     let serverData;
+    let serverStatus = 'offline';
     try {
       const queryClient = getQueryClient();
-      serverData = await queryClient.getServerStatus();
+      serverData = await queryClient.getServerStatusSafe();
+      if (!('error' in serverData)) {
+        serverStatus = serverData.status || 'offline';
+      }
     } catch (error) {
       console.error('Failed to fetch server status:', error);
     }
 
-    return NextResponse.json({
+    const response = NextResponse.json({
       address,
       port,
       version: serverData?.version || 'Unknown',
       maxPlayers: serverData?.players?.max || 100,
+      players: serverData?.players?.online || 0,
+      status: serverStatus,
+      motd: serverData?.motd || null,
     });
+
+    if (hasValidPassword && password) {
+      response.cookies.set('server_access', password, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'lax',
+        maxAge: 60 * 60 * 24 * 30,
+        path: '/',
+      });
+    }
+
+    return response;
   } catch (error) {
     console.error('Connect API error:', error);
     return NextResponse.json(
