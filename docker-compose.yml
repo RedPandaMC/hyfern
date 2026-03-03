@@ -86,7 +86,6 @@ services:
         -XX:+Use$${HYTALE_GC:-G1GC} \
         -XX:MaxGCPauseMillis=$${HYTALE_MAX_GC_PAUSE:-200} \
         -XX:+ParallelRefProcEnabled \
-        -XX:-UseBiasedLocking \
         -XX:+AlwaysPreTouch \
         -XX:+OptimizeStringConcat \
         -XX:+HeapDumpOnOutOfMemoryError \

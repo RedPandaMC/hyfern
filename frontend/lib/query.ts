@@ -23,7 +23,7 @@ export class QueryClient {
     return `Basic ${Buffer.from(credentials).toString('base64')}`;
   }
 
-  async getServerStatus(): Promise<QueryResponse> {
+  async getServerStatus(signal?: AbortSignal): Promise<QueryResponse> {
     try {
       const url = `${this.config.webserverUrl}${this.config.queryEndpoint}`;
 
@@ -35,6 +35,7 @@ export class QueryClient {
           'Content-Type': 'application/json',
         },
         cache: 'no-store',
+        signal,
       });
 
       if (!response.ok) {
@@ -44,20 +45,28 @@ export class QueryClient {
       const data = await response.json();
       return data as QueryResponse;
     } catch (error) {
+      if (error instanceof Error && error.name === 'AbortError') {
+        throw new Error('Query request timed out');
+      }
       logger.error('Failed to fetch server status:', { context: 'query', error: error as Error });
       throw error;
     }
   }
 
-  async getServerStatusSafe(): Promise<QueryResponse | QueryError> {
+  async getServerStatusSafe(timeoutMs: number = 5000): Promise<QueryResponse | QueryError> {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+
     try {
-      return await this.getServerStatus();
+      return await this.getServerStatus(controller.signal);
     } catch (error) {
       return {
         error: 'QUERY_FAILED',
         message: error instanceof Error ? error.message : 'Unknown error',
         timestamp: Date.now(),
       };
+    } finally {
+      clearTimeout(timeoutId);
     }
   }
 }
